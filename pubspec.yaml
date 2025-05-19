@@ -10,6 +10,7 @@ dependencies:
   dotprompt_dart:
     path: ../dotprompt_dart
   google_generative_ai: ^0.4.7
+  json_schema: ^5.2.1
   openai_dart: ^0.4.5
 
 dev_dependencies:

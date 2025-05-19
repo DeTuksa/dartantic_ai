@@ -24,6 +24,11 @@ class ProviderTable {
           modelName: settings.modelName,
           apiKey: settings.apiKey,
         ),
+    'googleai':
+        (settings) => GeminiProvider(
+          modelName: settings.modelName,
+          apiKey: settings.apiKey,
+        ),
     'google-gla':
         (settings) => GeminiProvider(
           modelName: settings.modelName,
@@ -33,12 +38,13 @@ class ProviderTable {
 
   /// Creates a provider instance for the given settings.
   ///
-  /// Uses the [settings familyName] to look up the appropriate provider factory
-  /// in the [providers] map and creates a provider with the specified settings.
-  /// Throws an [ArgumentError] if the provider family is not supported.
+  /// Uses the [settings providerName] to look up the appropriate provider
+  /// factory in the [providers] map and creates a provider with the specified
+  /// settings. Throws an [ArgumentError] if the provider family is not
+  /// supported.
   static Provider providerFor(ProviderSettings settings) {
-    final providerFactory = providers[settings.familyName];
+    final providerFactory = providers[settings.providerName];
     if (providerFactory != null) return providerFactory(settings);
-    throw ArgumentError('Unsupported provider family: $settings.family');
+    throw ArgumentError('Unsupported provider family: $settings.providerName');
   }
 }

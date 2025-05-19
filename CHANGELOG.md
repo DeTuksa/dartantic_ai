@@ -1,3 +1,10 @@
+## 0.3.0
+
+- dotprompt_dart package support
+- expanded model naming to include "providerName", "providerName:model" or
+  "providerName/model", e.g. "openai" or "googleai/gemini-2.0-flash"
+- moving types specified by `Map<String, dynamic>` to a `JsonSchema` object
+
 ## 0.2.0
 
 - Define tools and their inputs/outputs easily

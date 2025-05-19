@@ -1,3 +1,5 @@
+import 'package:json_schema/json_schema.dart';
+
 /// A function that handles tool calls by processing input parameters and
 /// returning a result.
 ///
@@ -23,7 +25,7 @@ class Tool {
     required this.onCall,
     String? description,
     this.inputType,
-  }) : description = description ?? inputType?['description'];
+  }) : description = description ?? inputType?.description;
 
   /// The unique identifier for this tool.
   final String name;
@@ -32,7 +34,7 @@ class Tool {
   final String? description;
 
   /// Schema definition for the expected input parameters.
-  final Map<String, dynamic>? inputType;
+  final JsonSchema? inputType;
 
   /// The function that will be executed when this tool is called.
   final ToolCallHandler onCall;

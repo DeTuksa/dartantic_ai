@@ -1,3 +1,5 @@
+import 'package:json_schema/json_schema.dart';
+
 import '../../agent/tool.dart';
 
 /// Settings used to configure a model.
@@ -24,7 +26,7 @@ class ModelSettings {
   ///
   /// When provided, configures the model to return responses in JSON format
   /// that match this schema.
-  final Map<String, dynamic>? outputType;
+  final JsonSchema? outputType;
 
   /// The tools to use for the model.
   final Iterable<Tool>? tools;

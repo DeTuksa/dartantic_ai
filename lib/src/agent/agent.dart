@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:dotprompt_dart/dotprompt_dart.dart';
+import 'package:json_schema/json_schema.dart';
+
 import '../models/interface/model.dart';
 import '../models/interface/model_settings.dart';
 import '../providers/implementation/provider_table.dart';
@@ -27,7 +30,7 @@ class Agent {
   Agent(
     Provider provider, {
     String? systemPrompt,
-    Map<String, dynamic>? outputType,
+    JsonSchema? outputType,
     this.outputFromJson,
     Iterable<Tool>? tools,
   }) : _model = provider.createModel(
@@ -41,11 +44,12 @@ class Agent {
   /// Factory constructor to create an [Agent] for a specific model.
   ///
   /// This constructor allows you to create an [Agent] by specifying the model
-  /// in the format "familyName" or "familyName:modelName". It automatically
-  /// resolves the appropriate provider for the given model.
+  /// in the format "providerName" or "providerName:modelName" or
+  /// "providerName/modelName". It automatically resolves the appropriate
+  /// provider for the given model.
   ///
-  /// - [model]: The model identifier in "familyName" or "familyName:modelName"
-  ///   format.
+  /// - [model]: The model identifier in "providerName" or
+  ///   "providerName:modelName" or "providerName/modelName" format.
   /// - [systemPrompt]: An optional system prompt to guide the agent's behavior.
   /// - [outputType]: An optional map defining the expected output type.
   /// - [outputFromJson]: An optional function to convert JSON output to a typed
@@ -54,7 +58,7 @@ class Agent {
   factory Agent.model(
     String model, {
     String? systemPrompt,
-    Map<String, dynamic>? outputType,
+    JsonSchema? outputType,
     dynamic Function(Map<String, dynamic> json)? outputFromJson,
     Iterable<Tool>? tools,
   }) => Agent(
@@ -90,18 +94,52 @@ class Agent {
     return AgentResponseFor(output: outputTyped);
   }
 
-  /// Resolves the provider for the given [model] in "familyName" or
-  /// "familyName:modelName" format.
+  /// Executes a given [DotPrompt] using the specified parameters and returns
+  /// the response as an [AgentResponse].
+  ///
+  /// - [prompt]: The [DotPrompt] to be executed.
+  /// - [systemPrompt]: An optional system prompt to guide the agent's behavior.
+  /// - [outputType]: An optional [JsonSchema] defining the expected output
+  ///   type.
+  /// - [outputFromJson]: An optional function to convert JSON output to a typed
+  ///   object.
+  /// - [tools]: An optional collection of tools the agent can use.
+  /// - [input]: A map of input values to render the prompt with, defaults to an
+  ///   empty map.
+  ///
+  /// Returns an [AgentResponse] containing the raw string output from the
+  /// agent.
+  static Future<AgentResponse> runPrompt(
+    DotPrompt prompt, {
+    String? systemPrompt,
+    JsonSchema? outputType,
+    dynamic Function(Map<String, dynamic> json)? outputFromJson,
+    Iterable<Tool>? tools,
+    Map<String, dynamic> input = const {},
+  }) async {
+    final agent = Agent.model(
+      prompt.frontMatter.model ?? 'google',
+      systemPrompt: systemPrompt,
+      outputType: outputType,
+      outputFromJson: outputFromJson,
+      tools: tools,
+    );
+
+    return agent.run(prompt.render(input));
+  }
+
+  /// Resolves the provider for the given [model] in "providerName" or
+  /// "providerName:modelName" or "providerName/modelName" format.
   static Provider providerFor(String model) {
     if (model.isEmpty) throw ArgumentError('Model must be provided');
 
-    final modelParts = model.split(':');
-    final familyName = modelParts[0];
+    final modelParts = model.split(RegExp('[:/]'));
+    final providerName = modelParts[0];
     final modelName = modelParts.length != 1 ? modelParts[1] : null;
 
     return ProviderTable.providerFor(
       ProviderSettings(
-        familyName: familyName,
+        providerName: providerName,
         modelName: modelName,
         apiKey: null,
       ),

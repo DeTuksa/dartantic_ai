@@ -18,8 +18,8 @@ The following are the target features for this package:
 - [x] Typed output via `Agent.runFor`
 - [x] Define tools and their inputs/outputs easily
 - [x] Automatically generate LLM-specific tool/output schemas
-- [ ] Bring your own provider
-- [ ] Execute tools with validated inputs
+- [x] Bring your own provider
+- [x] Execute tools with validated inputs
 - [ ] Chains and Sequential Execution
 - [ ] JSON Mode, Functions Mode, Flexible Decoding
 - [ ] Simple Assistant/Agent loop utilities

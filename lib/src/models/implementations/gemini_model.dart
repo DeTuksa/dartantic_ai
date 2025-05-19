@@ -1,9 +1,11 @@
 import 'dart:developer' as dev;
 
 import 'package:google_generative_ai/google_generative_ai.dart' as gemini;
+import 'package:json_schema/json_schema.dart';
 
 import '../../agent/agent_response.dart';
 import '../../agent/tool.dart';
+import '../../json_schema_extension.dart';
 import '../interface/model.dart';
 
 /// Implementation of [Model] that uses Google's Gemini API.
@@ -20,7 +22,7 @@ class GeminiModel extends Model {
   GeminiModel({
     required String modelName,
     required String apiKey,
-    Map<String, dynamic>? outputType,
+    JsonSchema? outputType,
     String? systemPrompt,
     Iterable<Tool>? tools,
   }) : _tools = tools,
@@ -32,7 +34,7 @@ class GeminiModel extends Model {
                  ? null
                  : gemini.GenerationConfig(
                    responseMimeType: 'application/json',
-                   responseSchema: _schemaObjectFrom(outputType, outputType),
+                   responseSchema: _schemaObjectFromJsonSchema(outputType),
                  ),
          systemInstruction:
              systemPrompt != null ? gemini.Content.text(systemPrompt) : null,
@@ -95,6 +97,11 @@ class GeminiModel extends Model {
 
     dev.log('Tool: $name($args)= $result');
     return result;
+  }
+
+  static gemini.Schema _schemaObjectFromJsonSchema(JsonSchema jsonSchema) {
+    final map = jsonSchema.toMap();
+    return _schemaObjectFrom(map, map);
   }
 
   static gemini.Schema _schemaObjectFrom(
@@ -192,7 +199,7 @@ class GeminiModel extends Model {
       // Convert inputType to a Schema object using the existing method
       final parameters =
           tool.inputType != null
-              ? _schemaObjectFrom(tool.inputType!, tool.inputType!)
+              ? _schemaObjectFromJsonSchema(tool.inputType!)
               : gemini.Schema.object(properties: {});
 
       // Create a function declaration for the tool

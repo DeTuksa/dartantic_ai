@@ -5,18 +5,18 @@
 class ProviderSettings {
   /// Creates a new [ProviderSettings] instance.
   ///
-  /// The [familyName] identifies the provider family (e.g., "openai",
+  /// The [providerName] identifies the provider family (e.g., "openai",
   /// "google-gla"). The [modelName] specifies which model to use within that
   /// family. The [apiKey] is an optional API key for authentication with the
   /// provider.
   ProviderSettings({
-    required this.familyName,
+    required this.providerName,
     required this.modelName,
     required this.apiKey,
   });
 
   /// The provider family name (e.g., "openai", "google-gla").
-  final String familyName;
+  final String providerName;
 
   /// The specific model name to use within the provider family.
   final String? modelName;

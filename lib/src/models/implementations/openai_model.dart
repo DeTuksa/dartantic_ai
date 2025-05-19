@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
 
+import 'package:json_schema/json_schema.dart';
 import 'package:openai_dart/openai_dart.dart' as openai;
 
-import '../../agent/agent.dart';
+import '../../../dartantic_ai.dart';
 import '../interface/model.dart';
 
 /// Implementation of [Model] that uses OpenAI's API.
@@ -20,7 +21,7 @@ class OpenAiModel extends Model {
   OpenAiModel({
     required String apiKey,
     required String modelName,
-    Map<String, dynamic>? outputType,
+    JsonSchema? outputType,
     String? systemPrompt,
     Iterable<Tool>? tools,
   }) : _tools = tools,
@@ -69,7 +70,7 @@ class OpenAiModel extends Model {
                       function: openai.FunctionObject(
                         name: tool.name,
                         description: tool.description,
-                        parameters: tool.inputType ?? {},
+                        parameters: tool.inputType?.toMap(),
                       ),
                     ),
                   )
@@ -88,7 +89,7 @@ class OpenAiModel extends Model {
       // Handle tool calls
       for (final toolCall in message.toolCalls!) {
         final args =
-            jsonDecode(toolCall.function.arguments) as Map<String, Object?>;
+            jsonDecode(toolCall.function.arguments) as Map<String, dynamic>;
         final result = await _callTool(toolCall.function.name, args);
 
         // Add the tool response to the messages
@@ -102,11 +103,11 @@ class OpenAiModel extends Model {
     }
   }
 
-  Future<Map<String, Object?>?> _callTool(
+  Future<Map<String, dynamic>?> _callTool(
     String name,
-    Map<String, Object?> args,
+    Map<String, dynamic> args,
   ) async {
-    Map<String, Object?>? result;
+    Map<String, dynamic>? result;
     try {
       // if the tool isn't found, return an error
       final tool = _tools?.where((t) => t.name == name).singleOrNull;
@@ -124,11 +125,12 @@ class OpenAiModel extends Model {
   }
 
   static openai.JsonSchemaObject _schemaObjectFrom(
-    Map<String, dynamic> jsonSchema, {
+    JsonSchema rawJsonSchema, {
     String name = 'response',
     bool strict = true,
   }) {
     // Ensure additionalProperties: false is set at every object level
+    final jsonSchema = rawJsonSchema.toMap();
     final schema = _ensureAdditionalPropertiesFalse(jsonSchema);
 
     return openai.JsonSchemaObject(

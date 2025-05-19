@@ -70,26 +70,5 @@ const _$ListOfLocTimeTempsSchemaMap = <String, dynamic>{
     }
   },
   r'required': [r'locations'],
-  r'$defs': {
-    r'LocTimeTemp': {
-      r'type': r'object',
-      r'properties': {
-        r'location': {
-          r'type': r'string',
-          r'description':
-              r'/// The location to get the temperature in (e.g. "New York, NY")'
-        },
-        r'time': {
-          r'type': r'string',
-          r'format': r'date-time',
-          r'description': r'/// The time in the given time zone'
-        },
-        r'temp': {
-          r'type': r'number',
-          r'description': r'/// The temperature in degrees Fahrenheit'
-        }
-      },
-      r'required': [r'location', r'time', r'temp']
-    }
-  }
+  r'$defs': {}
 };

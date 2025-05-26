@@ -130,3 +130,114 @@ tools.
   - Add tests for multi-turn chat, streaming, and embedding APIs.
   - Update documentation and usage examples to cover new features.
 
+### Milestone 3: Typed Response + Tools + Simple Agent Loop
+- e.g. two tools, typed response and we keep looping till the LLM is done
+- Just like pydantic-ai can do!
+
+```python
+"""
+city_info_demo.py  –  pydantic-ai example with tools + typed output
+---------------------------------------------------------------
+Given a user-supplied list of city names, the assistant:
+  • calls get_time()  – fetches the current local time
+  • calls get_temp()  – fetches the current temperature in °C
+  • returns a typed list of CityReport objects
+The pydantic-ai library auto-loops until the model has filled the
+schema without any unresolved tool calls.
+"""
+
+import os
+import json
+import httpx
+from typing import List, Optional
+from pydantic import BaseModel, Field
+from pydantic_ai import OpenAIChat, tool
+
+# --------------------------------------------------------------------
+# 1.  Two simple tools (worldtimeapi + open-meteo)
+# --------------------------------------------------------------------
+# Hard-code lat/lon + timezone for a few demo cities.
+CITY_META = {
+    "London":     {"lat": 51.5072, "lon": -0.1276, "tz": "Europe/London"},
+    "New York":   {"lat": 40.7128, "lon": -74.0060, "tz": "America/New_York"},
+    "Tokyo":      {"lat": 35.6895, "lon": 139.6917, "tz": "Asia/Tokyo"},
+    "Sydney":     {"lat": -33.8688, "lon": 151.2093, "tz": "Australia/Sydney"},
+}
+
+@tool(name="get_time",
+      description="Return the current local time for a known city.")
+def get_time(city: str) -> Optional[str]:
+    meta = CITY_META.get(city)
+    if not meta:
+        return None
+    tz = meta["tz"]
+    url = f"https://worldtimeapi.org/api/timezone/{tz}"
+    try:
+        resp = httpx.get(url, timeout=8)
+        resp.raise_for_status()
+        return resp.json()["datetime"]         # ISO-8601 string
+    except Exception:
+        return None
+
+@tool(name="get_temp",
+      description="Return the current temperature in °C for a known city.")
+def get_temp(city: str) -> Optional[float]:
+    meta = CITY_META.get(city)
+    if not meta:
+        return None
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={meta['lat']}&longitude={meta['lon']}"
+        "&current_weather=true"
+    )
+    try:
+        resp = httpx.get(url, timeout=8)
+        resp.raise_for_status()
+        return resp.json()["current_weather"]["temperature"]
+    except Exception:
+        return None
+
+# --------------------------------------------------------------------
+# 2.  Typed response schema
+# --------------------------------------------------------------------
+class CityReport(BaseModel):
+    city: str
+    local_time: str = Field(..., description="ISO-8601 local time string")
+    temp_c: float   = Field(..., description="Temperature in Celsius")
+
+class CityReportList(BaseModel):
+    reports: List[CityReport]
+
+# --------------------------------------------------------------------
+# 3.  Build chat task (schema + tools)
+# --------------------------------------------------------------------
+assistant = OpenAIChat(
+    model          = "gpt-4o-mini",     # any GPT-4-class model
+    response_model = CityReportList,
+    tools          = [get_time, get_temp],
+    temperature    = 0.2,
+)
+
+# --------------------------------------------------------------------
+# 4.  User prompt (cities could come from argv, etc.)
+# --------------------------------------------------------------------
+CITIES = ["London", "Tokyo", "New York", "Sydney"]
+
+prompt = f"""
+You are a helpful assistant.
+For each city in this list, return its current local time and temperature:
+
+{', '.join(CITIES)}
+
+• Call get_time(city) and get_temp(city) as needed.
+• If a tool returns null, skip that city.
+• Respond **only** with JSON that matches the CityReportList schema.
+"""
+
+# --------------------------------------------------------------------
+# 5.  One call – pydantic-ai auto-loops until typed schema is satisfied
+# --------------------------------------------------------------------
+city_info: CityReportList = assistant(prompt)
+
+print(json.dumps(city_info.model_dump(), indent=2))
+```

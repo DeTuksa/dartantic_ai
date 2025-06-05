@@ -21,9 +21,15 @@ void main() {
           systemPrompt: 'Be concise, reply with one sentence.',
         );
 
-        final result = await agent.run('Where does "hello world" come from?');
-        expect(result.output, isNotEmpty);
-        expect(RegExp(r'\.').allMatches(result.output).length, equals(1));
+        final output = StringBuffer();
+        await for (final chunk in agent.run(
+          'Where does "hello world" come from?',
+        )) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(RegExp(r'\.').allMatches(resultOutput).length, equals(1));
       });
 
       test('JSON Schema String Output', () async {
@@ -38,9 +44,13 @@ void main() {
         };
 
         final agent = Agent('openai', outputType: outputSchema.toSchema());
-        final result = await agent.run('The windy city in the US of A.');
-        expect(result.output, isNotEmpty);
-        expect(result.output, contains('Chicago'));
+        final output = StringBuffer();
+        await for (final chunk in agent.run('The windy city in the US of A.')) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(resultOutput, contains('Chicago'));
       });
 
       test('JSON Schema Object Output', () async {
@@ -123,12 +133,15 @@ void main() {
           ],
         );
 
-        final result = await agent.run(
+        final output = StringBuffer();
+        await for (final chunk in agent.run(
           'What is the time and temperature in New York City?',
-        );
-
-        expect(result.output, isNotEmpty);
-        expect(result.output, contains('New York'));
+        )) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(resultOutput, contains('New York'));
       });
 
       test('Gemini Integration', () async {
@@ -207,9 +220,13 @@ input:
 Summarize this in {{length}} words: {{text}}
 ''');
 
-        final result = await Agent.runPrompt(prompt);
-        expect(result.output, isNotEmpty);
-        expect(result.output.split(' ').length, equals(3));
+        final output = StringBuffer();
+        await for (final chunk in Agent.runPrompt(prompt)) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(resultOutput.split(' ').length, equals(3));
       });
     });
 
@@ -220,9 +237,15 @@ Summarize this in {{length}} words: {{text}}
           systemPrompt: 'Be concise, reply with one sentence.',
         );
 
-        final result = await agent.run('Where does "hello world" come from?');
-        expect(result.output, isNotEmpty);
-        expect(RegExp(r'\.').allMatches(result.output).length, equals(1));
+        final output = StringBuffer();
+        await for (final chunk in agent.run(
+          'Where does "hello world" come from?',
+        )) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(RegExp(r'\.').allMatches(resultOutput).length, equals(1));
       });
 
       test('OpenAI Provider with Schema', () async {
@@ -263,9 +286,15 @@ Summarize this in {{length}} words: {{text}}
           systemPrompt: 'Be concise, reply with one sentence.',
         );
 
-        final result = await agent.run('Where does "hello world" come from?');
-        expect(result.output, isNotEmpty);
-        expect(RegExp(r'\.').allMatches(result.output).length, equals(1));
+        final output = StringBuffer();
+        await for (final chunk in agent.run(
+          'Where does "hello world" come from?',
+        )) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(RegExp(r'\.').allMatches(resultOutput).length, equals(1));
       });
 
       test('Gemini Provider with Schema', () async {
@@ -346,12 +375,15 @@ Summarize this in {{length}} words: {{text}}
           ],
         );
 
-        final result = await agent.run(
+        final output = StringBuffer();
+        await for (final chunk in agent.run(
           'What is the time and temperature in New York City?',
-        );
-
-        expect(result.output, isNotEmpty);
-        expect(result.output, contains('New York'));
+        )) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(resultOutput, contains('New York'));
       });
 
       test('Gemini Provider with Tools', () async {
@@ -400,12 +432,15 @@ Summarize this in {{length}} words: {{text}}
           ],
         );
 
-        final result = await agent.run(
+        final output = StringBuffer();
+        await for (final chunk in agent.run(
           'What is the time and temperature in New York City?',
-        );
-
-        expect(result.output, isNotEmpty);
-        expect(result.output, contains('New York'));
+        )) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(resultOutput, contains('New York'));
       });
     });
   });

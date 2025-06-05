@@ -53,7 +53,8 @@ class Agent {
   /// - [provider]: The [Provider] to use for the agent.
   /// - [systemPrompt]: (Optional) The system prompt to use for the agent.
   /// - [outputType]: (Optional) The [JsonSchema] for the expected output type.
-  /// - [outputFromJson]: (Optional) A function to convert JSON output to a typed object.
+  /// - [outputFromJson]: (Optional) A function to convert JSON output to a
+  ///   typed object.
   /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
   Agent.provider(
     Provider provider, {

@@ -22,7 +22,7 @@ void main() {
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.run(
+        await for (final chunk in agent.runStream(
           'Where does "hello world" come from?',
         )) {
           output.write(chunk.output);
@@ -45,7 +45,9 @@ void main() {
 
         final agent = Agent('openai', outputType: outputSchema.toSchema());
         final output = StringBuffer();
-        await for (final chunk in agent.run('The windy city in the US of A.')) {
+        await for (final chunk in agent.runStream(
+          'The windy city in the US of A.',
+        )) {
           output.write(chunk.output);
         }
         final resultOutput = output.toString();
@@ -134,7 +136,7 @@ void main() {
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.run(
+        await for (final chunk in agent.runStream(
           'What is the time and temperature in New York City?',
         )) {
           output.write(chunk.output);
@@ -221,7 +223,7 @@ Summarize this in {{length}} words: {{text}}
 ''');
 
         final output = StringBuffer();
-        await for (final chunk in Agent.runPrompt(prompt)) {
+        await for (final chunk in Agent.runPromptStream(prompt)) {
           output.write(chunk.output);
         }
         final resultOutput = output.toString();
@@ -238,7 +240,7 @@ Summarize this in {{length}} words: {{text}}
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.run(
+        await for (final chunk in agent.runStream(
           'Where does "hello world" come from?',
         )) {
           output.write(chunk.output);
@@ -287,7 +289,7 @@ Summarize this in {{length}} words: {{text}}
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.run(
+        await for (final chunk in agent.runStream(
           'Where does "hello world" come from?',
         )) {
           output.write(chunk.output);
@@ -376,7 +378,7 @@ Summarize this in {{length}} words: {{text}}
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.run(
+        await for (final chunk in agent.runStream(
           'What is the time and temperature in New York City?',
         )) {
           output.write(chunk.output);
@@ -433,7 +435,7 @@ Summarize this in {{length}} words: {{text}}
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.run(
+        await for (final chunk in agent.runStream(
           'What is the time and temperature in New York City?',
         )) {
           output.write(chunk.output);

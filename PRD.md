@@ -55,7 +55,7 @@ tools.
 ### Functional
 - The system MUST support agent creation via both model string and provider
   instance.
-- The system MUST support running prompts and returning string outputs.
+- The system MUST support running prompts and returning streaming string outputs.
 - The system MUST support running prompts and returning typed outputs, using a
   provided schema and fromJson function.
 - The system MUST support defining tools with typed input (validated via JSON
@@ -77,7 +77,7 @@ tools.
 
 ## Acceptance Criteria
 - [ ] Agents can be created using both model strings and provider instances.
-- [ ] Agents can run prompts and return string outputs.
+- [ ] Agents can run prompts and return streaming string outputs.
 - [ ] Agents can run prompts and return typed outputs, mapped to custom Dart types.
 - [ ] Agents can use DotPrompt for structured prompt input.
 - [ ] Agents can define and use tools with typed input/output, validated via JSON schema.
@@ -110,9 +110,23 @@ tools.
     and optional tool/function fields.
   - Update `Agent` and provider interfaces to accept and process message
     history.
-- **Streaming responses**: Add support for streaming LLM responses via a
-  `Stream<AgentResponse>` API, allowing real-time consumption of output as it is
-  generated.
+- **Streaming responses**: LLM responses can be streamed via `Agent.runStream`, `Agent.runPromptStream`, and similar methods, all of which return a `Stream<AgentResponse>`. This allows
+  real-time consumption of output as it's generated. Streaming is a core, stable feature of the API, and is the primary way to consume real-time output from the agent. Note: `Agent.run` returns a `Future<AgentResponse>` with the full response, not a stream.
+
+  ```dart
+  // Example of streaming with Agent.runStream
+  import 'dart:io';
+  import 'package:dartantic_ai/dartantic_ai.dart';
+
+  void main() async {
+    final agent = Agent('openai:gpt-4o');
+    final stream = agent.runStream('Tell me a short story about a brave robot.');
+    await for (final response in stream) {
+      stdout.write(response.output);
+    }
+  }
+  ```
+
 - **Embedding generation**: Add methods to generate vector embeddings for text:
   - `Future<List<double>> createEmbedding(String text, {EmbeddingType type})`
   - Introduce `EmbeddingType` enum (document, query).

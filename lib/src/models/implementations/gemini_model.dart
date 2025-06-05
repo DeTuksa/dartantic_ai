@@ -45,7 +45,7 @@ class GeminiModel extends Model {
   final Iterable<Tool>? _tools;
 
   @override
-  Stream<AgentResponse> run(String prompt) async* {
+  Stream<AgentResponse> runStream(String prompt) async* {
     // send the prompt to the model
     final chat = _model.startChat();
     final stream = chat.sendMessageStream(gemini.Content.text(prompt));

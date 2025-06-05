@@ -27,10 +27,8 @@ Future<void> helloWorldExample() async {
     systemPrompt: 'Be concise, reply with one sentence.',
   );
 
-  await for (final result in agent.run('Where does "hello world" come from?')) {
-    stdout.write(result.output);
-  }
-  print('');
+  final response = await agent.run('Where does "hello world" come from?');
+  print(response.output);
 }
 
 Future<void> outputTypeExampleWithJsonSchemaAndStringOutput() async {
@@ -47,7 +45,9 @@ Future<void> outputTypeExampleWithJsonSchemaAndStringOutput() async {
   };
 
   final agent = Agent('openai', outputType: tncSchema.toSchema());
-  await for (final result in agent.run('The windy city in the US of A.')) {
+  await for (final result in agent.runStream(
+    'The windy city in the US of A.',
+  )) {
     stdout.write(result.output);
   }
   print('');
@@ -117,7 +117,7 @@ Future<void> toolExample() async {
     ],
   );
 
-  await for (final result in agent.run(
+  await for (final result in agent.runStream(
     'What is the time and temperature in New York City?',
   )) {
     stdout.write(result.output);
@@ -151,7 +151,7 @@ Future<void> toolExampleWithTypedOutput() async {
     ],
   );
 
-  await for (final result in agent.run(
+  await for (final result in agent.runStream(
     'What is the time and temperature in New York City and Chicago?',
   )) {
     stdout.write(result.output);
@@ -185,7 +185,7 @@ input:
 Summarize this in {{length}} words: {{text}}
 ''');
 
-  await for (final result in Agent.runPrompt(prompt)) {
+  await for (final result in Agent.runPromptStream(prompt)) {
     stdout.write(result.output);
   }
 }

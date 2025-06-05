@@ -78,11 +78,30 @@ class Agent {
   /// model into a strongly-typed object when using [runFor].
   final dynamic Function(Map<String, dynamic> json)? outputFromJson;
 
+  /// Executes the given [prompt] using the model and returns the complete
+  /// response.
+  ///
+  /// This method processes the prompt through the model, collects the output
+  /// from the resulting stream, and returns it as a single [AgentResponse].
+  ///
+  /// - [prompt]: The input string to be processed by the model.
+  ///
+  /// Returns an [AgentResponse] containing the concatenated output from the
+  /// model.
+  Future<AgentResponse> run(String prompt) async {
+    final stream = _model.runStream(prompt);
+    final output = StringBuffer();
+    await for (final chunk in stream) {
+      output.write(chunk.output);
+    }
+    return AgentResponse(output: output.toString());
+  }
+
   /// Runs the given [prompt] through the model and returns the response as a
   /// stream.
   ///
   /// Returns a [Stream] of [AgentResponse] containing the raw string output.
-  Stream<AgentResponse> run(String prompt) => _model.run(prompt);
+  Stream<AgentResponse> runStream(String prompt) => _model.runStream(prompt);
 
   /// Runs the given [prompt] through the model and returns a typed response.
   ///
@@ -90,16 +109,81 @@ class Agent {
   /// [T]. Uses [outputFromJson] to convert the JSON response if provided,
   /// otherwise returns the decoded JSON.
   Future<AgentResponseFor<T>> runFor<T>(String prompt) async {
-    // dev.log('schema: [1m${_modelSettings.outputType}[0m');
-    final stream = run(prompt);
-    final output = StringBuffer();
-    await for (final chunk in stream) {
-      output.write(chunk.output);
-    }
-    final outputJson = jsonDecode(output.toString());
+    final response = await run(prompt);
+    final outputJson = jsonDecode(response.output);
     final outputTyped = outputFromJson?.call(outputJson) ?? outputJson;
     return AgentResponseFor(output: outputTyped);
   }
+
+  /// Executes a given [DotPrompt] and returns the complete response.
+  ///
+  /// This method processes the [DotPrompt] through the model specified in the
+  /// prompt's front matter or defaults to 'google' if not specified. It
+  /// collects the output and returns it as a single [AgentResponse].
+  ///
+  /// - [prompt]: The [DotPrompt] to be executed.
+  /// - [systemPrompt]: (Optional) A system prompt to guide the agent's
+  ///   behavior.
+  /// - [outputType]: (Optional) A [JsonSchema] defining the expected output
+  ///   type.
+  /// - [outputFromJson]: (Optional) A function to convert JSON output to a
+  ///   typed object.
+  /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
+  /// - [input]: (Optional) A map of input values to render the prompt with.
+  ///   Defaults to an empty map.
+  ///
+  /// Returns a [Future] of [AgentResponse] containing the concatenated output
+  /// from the agent.
+  static Future<AgentResponse> runPrompt(
+    DotPrompt prompt, {
+    String? systemPrompt,
+    JsonSchema? outputType,
+    dynamic Function(Map<String, dynamic> json)? outputFromJson,
+    Iterable<Tool>? tools,
+    Map<String, dynamic> input = const {},
+  }) => Agent(
+    prompt.frontMatter.model ?? 'google',
+    systemPrompt: systemPrompt,
+    outputType: outputType,
+    outputFromJson: outputFromJson,
+    tools: tools,
+  ).run(prompt.render(input));
+
+  /// Executes a [DotPrompt] and returns a typed response.
+  ///
+  /// This method processes the [DotPrompt] through the model specified in the
+  /// prompt's front matter, or defaults to 'google' if not specified. It
+  /// renders the prompt with the provided [input] map, sends it to the model,
+  /// and returns the output as an [AgentResponseFor<T>] containing the output
+  /// converted to type [T].
+  ///
+  /// - [prompt]: The [DotPrompt] to execute.
+  /// - [systemPrompt]: (Optional) A system prompt to guide the agent's
+  ///   behavior.
+  /// - [outputType]: (Optional) A [JsonSchema] defining the expected output
+  ///   type.
+  /// - [outputFromJson]: (Optional) A function to convert JSON output to a
+  ///   typed object.
+  /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
+  /// - [input]: (Optional) A map of input values to render the prompt with.
+  ///   Defaults to an empty map.
+  ///
+  /// Returns a [Future] of [AgentResponseFor<T>] containing the output
+  /// converted to type [T].
+  static Future<AgentResponseFor<T>> runPromptFor<T>(
+    DotPrompt prompt, {
+    String? systemPrompt,
+    JsonSchema? outputType,
+    dynamic Function(Map<String, dynamic> json)? outputFromJson,
+    Iterable<Tool>? tools,
+    Map<String, dynamic> input = const {},
+  }) => Agent(
+    prompt.frontMatter.model ?? 'google',
+    systemPrompt: systemPrompt,
+    outputType: outputType,
+    outputFromJson: outputFromJson,
+    tools: tools,
+  ).runFor<T>(prompt.render(input));
 
   /// Executes a given [DotPrompt] using the specified parameters and returns
   /// the response as a [Stream] of [AgentResponse].
@@ -117,24 +201,20 @@ class Agent {
   ///
   /// Returns a [Stream] of [AgentResponse] containing the raw string output
   /// from the agent.
-  static Stream<AgentResponse> runPrompt(
+  static Stream<AgentResponse> runPromptStream(
     DotPrompt prompt, {
     String? systemPrompt,
     JsonSchema? outputType,
     dynamic Function(Map<String, dynamic> json)? outputFromJson,
     Iterable<Tool>? tools,
     Map<String, dynamic> input = const {},
-  }) {
-    final agent = Agent(
-      prompt.frontMatter.model ?? 'google',
-      systemPrompt: systemPrompt,
-      outputType: outputType,
-      outputFromJson: outputFromJson,
-      tools: tools,
-    );
-
-    return agent.run(prompt.render(input));
-  }
+  }) => Agent(
+    prompt.frontMatter.model ?? 'google',
+    systemPrompt: systemPrompt,
+    outputType: outputType,
+    outputFromJson: outputFromJson,
+    tools: tools,
+  ).runStream(prompt.render(input));
 
   /// Resolves the [Provider] for the given [model] string.
   ///

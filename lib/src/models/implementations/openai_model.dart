@@ -42,7 +42,7 @@ class OpenAiModel extends Model {
   final Iterable<Tool>? _tools;
 
   @override
-  Stream<AgentResponse> run(String prompt) async* {
+  Stream<AgentResponse> runStream(String prompt) async* {
     final messages = <openai.ChatCompletionMessage>[
       if (_systemPrompt != null)
         openai.ChatCompletionMessage.system(content: _systemPrompt),

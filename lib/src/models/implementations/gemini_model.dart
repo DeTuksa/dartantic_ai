@@ -44,45 +44,54 @@ class GeminiModel extends Model {
   late final gemini.GenerativeModel _model;
   final Iterable<Tool>? _tools;
 
-  /// Runs the given [prompt] through the Gemini model and returns the response.
-  ///
-  /// Returns an [AgentResponse] containing the text from the model's response.
   @override
-  Future<AgentResponse> run(String prompt) async {
+  Stream<AgentResponse> run(String prompt) async* {
     // send the prompt to the model
-    final result = await _model.startChat().sendMessage(
-      gemini.Content.text(prompt),
-    );
+    final chat = _model.startChat();
+    final stream = chat.sendMessageStream(gemini.Content.text(prompt));
 
-    // get the text from the model's response
-    final output = StringBuffer(result.text ?? '');
+    final chunks = <String>[];
+    final functionCalls = <gemini.FunctionCall>[];
 
-    // if the model returned function calls, handle them
-    if (result.functionCalls.isNotEmpty) {
-      final response = await _model.startChat().sendMessage(
+    await for (final chunk in stream) {
+      final text = chunk.text ?? '';
+      if (text.isNotEmpty) {
+        chunks.add(text);
+        yield AgentResponse(output: text);
+      }
+
+      // Collect function calls
+      functionCalls.addAll(chunk.functionCalls);
+    }
+
+    // If there are function calls, handle them
+    if (functionCalls.isNotEmpty) {
+      final responses = <gemini.FunctionResponse>[];
+
+      for (final functionCall in functionCalls) {
+        final result = await _callTool(functionCall.name, functionCall.args);
+        responses.add(gemini.FunctionResponse(functionCall.name, result));
+      }
+
+      // Send function responses back to the model
+      final result = await chat.sendMessage(
         gemini.Content.multi([
-          gemini.TextPart(''), // Gemini requires a text part (Vertex doesn't?)
-          ...[
-            for (final functionCall in result.functionCalls)
-              gemini.FunctionResponse(
-                functionCall.name,
-                await _callTool(functionCall.name, functionCall.args),
-              ),
-          ],
+          gemini.TextPart(''), // Gemini requires a text part
+          ...responses,
         ]),
       );
 
-      output.write(response.text ?? '');
+      if (result.text != null && result.text!.isNotEmpty) {
+        yield AgentResponse(output: result.text!);
+      }
     }
-
-    return AgentResponse(output: output.toString());
   }
 
-  Future<Map<String, Object?>?> _callTool(
+  Future<Map<String, dynamic>?> _callTool(
     String name,
-    Map<String, Object?> args,
+    Map<String, dynamic> args,
   ) async {
-    Map<String, Object?>? result;
+    Map<String, dynamic> result;
     try {
       // if the tool isn't found, return an error
       final tool = _tools?.where((t) => t.name == name).singleOrNull;

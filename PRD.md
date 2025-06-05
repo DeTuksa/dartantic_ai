@@ -92,7 +92,7 @@ tools.
 
 ## Milestones
 
-### Milestone 1: Core Agent Functionality (Implemented)
+### Milestone 1: Core Agent Functionality (done)
 - Agent creation via model string (e.g., `openai:gpt-4o`) or provider instance
   (e.g., `OpenAiProvider()`).
 - Running prompts and returning string outputs (`Agent.run`).
@@ -115,8 +115,6 @@ tools.
   generated.
 - **Embedding generation**: Add methods to generate vector embeddings for text:
   - `Future<List<double>> createEmbedding(String text, {EmbeddingType type})`
-  - `Future<List<List<double>>> createEmbeddings(List<String> texts,
-    {EmbeddingType type})`
   - Introduce `EmbeddingType` enum (document, query).
 - **API changes**:
   - Extend `AgentResponse` to include the full message history.
@@ -238,6 +236,5 @@ For each city in this list, return its current local time and temperature:
 # 5.  One call – pydantic-ai auto-loops until typed schema is satisfied
 # --------------------------------------------------------------------
 city_info: CityReportList = assistant(prompt)
-
 print(json.dumps(city_info.model_dump(), indent=2))
 ```

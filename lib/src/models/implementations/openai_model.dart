@@ -41,13 +41,8 @@ class OpenAiModel extends Model {
   final String? _systemPrompt;
   final Iterable<Tool>? _tools;
 
-  /// Runs the given [prompt] through the OpenAI model and returns the response.
-  ///
-  /// Returns an [AgentResponse] containing the text from the model's response.
-  /// If tool calls are present, they will be executed and the results will be
-  /// included in the final response.
   @override
-  Future<AgentResponse> run(String prompt) async {
+  Stream<AgentResponse> run(String prompt) async* {
     final messages = <openai.ChatCompletionMessage>[
       if (_systemPrompt != null)
         openai.ChatCompletionMessage.system(content: _systemPrompt),
@@ -57,7 +52,7 @@ class OpenAiModel extends Model {
     ];
 
     while (true) {
-      final res = await _client.createChatCompletion(
+      final stream = _client.createChatCompletionStream(
         request: openai.CreateChatCompletionRequest(
           model: openai.ChatCompletionModel.modelId(_modelName),
           responseFormat: _responseFormat,
@@ -78,28 +73,49 @@ class OpenAiModel extends Model {
         ),
       );
 
-      final message = res.choices.first.message;
-      messages.add(message);
+      var toolCallName = '';
+      var toolCallArgs = '';
+      var toolCallId = '';
 
-      // If there are no tool calls, return the final response
-      if (message.toolCalls == null || message.toolCalls!.isEmpty) {
-        return AgentResponse(output: message.content ?? '');
+      await for (final chunk in stream) {
+        final delta = chunk.choices.first.delta;
+
+        // Handle content streaming
+        if (delta.content != null) {
+          yield AgentResponse(output: delta.content!);
+        }
+
+        // Handle tool calls
+        if (delta.toolCalls != null && delta.toolCalls!.isNotEmpty) {
+          final toolCall = delta.toolCalls!.first;
+          if (toolCall.function?.name != null) {
+            toolCallName = toolCall.function!.name!;
+          }
+          if (toolCall.function?.arguments != null) {
+            toolCallArgs += toolCall.function!.arguments!;
+          }
+          if (toolCall.id != null) {
+            toolCallId = toolCall.id!;
+          }
+        }
+      }
+
+      // If no tool calls, we're done
+      if (toolCallName.isEmpty) {
+        break;
       }
 
       // Handle tool calls
-      for (final toolCall in message.toolCalls!) {
-        final args =
-            jsonDecode(toolCall.function.arguments) as Map<String, dynamic>;
-        final result = await _callTool(toolCall.function.name, args);
+      final args = jsonDecode(toolCallArgs) as Map<String, dynamic>;
+      final result = await _callTool(toolCallName, args);
 
-        // Add the tool response to the messages
-        messages.add(
-          openai.ChatCompletionMessage.tool(
-            toolCallId: toolCall.id,
-            content: jsonEncode(result),
-          ),
-        );
-      }
+      // Add the tool response to the messages
+      messages.add(
+        openai.ChatCompletionMessage.tool(
+          toolCallId: toolCallId,
+          content: jsonEncode(result),
+        ),
+      );
     }
   }
 

@@ -9,13 +9,13 @@ import 'package:example/time_tool_call.dart';
 import 'package:example/town_and_country.dart';
 
 void main() async {
-  await helloWorldExample();
-  await outputTypeExampleWithJsonSchemaAndStringOutput();
-  await outputTypeExampleWithJsonSchemaAndOutjectOutput();
-  await outputTypeExampleWithSotiSchema();
+  // await helloWorldExample();
+  // await outputTypeExampleWithJsonSchemaAndStringOutput();
+  // await outputTypeExampleWithJsonSchemaAndOutjectOutput();
+  // await outputTypeExampleWithSotiSchema();
   await toolExample();
-  await toolExampleWithTypedOutput();
-  await dotPromptExample();
+  // await toolExampleWithTypedOutput();
+  // await dotPromptExample();
   exit(0);
 }
 
@@ -27,8 +27,10 @@ Future<void> helloWorldExample() async {
     systemPrompt: 'Be concise, reply with one sentence.',
   );
 
-  final result = await agent.run('Where does "hello world" come from?');
-  print(result.output);
+  await for (final result in agent.run('Where does "hello world" come from?')) {
+    stdout.write(result.output);
+  }
+  print('');
 }
 
 Future<void> outputTypeExampleWithJsonSchemaAndStringOutput() async {
@@ -45,8 +47,10 @@ Future<void> outputTypeExampleWithJsonSchemaAndStringOutput() async {
   };
 
   final agent = Agent('openai', outputType: tncSchema.toSchema());
-  final result = await agent.run('The windy city in the US of A.');
-  print(result.output);
+  await for (final result in agent.run('The windy city in the US of A.')) {
+    stdout.write(result.output);
+  }
+  print('');
 }
 
 Future<void> outputTypeExampleWithJsonSchemaAndOutjectOutput() async {
@@ -86,7 +90,6 @@ Future<void> outputTypeExampleWithSotiSchema() async {
   final result = await agent.runFor<TownAndCountry>(
     'The windy city in the US of A.',
   );
-
   print(result.output);
 }
 
@@ -114,11 +117,12 @@ Future<void> toolExample() async {
     ],
   );
 
-  final result = await agent.run(
+  await for (final result in agent.run(
     'What is the time and temperature in New York City?',
-  );
-
-  print(result.output);
+  )) {
+    stdout.write(result.output);
+  }
+  print('');
 }
 
 // NOTE: can the Agent handle tools+typed output itself even if the underlying
@@ -147,10 +151,11 @@ Future<void> toolExampleWithTypedOutput() async {
     ],
   );
 
-  final result = await agent.run(
+  await for (final result in agent.run(
     'What is the time and temperature in New York City and Chicago?',
-  );
-  print(result.output);
+  )) {
+    stdout.write(result.output);
+  }
 
   // TODO: this doesn't work yet; perhaps it needs a RefProvider.sync() to
   // resolve the LocTimeTemp schema? this would require a call to direct call to
@@ -180,6 +185,7 @@ input:
 Summarize this in {{length}} words: {{text}}
 ''');
 
-  final result = await Agent.runPrompt(prompt);
-  print(result.output);
+  await for (final result in Agent.runPrompt(prompt)) {
+    stdout.write(result.output);
+  }
 }

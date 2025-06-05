@@ -21,18 +21,19 @@ export 'tool.dart';
 class Agent {
   /// Factory constructor to create an [Agent] for a specific model.
   ///
-  /// This constructor allows you to create an [Agent] by specifying the model
-  /// in the format "providerName" or "providerName:modelName" or
-  /// "providerName/modelName". It automatically resolves the appropriate
-  /// provider for the given model.
+  /// Creates an [Agent] by specifying the model in the format "providerName",
+  /// "providerName:modelName", or "providerName/modelName". Automatically
+  /// resolves the appropriate provider for the given model.
   ///
-  /// - [model]: The model identifier in "providerName" or
-  ///   "providerName:modelName" or "providerName/modelName" format.
-  /// - [systemPrompt]: An optional system prompt to guide the agent's behavior.
-  /// - [outputType]: An optional map defining the expected output type.
-  /// - [outputFromJson]: An optional function to convert JSON output to a typed
-  ///   object.
-  /// - [tools]: An optional collection of tools the agent can use.
+  /// - [model]: The model identifier in "providerName",
+  ///   "providerName:modelName", or "providerName/modelName" format.
+  /// - [systemPrompt]: (Optional) A system prompt to guide the agent's
+  ///   behavior.
+  /// - [outputType]: (Optional) A [JsonSchema] defining the expected output
+  ///   type.
+  /// - [outputFromJson]: (Optional) A function to convert JSON output to a
+  ///   typed object.
+  /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
   factory Agent(
     String model, {
     String? systemPrompt,
@@ -49,12 +50,11 @@ class Agent {
 
   /// Creates a new [Agent] with the given [provider].
   ///
-  /// The [provider] is the provider to use for the agent. The [systemPrompt] is
-  /// the system prompt to use for the agent. The [outputType] is the output
-  /// type to use for the agent. The [outputFromJson] is the function to use to
-  /// convert the output to a typed object. The [tools] parameter allows you to
-  /// provide a collection of tools that the agent can use to perform external
-  /// actions or access specific capabilities.
+  /// - [provider]: The [Provider] to use for the agent.
+  /// - [systemPrompt]: (Optional) The system prompt to use for the agent.
+  /// - [outputType]: (Optional) The [JsonSchema] for the expected output type.
+  /// - [outputFromJson]: (Optional) A function to convert JSON output to a typed object.
+  /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
   Agent.provider(
     Provider provider, {
     String? systemPrompt,
@@ -77,46 +77,53 @@ class Agent {
   /// model into a strongly-typed object when using [runFor].
   final dynamic Function(Map<String, dynamic> json)? outputFromJson;
 
-  /// Runs the given [prompt] through the model and returns the response.
+  /// Runs the given [prompt] through the model and returns the response as a
+  /// stream.
   ///
-  /// Returns an [AgentResponse] containing the raw string output.
-  Future<AgentResponse> run(String prompt) => _model.run(prompt);
+  /// Returns a [Stream] of [AgentResponse] containing the raw string output.
+  Stream<AgentResponse> run(String prompt) => _model.run(prompt);
 
   /// Runs the given [prompt] through the model and returns a typed response.
   ///
   /// Returns an [AgentResponseFor<T>] containing the output converted to type
-  /// [T]. Uses [outputFromJson] to convert the JSON response if provided.
+  /// [T]. Uses [outputFromJson] to convert the JSON response if provided,
+  /// otherwise returns the decoded JSON.
   Future<AgentResponseFor<T>> runFor<T>(String prompt) async {
-    // dev.log('schema: ${_modelSettings.outputType}');
-    final output = await run(prompt);
-    final outputJson = jsonDecode(output.output);
+    // dev.log('schema: [1m${_modelSettings.outputType}[0m');
+    final stream = run(prompt);
+    final output = StringBuffer();
+    await for (final chunk in stream) {
+      output.write(chunk.output);
+    }
+    final outputJson = jsonDecode(output.toString());
     final outputTyped = outputFromJson?.call(outputJson) ?? outputJson;
     return AgentResponseFor(output: outputTyped);
   }
 
   /// Executes a given [DotPrompt] using the specified parameters and returns
-  /// the response as an [AgentResponse].
+  /// the response as a [Stream] of [AgentResponse].
   ///
   /// - [prompt]: The [DotPrompt] to be executed.
-  /// - [systemPrompt]: An optional system prompt to guide the agent's behavior.
-  /// - [outputType]: An optional [JsonSchema] defining the expected output
+  /// - [systemPrompt]: (Optional) A system prompt to guide the agent's
+  ///   behavior.
+  /// - [outputType]: (Optional) A [JsonSchema] defining the expected output
   ///   type.
-  /// - [outputFromJson]: An optional function to convert JSON output to a typed
-  ///   object.
-  /// - [tools]: An optional collection of tools the agent can use.
-  /// - [input]: A map of input values to render the prompt with, defaults to an
-  ///   empty map.
+  /// - [outputFromJson]: (Optional) A function to convert JSON output to a
+  ///   typed object.
+  /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
+  /// - [input]: (Optional) A map of input values to render the prompt with.
+  ///   Defaults to an empty map.
   ///
-  /// Returns an [AgentResponse] containing the raw string output from the
-  /// agent.
-  static Future<AgentResponse> runPrompt(
+  /// Returns a [Stream] of [AgentResponse] containing the raw string output
+  /// from the agent.
+  static Stream<AgentResponse> runPrompt(
     DotPrompt prompt, {
     String? systemPrompt,
     JsonSchema? outputType,
     dynamic Function(Map<String, dynamic> json)? outputFromJson,
     Iterable<Tool>? tools,
     Map<String, dynamic> input = const {},
-  }) async {
+  }) {
     final agent = Agent(
       prompt.frontMatter.model ?? 'google',
       systemPrompt: systemPrompt,
@@ -128,8 +135,12 @@ class Agent {
     return agent.run(prompt.render(input));
   }
 
-  /// Resolves the provider for the given [model] in "providerName" or
-  /// "providerName:modelName" or "providerName/modelName" format.
+  /// Resolves the [Provider] for the given [model] string.
+  ///
+  /// [model] should be in the format "providerName", "providerName:modelName",
+  /// or "providerName/modelName".
+  ///
+  /// Throws [ArgumentError] if [model] is empty.
   static Provider providerFor(String model) {
     if (model.isEmpty) throw ArgumentError('Model must be provided');
 

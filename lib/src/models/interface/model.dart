@@ -8,5 +8,5 @@ abstract class Model {
   /// Runs the given [prompt] through the model and returns the response.
   ///
   /// Returns an [AgentResponse] containing the model's output.
-  Future<AgentResponse> run(String prompt);
+  Stream<AgentResponse> run(String prompt);
 }

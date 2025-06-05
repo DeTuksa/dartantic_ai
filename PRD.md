@@ -103,13 +103,6 @@ tools.
 - [x] Passing system prompts to models.
 
 ### Milestone 2: Multi-turn Chat, Streaming, and Embedding Support
-- [ ] **Multi-turn chat**: Add support for passing a list of `ChatMessage`
-  objects (with roles: system, user, assistant, tool, function) to the agent for
-  context-aware, conversational LLM interactions.
-  - Introduce `ChatMessageRole` enum and `ChatMessage` class with role, content,
-    and optional tool/function fields.
-  - Update `Agent` and provider interfaces to accept and process message
-    history.
 - [x] **Streaming responses**: LLM responses can be streamed via
   `Agent.runStream`, `Agent.runPromptStream`, and similar methods, all of which
   return a `Stream<AgentResponse>`. This allows real-time consumption of output
@@ -130,7 +123,13 @@ tools.
     }
   }
   ```
-
+- [ ] **Multi-turn chat**: Add support for passing a list of `ChatMessage`
+  objects (with roles: system, user, assistant, tool, function) to the agent for
+  context-aware, conversational LLM interactions.
+  - Introduce `ChatMessageRole` enum and `ChatMessage` class with role, content,
+    and optional tool/function fields.
+  - Update `Agent` and provider interfaces to accept and process message
+    history.
 - [ ] **Embedding generation**: Add methods to generate vector embeddings for
   text:
   - `Future<List<double>> createEmbedding(String text, {EmbeddingType type})`

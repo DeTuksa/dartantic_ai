@@ -59,11 +59,9 @@ void main() async {
     systemPrompt: 'Be concise, reply with one sentence.',
   );
 
-  // Run the agent with a prompt (streaming)
-  final stream = agent.runStream('Where does "hello world" come from?');
-  await for (final chunk in stream) {
-    stdout.write(chunk.output);
-  }
+  // Run the agent with a prompt (non-streaming)
+  final result = await agent.run('Where does "hello world" come from?');
+  print(result.output); // Output: one sentence on the origin of "hello world"
 }
 ```
 
@@ -116,7 +114,7 @@ void main() async {
   );
 
   // Get structured output as a JSON object
-  final result = await agent.runStream('The windy city in the US of A.');
+  final result = await agent.run('The windy city in the US of A.');
   print(result.output); // Output: {"town":"Chicago","country":"United States"}
 }
 ```
@@ -256,10 +254,7 @@ Future<void> toolExample() async {
     ],
   );
 
-  final result = await agent.runStream(
-    'What is time is it in New York City?',
-  );
-
+  final result = await agent.run('What is time is it in New York City?');
   print(result.output);
 }
 ```

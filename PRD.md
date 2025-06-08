@@ -130,6 +130,7 @@ tools.
     and optional tool/function fields.
   - Update `Agent` and provider interfaces to accept and process message
     history.
+
 - [ ] **Embedding generation**: Add methods to generate vector embeddings for
   text:
   - `Future<List<double>> createEmbedding(String text, {EmbeddingType type})`

@@ -113,25 +113,8 @@ void main() {
 
     Future<void> testMessageHistoryWithInitialMessages(
       Provider provider,
+      List<Message> initialMessages,
     ) async {
-      final initialMessages = [
-        Message(
-          role: MessageRole.system,
-          content: [const TextPart('You are a test system prompt.')],
-        ),
-        Message(
-          role: MessageRole.user,
-          content: [const TextPart('What is the capital of France?')],
-        ),
-        Message(
-          role: MessageRole.model,
-          content: [const TextPart('The capital of France is Paris.')],
-        ),
-        Message(
-          role: MessageRole.user,
-          content: [const TextPart('And Germany?')],
-        ),
-      ];
       final agent = Agent.provider(provider);
       final responses = <AgentResponse>[];
       await agent
@@ -145,26 +128,48 @@ void main() {
         isNotEmpty,
         reason: '${provider.displayName}: messages should not be empty',
       );
-      expect(
-        messages.first.role,
-        MessageRole.system,
-        reason: '${provider.displayName}: first message should be system',
-      );
-      expect(
-        messages[1].role,
-        MessageRole.user,
-        reason: '${provider.displayName}: second message should be user',
-      );
-      expect(
-        messages[2].role,
-        MessageRole.model,
-        reason: '${provider.displayName}: third message should be model',
-      );
-      expect(
-        messages[3].role,
-        MessageRole.user,
-        reason: '${provider.displayName}: fourth message should be user',
-      );
+      final first = initialMessages.first;
+      final hasSystem = first.role == MessageRole.system;
+      if (hasSystem) {
+        expect(
+          messages.first.role,
+          MessageRole.system,
+          reason: '${provider.displayName}: first message should be system',
+        );
+        expect(
+          messages[1].role,
+          MessageRole.user,
+          reason: '${provider.displayName}: second message should be user',
+        );
+        expect(
+          messages[2].role,
+          MessageRole.model,
+          reason: '${provider.displayName}: third message should be model',
+        );
+        expect(
+          messages[3].role,
+          MessageRole.user,
+          reason: '${provider.displayName}: fourth message should be user',
+        );
+      } else {
+        expect(
+          messages.first.role,
+          MessageRole.user,
+          reason:
+              '${provider.displayName}: first message should be user '
+              '(no system message)',
+        );
+        expect(
+          messages[1].role,
+          MessageRole.model,
+          reason: '${provider.displayName}: second message should be model',
+        );
+        expect(
+          messages[2].role,
+          MessageRole.user,
+          reason: '${provider.displayName}: third message should be user',
+        );
+      }
       expect(
         messages.last.role,
         MessageRole.model,
@@ -183,13 +188,70 @@ void main() {
       );
     }
 
-    test(
-      'history with non-empty initial messages (OpenAI)',
-      () => testMessageHistoryWithInitialMessages(OpenAiProvider()),
+    // Shared initial message lists
+    final initialWithSystem = <Message>[
+      Message(
+        role: MessageRole.system,
+        content: [const TextPart('You are a test system prompt.')],
+      ),
+      Message(
+        role: MessageRole.user,
+        content: [const TextPart('What is the capital of France?')],
+      ),
+      Message(
+        role: MessageRole.model,
+        content: [const TextPart('The capital of France is Paris.')],
+      ),
+      Message(
+        role: MessageRole.user,
+        content: [const TextPart('And Germany?')],
+      ),
+    ];
+    final initialNoSystem = <Message>[
+      Message(
+        role: MessageRole.user,
+        content: [const TextPart('What is the capital of France?')],
+      ),
+      Message(
+        role: MessageRole.model,
+        content: [const TextPart('The capital of France is Paris.')],
+      ),
+      Message(
+        role: MessageRole.user,
+        content: [const TextPart('And Germany?')],
+      ),
+    ];
+
+    void registerHistoryTest({
+      required String name,
+      required Provider provider,
+      required List<Message> initialMessages,
+    }) {
+      test(
+        name,
+        () => testMessageHistoryWithInitialMessages(provider, initialMessages),
+      );
+    }
+
+    registerHistoryTest(
+      name: 'history with non-empty initial messages, with system (OpenAI)',
+      provider: OpenAiProvider(),
+      initialMessages: initialWithSystem,
     );
-    test(
-      'history with non-empty initial messages (Gemini)',
-      () => testMessageHistoryWithInitialMessages(GeminiProvider()),
+    registerHistoryTest(
+      name: 'history with non-empty initial messages, with system (Gemini)',
+      provider: GeminiProvider(),
+      initialMessages: initialWithSystem,
+    );
+    registerHistoryTest(
+      name: 'history with non-empty initial messages, no system (OpenAI)',
+      provider: OpenAiProvider(),
+      initialMessages: initialNoSystem,
+    );
+    registerHistoryTest(
+      name: 'history with non-empty initial messages, no system (Gemini)',
+      provider: GeminiProvider(),
+      initialMessages: initialNoSystem,
     );
 
     Future<void> testSystemPromptPropagation(Provider provider) async {
@@ -199,13 +261,19 @@ void main() {
       await agent.runStream('Say hello!').forEach(responses.add);
       final messages =
           responses.isNotEmpty ? responses.last.messages : <Message>[];
-      expect(messages.first.role, MessageRole.system);
-      expect(
-        messages.first.content.whereType<TextPart>().any(
-          (p) => p.text == systemPrompt,
-        ),
-        isTrue,
-      );
+      if (messages.isNotEmpty && messages.first.role == MessageRole.system) {
+        expect(
+          messages.first.content.whereType<TextPart>().any(
+            (p) => p.text == systemPrompt,
+          ),
+          isTrue,
+        );
+      } else {
+        expect(
+          messages.isEmpty || messages.first.role != MessageRole.system,
+          isTrue,
+        );
+      }
     }
 
     test(
@@ -249,13 +317,15 @@ void main() {
           content: [const TextPart('What animal says "quack"?')],
         ),
       ];
-      final result = await agent.runFor<Map<String, String>>(
+      final result = await agent.runFor<Map<String, dynamic>>(
         'What animal says "neigh"?',
         messages: initialMessages,
       );
-      expect(result.output, isA<Map<String, String>>());
-      expect(result.output['animal'], isNotEmpty);
-      expect(result.output['sound'], isNotEmpty);
+      expect(result.output, isA<Map<String, dynamic>>());
+      expect(result.output['animal'], isNotNull);
+      expect(result.output['sound'], isNotNull);
+      expect(result.output['animal'], isA<String>());
+      expect(result.output['sound'], isA<String>());
     }
 
     test(

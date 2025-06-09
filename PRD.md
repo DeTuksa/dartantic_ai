@@ -103,12 +103,7 @@ tools.
 - [x] Passing system prompts to models.
 
 ### Milestone 2: Multi-turn Chat, Streaming
-- [x] **Streaming responses**: LLM responses can be streamed via
-  `Agent.runStream`, `Agent.runPromptStream`, and similar methods, all of which
-  return a `Stream<AgentResponse>`. This allows real-time consumption of output
-  as it's generated. Streaming is a core, stable feature of the API, and is the
-  primary way to consume real-time output from the agent. Note: `Agent.run`
-  returns a `Future<AgentResponse>` with the full response, not a stream.
+- [x] **Streaming responses**: LLM responses can be streamed via `Agent.runStream`, `Agent.runPromptStream`, and similar methods, all of which return a `Stream<AgentResponse>`. This allows real-time consumption of output as it's generated. Streaming is a core, stable feature of the API, and is the primary way to consume real-time output from the agent. Note: `Agent.run` returns a `Future<AgentResponse>` with the full response, not a stream.
 
   ```dart
   // Example of streaming with Agent.runStream
@@ -123,22 +118,28 @@ tools.
     }
   }
   ```
-- [ ] **Multi-turn chat**: Add support for passing a list of `ChatMessage`
-  objects (with roles: system, user, assistant, tool, function) to the agent for
-  context-aware, conversational LLM interactions.
-  - Introduce `ChatMessageRole` enum and `ChatMessage` class with role, content,
-    and optional tool/function fields.
-  - Update `Agent` and provider interfaces to accept and process message
-    history.
-  - Update `AgentResponse` to return message history.
-  - [ ] **API changes**:
-  - Extend `AgentResponse` to include the full message history.
-  - Add new methods to `Agent` for chat, streaming, and embedding.
-- [ ] **Provider-specific implementations**:
-  - OpenAI: Map `ChatMessage` to OpenAI chat API, support streaming and
-    embedding endpoints.
-  - Gemini: Map `ChatMessage` to Gemini API, support streaming if available, and
-    implement embedding (or throw if not supported).
+- [x] **Multi-turn chat**: The system supports passing a list of `Message` objects (with roles: system, user, model, etc.) to the agent for context-aware, conversational LLM interactions.
+  - The `Message` class supports roles (`system`, `user`, `model`) and content parts (including text and media).
+  - The `Agent.runStream` and related methods accept a `messages` parameter, which is a list of `Message` objects representing the conversation history.
+  - The agent ensures that the prompt and message history are included in the request, and the response includes the updated message history.
+  - Tests verify that when an empty message history is provided, the agent includes both the user prompt and the model response in the resulting message list.
+
+- [x] **API changes**:
+  - `AgentResponse` includes the full message history after each response.
+  - The `Agent` interface supports chat-like workflows by accepting and returning message lists.
+  - The `Message` class supports serialization/deserialization for easy storage and replay of conversations.
+
+- [x] **Provider-specific implementations**:
+  - OpenAI: Maps `Message` to OpenAI chat API, supports streaming.
+  - Gemini: Maps `Message` to Gemini API, supports streaming if available.
+
+- [ ] Full testing with non-streaming, tool calls, typed output, etc.
+
+**Summary of current status:**  
+- Multi-turn chat is supported via the `messages` parameter in agent methods.
+- Message roles and content types (text, media) are handled.
+- Streaming and message history are integrated into the API and tested.
+- Both OpenAI and Gemini providers support this message-passing interface.
 
 ### Milestone 3: Multi-media input
 - [ ] `Model.runStream` should take a `Message` as a prompt, so that it can

@@ -15,6 +15,7 @@ The following are the target features for this package:
 - [x] Automatically check environment for API key if none is provided (not web
   compatible)
 - [x] Streaming string output via `Agent.runStream`
+- [x] Multi-turn chat/message history support via the `messages` parameter and the `Message` class (with roles and content types)
 - [x] Typed output via `Agent.runFor`
 - [x] Define tools and their inputs/outputs easily
 - [x] Automatically generate LLM-specific tool/output schemas
@@ -321,6 +322,42 @@ Future<Map<String, dynamic>?> onTimeCall(Map<String, dynamic> input) async {
 
 Not only is this simpler code, but it frees you from maintaining a separate type
 for output.
+
+### Multi-turn Chat (Message History)
+
+You can pass a list of `Message` objects to the agent for context-aware, multi-turn conversations. Each message has a role (`system`, `user`, `model`) and a list of content parts (text, media, etc.). Both OpenAI and Gemini providers support this interface.
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:dartantic_ai/src/models/message.dart';
+
+void main() async {
+  final agent = Agent('openai:gpt-4o');
+  final messages = [
+    Message(
+      role: MessageRole.system,
+      content: [TextPart('You are a helpful AI assistant.')],
+    ),
+    Message(
+      role: MessageRole.user,
+      content: [TextPart('Hello, can you help me with a task?')],
+    ),
+  ];
+
+  // Pass the prompt as the user message, and the previous messages as context
+  final prompt = 'What is 2 + 2?';
+  final response = await agent.run(prompt, messages: messages);
+  print(response.output); // Output: 4
+
+  // The response.messages contains the full updated message history:
+  // [
+  //   Message(role: MessageRole.system, content: [TextPart('You are a helpful AI assistant.')]),
+  //   Message(role: MessageRole.user, content: [TextPart('Hello, can you help me with a task?')]),
+  //   Message(role: MessageRole.user, content: [TextPart('What is 2 + 2?')]),
+  //   Message(role: MessageRole.model, content: [TextPart('4')]),
+  // ]
+}
+```
 
 ### Streaming Output
 

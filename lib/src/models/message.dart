@@ -95,6 +95,9 @@ class TextPart extends Part {
 
   @override
   Map<String, dynamic> toJson() => {'text': text};
+
+  @override
+  String toString() => 'TextPart(text: "$text")';
 }
 
 /// A media part of a message's content, such as an image or video.
@@ -118,6 +121,9 @@ class MediaPart extends Part {
   Map<String, dynamic> toJson() => {
     'media': {'contentType': contentType, 'url': url},
   };
+
+  @override
+  String toString() => 'MediaPart(contentType: $contentType, url: $url)';
 }
 
 /// A tool call part of a message's content, representing a call to an external
@@ -153,4 +159,8 @@ class ToolPart extends Part {
   Map<String, dynamic> toJson() => {
     'tool': {'id': id, 'name': name, 'arguments': arguments, 'result': result},
   };
+
+  @override
+  String toString() =>
+      'ToolPart(id: $id, name: $name, arguments: $arguments, result: $result)';
 }

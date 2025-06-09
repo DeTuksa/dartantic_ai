@@ -63,7 +63,8 @@ class Agent {
     JsonSchema? outputType,
     this.outputFromJson,
     Iterable<Tool>? tools,
-  }) : _model = provider.createModel(
+  }) : _systemPrompt = systemPrompt,
+       _model = provider.createModel(
          ModelSettings(
            systemPrompt: systemPrompt,
            outputType: outputType,
@@ -72,12 +73,31 @@ class Agent {
        );
 
   final Model _model;
+  final String? _systemPrompt;
 
   /// Function to convert JSON output to a typed object.
   ///
   /// When provided, this function is used to convert the JSON response from the
   /// model into a strongly-typed object when using [runFor].
   final dynamic Function(Map<String, dynamic> json)? outputFromJson;
+
+  /// Helper to ensure the system prompt is present as the first message if
+  /// needed. Some LLMs add the system prompt to the first message and some
+  /// don't. By always adding it, we can be sure that the messages are
+  /// consistent, at least wrt the system prompt.
+  List<Message> _ensureSystemPromptMessage(List<Message> messages) =>
+      messages.isNotEmpty &&
+              _systemPrompt != null &&
+              _systemPrompt.isNotEmpty &&
+              messages.first.role != MessageRole.system
+          ? [
+            Message(
+              role: MessageRole.system,
+              content: [TextPart(_systemPrompt)],
+            ),
+            ...messages,
+          ]
+          : messages;
 
   /// Executes the given [prompt] using the model and returns the complete
   /// response.
@@ -93,7 +113,7 @@ class Agent {
     String prompt, {
     List<Message> messages = const [],
   }) async {
-    final stream = _model.runStream(prompt: prompt, messages: messages);
+    final stream = runStream(prompt, messages: messages);
     final output = StringBuffer();
     var outputMessages = <Message>[];
     await for (final chunk in stream) {
@@ -110,7 +130,17 @@ class Agent {
   Stream<AgentResponse> runStream(
     String prompt, {
     List<Message> messages = const [],
-  }) => _model.runStream(prompt: prompt, messages: messages);
+  }) async* {
+    await for (final chunk in _model.runStream(
+      prompt: prompt,
+      messages: messages,
+    )) {
+      yield AgentResponse(
+        output: chunk.output,
+        messages: _ensureSystemPromptMessage(chunk.messages),
+      );
+    }
+  }
 
   /// Runs the given [prompt] through the model and returns a typed response.
   ///

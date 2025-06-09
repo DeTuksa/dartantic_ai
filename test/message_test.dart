@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
@@ -115,26 +117,45 @@ void main() {
       Provider provider,
       List<Message> initialMessages,
     ) async {
-      final agent = Agent.provider(provider);
-      final responses = <AgentResponse>[];
-      await agent
-          .runStream('And Italy?', messages: initialMessages)
-          .forEach(responses.add);
-      final messages =
-          responses.isNotEmpty ? responses.last.messages : <Message>[];
+      final agent = Agent.provider(
+        provider,
+        systemPrompt:
+            initialMessages.isNotEmpty &&
+                    initialMessages.first.role == MessageRole.system
+                ? (initialMessages.first.content.first as TextPart).text
+                : null,
+      );
+
+      final response = await agent.run('And Italy?', messages: initialMessages);
+      final messages = response.messages;
+
+      // dump the messages to the console
+      print('# ${provider.displayName} messages:');
+      for (var i = 0; i < messages.length; i++) {
+        final m = messages[i];
+        print('- ${m.role}: ${m.content.map((p) => p.toJson()).join(' | ')}');
+      }
 
       expect(
         messages,
         isNotEmpty,
         reason: '${provider.displayName}: messages should not be empty',
       );
-      final first = initialMessages.first;
-      final hasSystem = first.role == MessageRole.system;
-      if (hasSystem) {
+      final systemPrompt =
+          initialMessages.isNotEmpty &&
+                  initialMessages.first.role == MessageRole.system
+              ? (initialMessages.first.content.first as TextPart).text
+              : null;
+      if (systemPrompt != null) {
         expect(
           messages.first.role,
           MessageRole.system,
           reason: '${provider.displayName}: first message should be system',
+        );
+        expect(
+          (messages.first.content.first as TextPart).text,
+          systemPrompt,
+          reason: '${provider.displayName}: system prompt text should match',
         );
         expect(
           messages[1].role,
@@ -152,6 +173,11 @@ void main() {
           reason: '${provider.displayName}: fourth message should be user',
         );
       } else {
+        expect(
+          messages.first.role,
+          isNot(MessageRole.system),
+          reason: '${provider.displayName}: no system prompt should be present',
+        );
         expect(
           messages.first.role,
           MessageRole.user,
@@ -189,24 +215,6 @@ void main() {
     }
 
     // Shared initial message lists
-    final initialWithSystem = <Message>[
-      Message(
-        role: MessageRole.system,
-        content: [const TextPart('You are a test system prompt.')],
-      ),
-      Message(
-        role: MessageRole.user,
-        content: [const TextPart('What is the capital of France?')],
-      ),
-      Message(
-        role: MessageRole.model,
-        content: [const TextPart('The capital of France is Paris.')],
-      ),
-      Message(
-        role: MessageRole.user,
-        content: [const TextPart('And Germany?')],
-      ),
-    ];
     final initialNoSystem = <Message>[
       Message(
         role: MessageRole.user,
@@ -216,42 +224,45 @@ void main() {
         role: MessageRole.model,
         content: [const TextPart('The capital of France is Paris.')],
       ),
-      Message(
-        role: MessageRole.user,
-        content: [const TextPart('And Germany?')],
-      ),
     ];
 
-    void registerHistoryTest({
-      required String name,
-      required Provider provider,
-      required List<Message> initialMessages,
-    }) {
-      test(
-        name,
-        () => testMessageHistoryWithInitialMessages(provider, initialMessages),
-      );
-    }
+    final initialWithSystem = <Message>[
+      Message(
+        role: MessageRole.system,
+        content: [const TextPart('You are a test system prompt.')],
+      ),
+      ...initialNoSystem,
+    ];
 
-    registerHistoryTest(
-      name: 'history with non-empty initial messages, with system (OpenAI)',
-      provider: OpenAiProvider(),
-      initialMessages: initialWithSystem,
+    test(
+      'history with non-empty initial messages, with system (OpenAI)',
+      () => testMessageHistoryWithInitialMessages(
+        OpenAiProvider(),
+        initialWithSystem,
+      ),
     );
-    registerHistoryTest(
-      name: 'history with non-empty initial messages, with system (Gemini)',
-      provider: GeminiProvider(),
-      initialMessages: initialWithSystem,
+    test(
+      'history with non-empty initial messages, with system (Gemini)',
+      () async {
+        await testMessageHistoryWithInitialMessages(
+          GeminiProvider(),
+          initialWithSystem,
+        );
+      },
     );
-    registerHistoryTest(
-      name: 'history with non-empty initial messages, no system (OpenAI)',
-      provider: OpenAiProvider(),
-      initialMessages: initialNoSystem,
+    test(
+      'history with non-empty initial messages, no system (OpenAI)',
+      () => testMessageHistoryWithInitialMessages(
+        OpenAiProvider(),
+        initialNoSystem,
+      ),
     );
-    registerHistoryTest(
-      name: 'history with non-empty initial messages, no system (Gemini)',
-      provider: GeminiProvider(),
-      initialMessages: initialNoSystem,
+    test(
+      'history with non-empty initial messages, no system (Gemini)',
+      () => testMessageHistoryWithInitialMessages(
+        GeminiProvider(),
+        initialNoSystem,
+      ),
     );
 
     Future<void> testSystemPromptPropagation(Provider provider) async {
@@ -261,13 +272,12 @@ void main() {
       await agent.runStream('Say hello!').forEach(responses.add);
       final messages =
           responses.isNotEmpty ? responses.last.messages : <Message>[];
-      if (messages.isNotEmpty && messages.first.role == MessageRole.system) {
+      if (systemPrompt.isNotEmpty) {
         expect(
-          messages.first.content.whereType<TextPart>().any(
-            (p) => p.text == systemPrompt,
-          ),
+          messages.isNotEmpty && messages.first.role == MessageRole.system,
           isTrue,
         );
+        expect((messages.first.content.first as TextPart).text, systemPrompt);
       } else {
         expect(
           messages.isEmpty || messages.first.role != MessageRole.system,
@@ -360,6 +370,28 @@ void main() {
       await agent.runStream('Repeat: hello world').forEach(responses.add);
       final messages =
           responses.isNotEmpty ? responses.last.messages : <Message>[];
+
+      // Dump the messages for inspection
+      print('--- Dumping messages for provider: ${provider.displayName} ---');
+      for (var i = 0; i < messages.length; i++) {
+        final m = messages[i];
+        print('Message #$i: role=${m.role}, content:');
+        for (final part in m.content) {
+          if (part is TextPart) {
+            print('  TextPart: text="${part.text}"');
+          } else if (part is ToolPart) {
+            print(
+              '  ToolPart: name="${part.name}", arguments=${part.arguments}',
+            );
+          } else if (part is MediaPart) {
+            print(
+              '  MediaPart: contentType="${part.contentType}", url="${part.url}"',
+            );
+          } else {
+            print('  ${part.runtimeType}: value=$part');
+          }
+        }
+      }
       // Should include a tool call and a tool response in the message history
       final hasToolCall = messages.any(
         (m) => m.content.any((p) => p is ToolPart),
@@ -389,5 +421,38 @@ void main() {
       'tool call history (Gemini)',
       () => testToolCallHistory(GeminiProvider()),
     );
+
+    test('context is maintained across chat responses (OpenAI)', () async {
+      final agent = Agent.provider(
+        OpenAiProvider(),
+        systemPrompt: 'You are a helpful assistant.',
+      );
+      // First exchange
+      final firstResponse = await agent.run('My favorite color is blue.');
+      final firstMessages = firstResponse.messages;
+      // Second exchange, referencing the first
+      final secondResponse = await agent.run(
+        'What color did I say I liked?',
+        messages: firstMessages,
+      );
+      final secondOutput = secondResponse.output.toLowerCase();
+      expect(secondOutput, contains('blue'));
+    });
+    test('context is maintained across chat responses (Gemini)', () async {
+      final agent = Agent.provider(
+        GeminiProvider(),
+        systemPrompt: 'You are a helpful assistant.',
+      );
+      // First exchange
+      final firstResponse = await agent.run('My favorite color is blue.');
+      final firstMessages = firstResponse.messages;
+      // Second exchange, referencing the first
+      final secondResponse = await agent.run(
+        'What color did I say I liked?',
+        messages: firstMessages,
+      );
+      final secondOutput = secondResponse.output.toLowerCase();
+      expect(secondOutput, contains('blue'));
+    });
   });
 }

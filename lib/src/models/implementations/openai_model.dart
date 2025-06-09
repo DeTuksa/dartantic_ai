@@ -8,6 +8,8 @@ import '../../../dartantic_ai.dart';
 import '../interface/model.dart';
 import '../message.dart';
 
+// TODO: refactor with extension properties and assertions
+
 /// Implementation of [Model] that uses OpenAI's API.
 ///
 /// This model handles interaction with OpenAI models, supporting both
@@ -32,7 +34,7 @@ class OpenAiModel extends Model {
        _responseFormat =
            outputType != null
                ? openai.ResponseFormat.jsonSchema(
-                 jsonSchema: _schemaObjectFrom(outputType),
+                 jsonSchema: _openaiSchemaFrom(outputType),
                )
                : null;
 
@@ -249,7 +251,7 @@ class OpenAiModel extends Model {
     return result;
   }
 
-  static openai.JsonSchemaObject _schemaObjectFrom(
+  static openai.JsonSchemaObject _openaiSchemaFrom(
     JsonSchema rawJsonSchema, {
     String name = 'response',
     bool strict = true,

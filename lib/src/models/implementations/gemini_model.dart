@@ -37,7 +37,7 @@ class GeminiModel extends Model {
                  ? null
                  : gemini.GenerationConfig(
                    responseMimeType: 'application/json',
-                   responseSchema: _schemaObjectFromJsonSchema(outputType),
+                   responseSchema: _geminiSchemaFrom(outputType),
                  ),
          systemInstruction:
              systemPrompt != null ? gemini.Content.text(systemPrompt) : null,
@@ -121,7 +121,7 @@ class GeminiModel extends Model {
     return result;
   }
 
-  static gemini.Schema _schemaObjectFromJsonSchema(JsonSchema jsonSchema) {
+  static gemini.Schema _geminiSchemaFrom(JsonSchema jsonSchema) {
     final map = jsonSchema.toMap();
     return _schemaObjectFrom(map, map);
   }
@@ -221,7 +221,7 @@ class GeminiModel extends Model {
       // Convert inputType to a Schema object using the existing method
       final parameters =
           tool.inputType != null
-              ? _schemaObjectFromJsonSchema(tool.inputType!)
+              ? _geminiSchemaFrom(tool.inputType!)
               : gemini.Schema.object(properties: {});
 
       // Create a function declaration for the tool
@@ -238,84 +238,117 @@ class GeminiModel extends Model {
     return result;
   }
 
-  static List<gemini.Content> _geminiHistoryFrom(List<Message> messages) =>
-      messages
-          .map(
-            (m) => gemini.Content.multi(
-              m.content.map((p) {
-                if (p is TextPart) {
-                  return gemini.TextPart(p.text);
-                } else if (p is MediaPart) {
-                  final url = p.url ?? '';
-                  Uint8List? bytes;
-                  if (url.startsWith('data:')) {
-                    final base64Str = url.split(',').last;
-                    bytes = Uint8List.fromList(
-                      const Base64Decoder().convert(base64Str),
-                    );
-                  } else {
-                    bytes = Uint8List(0);
-                  }
-                  return gemini.DataPart(p.contentType ?? '', bytes);
-                } else if (p is ToolPart) {
-                  return gemini.FunctionCall(
-                    p.name ?? '',
-                    p.arguments is Map<String, dynamic> ? p.arguments : {},
-                  );
-                } else {
-                  throw UnsupportedError(
-                    'Unknown part type: \\${p.runtimeType}',
-                  );
-                }
-              }).toList(),
-            ),
-          )
-          .toList();
+  static List<gemini.Content> _geminiHistoryFrom(List<Message> messages) {
+    // Gemini Content with system role is not supported; remove initial system
+    // message if present.
+    final filtered =
+        messages.isNotEmpty && messages.first.role == MessageRole.system
+            ? messages.sublist(1)
+            : messages;
+    final history = [for (final m in filtered) m.geminiContent];
 
-  static List<Message> _messagesFrom(Iterable<gemini.Content> history) {
-    final messages = <Message>[];
-    for (final content in history) {
-      final role = switch (content.role) {
-        'user' => MessageRole.user,
-        'model' => MessageRole.model,
-        'system' => MessageRole.system,
-        _ => MessageRole.model,
-      };
-
-      final parts = <Part>[];
-      for (final part in content.parts) {
-        if (part is gemini.TextPart) {
-          parts.add(TextPart(part.text));
-        } else if (part is gemini.DataPart) {
-          final base64 = base64Encode(part.bytes);
-          final dataUri = 'data:${part.mimeType};base64,$base64';
-          parts.add(MediaPart(contentType: part.mimeType, url: dataUri));
-        } else if (part is gemini.FunctionCall) {
-          parts.add(ToolPart(name: part.name, arguments: part.args));
-        } else {
-          dev.log('Unhandled part type: ${part.runtimeType}, value: $part');
-        }
-      }
-      if (parts.isEmpty) {
-        dev.log(
-          'Skipped content (no parts extracted) for type: '
-          '${content.runtimeType}, value: $content',
-        );
-        continue;
-      }
-      messages.add(Message(role: role, content: parts));
-    }
     assert(
-      messages.length == history.length,
-      'Output message list length (${messages.length}) does not match input '
-      'history list length (${history.length})',
+      history.length == filtered.length,
+      'Output Content list length (${history.length}) does not match input '
+      'Message list length (${filtered.length})',
     );
-    return messages;
+
+    return history;
   }
 
-  // static String _textFromGeminiContent(gemini.Content content) =>
-  //     content.parts.map((p) => p is gemini.TextPart ? p.text : '').join();
+  static List<Message> _messagesFrom(Iterable<gemini.Content> history) {
+    final messages = [for (final content in history) content.message];
 
-  // static String _textFromMessage(Message message) =>
-  //     message.content.map((p) => p is TextPart ? p.text : '').join();
+    assert(
+      messages.length == history.length,
+      'Output Message list length (${messages.length}) does not match input '
+      'Content list length (${history.length})',
+    );
+
+    return messages;
+  }
+}
+
+extension on String? {
+  MessageRole get messageRole => switch (this) {
+    'user' || null => MessageRole.user,
+    'model' => MessageRole.model,
+    'system' => MessageRole.system,
+    _ => MessageRole.user,
+  };
+}
+
+extension on MessageRole {
+  String get geminiRole => switch (this) {
+    MessageRole.user => 'user',
+    MessageRole.model => 'model',
+    MessageRole.system => 'system',
+  };
+}
+
+extension on gemini.Content {
+  Message get message {
+    final role = this.role.messageRole;
+    final parts = <Part>[];
+    for (final part in this.parts) {
+      if (part is gemini.TextPart) {
+        parts.add(TextPart(part.text));
+      } else if (part is gemini.DataPart) {
+        final base64 = base64Encode(part.bytes);
+        final dataUri = 'data:${part.mimeType};base64,$base64';
+        parts.add(MediaPart(contentType: part.mimeType, url: dataUri));
+      } else if (part is gemini.FunctionCall) {
+        parts.add(ToolPart(name: part.name, arguments: part.args));
+      } else {
+        print('Unhandled part type: \\${part.runtimeType}, value: $part');
+      }
+    }
+
+    assert(
+      parts.length == this.parts.length,
+      'Output parts length (${parts.length}) does not match input '
+      'Content parts length (${this.parts.length})',
+    );
+
+    return Message(role: role, content: parts);
+  }
+}
+
+extension on Message {
+  gemini.Content get geminiContent {
+    final parts = [
+      for (final p in content)
+        if (p is TextPart)
+          gemini.TextPart(p.text)
+        else if (p is MediaPart)
+          ...() {
+            final url = p.url ?? '';
+            Uint8List? bytes;
+            if (url.startsWith('data:')) {
+              final base64Str = url.split(',').last;
+              bytes = Uint8List.fromList(
+                const Base64Decoder().convert(base64Str),
+              );
+            } else {
+              bytes = Uint8List(0);
+            }
+            return [gemini.DataPart(p.contentType ?? '', bytes)];
+          }()
+        else if (p is ToolPart)
+          gemini.FunctionCall(
+            p.name ?? '',
+            p.arguments is Map<String, dynamic> ? p.arguments : {},
+          )
+        else
+          throw UnsupportedError('Unknown part type: \\${p.runtimeType}'),
+    ];
+
+    assert(
+      parts.length == content.length,
+      'Output gemini parts length (${parts.length}) does not match input '
+      'Message content length (${content.length})',
+    );
+
+    return gemini.Content(role.geminiRole, parts);
+  }
 }

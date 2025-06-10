@@ -103,12 +103,12 @@ void main() {
     }
 
     test(
-      'empty history + prompt (OpenAI)',
+      'empty history and prompt: OpenAI',
       () =>
           testEmptyMessagesPromptIncludesUserAndModelMessages(OpenAiProvider()),
     );
     test(
-      'empty history + prompt (Gemini)',
+      'empty history and prompt: Gemini',
       () =>
           testEmptyMessagesPromptIncludesUserAndModelMessages(GeminiProvider()),
     );
@@ -235,14 +235,14 @@ void main() {
     ];
 
     test(
-      'history with non-empty initial messages, with system (OpenAI)',
+      'history with non-empty initial messages, with system: OpenAI',
       () => testMessageHistoryWithInitialMessages(
         OpenAiProvider(),
         initialWithSystem,
       ),
     );
     test(
-      'history with non-empty initial messages, with system (Gemini)',
+      'history with non-empty initial messages, with system: Gemini',
       () async {
         await testMessageHistoryWithInitialMessages(
           GeminiProvider(),
@@ -251,14 +251,14 @@ void main() {
       },
     );
     test(
-      'history with non-empty initial messages, no system (OpenAI)',
+      'history with non-empty initial messages, no system: OpenAI',
       () => testMessageHistoryWithInitialMessages(
         OpenAiProvider(),
         initialNoSystem,
       ),
     );
     test(
-      'history with non-empty initial messages, no system (Gemini)',
+      'history with non-empty initial messages, no system: Gemini',
       () => testMessageHistoryWithInitialMessages(
         GeminiProvider(),
         initialNoSystem,
@@ -287,11 +287,11 @@ void main() {
     }
 
     test(
-      'system prompt propagation (OpenAI)',
+      'system prompt propagation: OpenAI',
       () => testSystemPromptPropagation(OpenAiProvider()),
     );
     test(
-      'system prompt propagation (Gemini)',
+      'system prompt propagation: Gemini',
       () => testSystemPromptPropagation(GeminiProvider()),
     );
 
@@ -339,11 +339,11 @@ void main() {
     }
 
     test(
-      'typed output with history (OpenAI)',
+      'typed output with history: OpenAI',
       () => testTypedOutputWithHistory(OpenAiProvider()),
     );
     test(
-      'typed output with history (Gemini)',
+      'typed output with history: Gemini',
       () => testTypedOutputWithHistory(GeminiProvider()),
     );
 
@@ -419,11 +419,11 @@ void main() {
     }
 
     test(
-      'tool call history (OpenAI)',
+      'tool call history: OpenAI',
       () => testToolCallHistory(OpenAiProvider()),
     );
     test(
-      'tool call history (Gemini)',
+      'tool call history: Gemini',
       () => testToolCallHistory(GeminiProvider()),
     );
 

@@ -8,8 +8,6 @@ import '../../../dartantic_ai.dart';
 import '../interface/model.dart';
 import '../message.dart';
 
-// TODO: refactor with extension properties and assertions
-
 /// Implementation of [Model] that uses OpenAI's API.
 ///
 /// This model handles interaction with OpenAI models, supporting both
@@ -392,19 +390,12 @@ class OpenAiModel extends Model {
   }
 
   static List<Message> _messagesFrom(
-    List<openai.ChatCompletionMessage> oiaMessages,
+    List<openai.ChatCompletionMessage> openMessages,
   ) {
     // Map tool call IDs to tool names
     final toolCallIdToName = <String, String>{};
     final result = <Message>[];
-    for (final message in oiaMessages) {
-      final role = switch (message.role) {
-        openai.ChatCompletionMessageRole.system => MessageRole.system,
-        openai.ChatCompletionMessageRole.user => MessageRole.user,
-        openai.ChatCompletionMessageRole.assistant => MessageRole.model,
-        openai.ChatCompletionMessageRole.tool => MessageRole.model,
-        _ => MessageRole.model,
-      };
+    for (final message in openMessages) {
       final parts = <Part>[];
       if (message.role == openai.ChatCompletionMessageRole.tool) {
         // Tool result: parse content as JSON and create ToolPart(kind: result)
@@ -474,15 +465,25 @@ class OpenAiModel extends Model {
           }
         }
       }
-      result.add(Message(role: role, content: parts));
+      result.add(Message(role: message.role.messageRole, content: parts));
     }
 
     assert(
-      result.length == oiaMessages.length,
+      result.length == openMessages.length,
       r'Output message list length (${result.length}) does not match input '
-      'message list length (${oiaMessages.length})',
+      'message list length (${openMessages.length})',
     );
 
     return result;
   }
+}
+
+extension on openai.ChatCompletionMessageRole {
+  MessageRole get messageRole => switch (this) {
+    openai.ChatCompletionMessageRole.system => MessageRole.system,
+    openai.ChatCompletionMessageRole.user => MessageRole.user,
+    openai.ChatCompletionMessageRole.assistant => MessageRole.model,
+    openai.ChatCompletionMessageRole.tool => MessageRole.model,
+    _ => MessageRole.model,
+  };
 }

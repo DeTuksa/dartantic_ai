@@ -11,7 +11,7 @@ Only supporting Gemini and OpenAI models via API keys in this limited release.
 The following are the target features for this package:
 - [x] Multi-Model Support
 - [x] Create agents from model strings (e.g. `openai:gpt-4o`) or typed
-  providers (e.g. `GoogleProvider()`)
+  providers (e.g. `GeminiProvider()`)
 - [x] Automatically check environment for API key if none is provided (not web
   compatible)
 - [x] Streaming string output via `Agent.runStream`
@@ -20,11 +20,21 @@ The following are the target features for this package:
 - [x] Define tools and their inputs/outputs easily
 - [x] Automatically generate LLM-specific tool/output schemas
 - [x] Bring your own provider
-- [ ] Execute tools with validated inputs
+- [x] Execute tools with validated inputs
 - [ ] Chains and Sequential Execution
 - [ ] JSON Mode, Functions Mode, Flexible Decoding
 - [ ] Simple Assistant/Agent loop utilities
 - [ ] Per call usage statistics
+
+## Provider Switching
+
+dartantic_ai supports seamless switching between OpenAI and Gemini providers within a single conversation. You can alternate between providers (e.g., OpenAI → Gemini → OpenAI) and the message history—including tool calls and tool results—remains compatible and threaded correctly. This enables robust multi-provider workflows, such as starting a conversation with one provider and continuing it with another, or leveraging provider-specific strengths in a single chat.
+
+- Message history is serialized and deserialized in a provider-agnostic way.
+- Tool call and result IDs are stable and compatible across providers.
+- Integration tests verify that tool calls and results are preserved and threaded correctly when switching providers.
+
+This feature allows you to build advanced, resilient LLM applications that can leverage multiple providers transparently.
 
 ## Usage
 

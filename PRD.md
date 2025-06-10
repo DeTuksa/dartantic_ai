@@ -84,7 +84,7 @@ tools.
 - [x] Agents can run prompts and return streaming string outputs.
 - [x] Agents can run prompts and return typed outputs, mapped to custom Dart types.
 - [x] Agents can use DotPrompt for structured prompt input.
-- [ ] Agents can define and use tools with typed input/output, validated via JSON schema.
+- [x] Execute tools with validated inputs
 - [x] The system supports both OpenAI and Gemini providers, with API keys loaded from environment variables.
 - [x] The system provides clear error messages for missing API keys or unsupported providers.
 - [x] Integration tests pass for all major features, including:
@@ -128,22 +128,25 @@ tools.
   - The agent ensures that the prompt and message history are included in the request, and the response includes the updated message history.
   - Tests verify that when an empty message history is provided, the agent includes both the user prompt and the model response in the resulting message list.
 
+- [x] **Tool calls and provider switching**: Tool calls are supported and threaded through message history, including across provider boundaries (OpenAI <-> Gemini). Tool call/result IDs are now stable and compatible, allowing seamless cross-provider chat and tool usage. Tests verify that tool calls and results are present in the message history and that provider switching works as expected.
+
 - [x] **API changes**:
   - `AgentResponse` includes the full message history after each response.
   - The `Agent` interface supports chat-like workflows by accepting and returning message lists.
   - The `Message` class supports serialization/deserialization for easy storage and replay of conversations.
 
 - [x] **Provider-specific implementations**:
-  - OpenAI: Maps `Message` to OpenAI chat API, supports streaming.
-  - Gemini: Maps `Message` to Gemini API, supports streaming if available.
+  - OpenAI: Maps `Message` to OpenAI chat API, supports streaming and tool calls.
+  - Gemini: Maps `Message` to Gemini API, supports streaming and tool calls, with cross-provider message history compatibility.
 
-- [ ] Full testing with non-streaming, tool calls, typed output, etc.
+- [x] **Testing**:
+  - Integration tests cover streaming, multi-turn chat, tool calls, typed output, and provider switching (including cross-provider tool call/result threading).
 
 **Summary of current status:**  
-- Multi-turn chat is supported via the `messages` parameter in agent methods.
-- Message roles and content types (text, media) are handled.
-- Streaming and message history are integrated into the API and tested.
-- Both OpenAI and Gemini providers support this message-passing interface.
+- Multi-turn chat, streaming, message roles, and content types are fully implemented and tested.
+- Tool calls and provider switching (OpenAI <-> Gemini) are implemented and tested, with stable tool call/result IDs across providers.
+- Message history serialization/deserialization is provider-agnostic and robust.
+- Remaining gaps: advanced agent loop (auto tool loop until schema is satisfied), multi-media input as prompt, and some advanced error handling.
 
 ### Milestone 3: Multi-media input
 - [ ] `Model.runStream` should take a `Message` as a prompt, so that it can

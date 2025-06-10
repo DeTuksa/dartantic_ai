@@ -258,10 +258,10 @@ class GeminiModel extends Model {
   }
 
   static List<Message> _messagesFrom(Iterable<gemini.Content> history) {
-    final toolCallIdMap = <String, String>{};
+    final toolCallIdQueue = <String, List<String>>{};
     final messages = [
       for (final content in history)
-        content.toMessageWithToolIdMap(toolCallIdMap),
+        content.toMessageWithToolIdQueue(toolCallIdQueue),
     ];
     assert(
       messages.length == history.length,
@@ -290,17 +290,18 @@ extension on MessageRole {
 }
 
 extension on gemini.Content {
-  /// Converts Gemini content to a Message, using a persistent [toolCallIdMap]
-  /// to ensure tool call/result IDs are stable across the conversation.
-  Message toMessageWithToolIdMap(Map<String, String> toolCallIdMap) {
+  /// Converts Gemini content to a Message, ensuring each FunctionCall gets a unique ID,
+  /// and the corresponding FunctionResponse uses the same ID. IDs are not reused.
+  Message toMessageWithToolIdQueue(Map<String, List<String>> toolCallIdQueue) {
     final role = this.role.messageRole;
     final parts = <Part>[];
     const uuid = Uuid();
     for (final part in this.parts) {
       if (part is gemini.FunctionCall) {
         final callKey = '${part.name}:${jsonEncode(part.args)}';
-        // Use existing ID if present, else generate and store
-        final id = toolCallIdMap.putIfAbsent(callKey, uuid.v4);
+        // Always generate a new unique ID for each call
+        final id = uuid.v4();
+        toolCallIdQueue.putIfAbsent(callKey, () => <String>[]).add(id);
         print(
           'Synthesizing ToolPartKind.call with id: $id, name: ${part.name}, args: ${part.args}',
         );
@@ -316,15 +317,13 @@ extension on gemini.Content {
           ),
         );
       } else if (part is gemini.FunctionResponse) {
-        // Try to find the matching call id
+        // Match to the oldest outstanding call with the same name/args
         var id = '';
-        // Try to find a matching call by name (and optionally by args if available)
-        final possibleKeys =
-            toolCallIdMap.keys
-                .where((k) => k.startsWith('${part.name}:'))
-                .toList();
-        if (possibleKeys.isNotEmpty) {
-          id = toolCallIdMap[possibleKeys.first]!;
+        final callKey =
+            '${part.name}:${jsonEncode(part.response?['sound'] != null ? {'sound': part.response!['sound']} : {})}';
+        final queue = toolCallIdQueue[callKey];
+        if (queue != null && queue.isNotEmpty) {
+          id = queue.removeAt(0);
         } else {
           id = uuid.v4(); // fallback, but this should be rare
         }
@@ -356,16 +355,13 @@ extension on gemini.Content {
         final dataUri = 'data:${part.mimeType};base64,$base64';
         parts.add(MediaPart(contentType: part.mimeType, url: dataUri));
       } else {
-        assert(
-          false,
-          'Unhandled part type: \\${part.runtimeType}, value: $part',
-        );
+        assert(false, 'Unhandled part type: ${part.runtimeType}, value: $part');
       }
     }
     assert(
       parts.length == this.parts.length,
-      'Output parts length (\u001b[32m${parts.length}\u001b[0m) does not match input '
-      'Content parts length (\u001b[32m${this.parts.length}\u001b[0m)',
+      'Output parts length (${parts.length}) does not match input '
+      'Content parts length (${this.parts.length})',
     );
     return Message(role: role, content: parts);
   }

@@ -258,14 +258,16 @@ class GeminiModel extends Model {
   }
 
   static List<Message> _messagesFrom(Iterable<gemini.Content> history) {
-    final messages = [for (final content in history) content.message];
-
+    final toolCallIdMap = <String, String>{};
+    final messages = [
+      for (final content in history)
+        content.toMessageWithToolIdMap(toolCallIdMap),
+    ];
     assert(
       messages.length == history.length,
       'Output Message list length (${messages.length}) does not match input '
       'Content list length (${history.length})',
     );
-
     return messages;
   }
 }
@@ -288,31 +290,47 @@ extension on MessageRole {
 }
 
 extension on gemini.Content {
-  Message get message {
+  /// Converts Gemini content to a Message, using a persistent [toolCallIdMap]
+  /// to ensure tool call/result IDs are stable across the conversation.
+  Message toMessageWithToolIdMap(Map<String, String> toolCallIdMap) {
     final role = this.role.messageRole;
     final parts = <Part>[];
     const uuid = Uuid();
     for (final part in this.parts) {
-      if (part is gemini.TextPart) {
-        parts.add(TextPart(part.text));
-      } else if (part is gemini.DataPart) {
-        final base64 = base64Encode(part.bytes);
-        final dataUri = 'data:${part.mimeType};base64,$base64';
-        parts.add(MediaPart(contentType: part.mimeType, url: dataUri));
-      } else if (part is gemini.FunctionCall) {
-        Map<String, dynamic> argsMap;
-        argsMap = Map<String, dynamic>.from(
+      if (part is gemini.FunctionCall) {
+        final callKey = '${part.name}:${jsonEncode(part.args)}';
+        // Use existing ID if present, else generate and store
+        final id = toolCallIdMap.putIfAbsent(callKey, uuid.v4);
+        print(
+          'Synthesizing ToolPartKind.call with id: $id, name: ${part.name}, args: ${part.args}',
+        );
+        final argsMap = Map<String, dynamic>.from(
           (part.args as Map).map((k, v) => MapEntry(k as String, v)),
         );
         parts.add(
           ToolPart(
             kind: ToolPartKind.call,
-            id: uuid.v4(),
+            id: id,
             name: part.name,
             arguments: argsMap,
           ),
         );
       } else if (part is gemini.FunctionResponse) {
+        // Try to find the matching call id
+        var id = '';
+        // Try to find a matching call by name (and optionally by args if available)
+        final possibleKeys =
+            toolCallIdMap.keys
+                .where((k) => k.startsWith('${part.name}:'))
+                .toList();
+        if (possibleKeys.isNotEmpty) {
+          id = toolCallIdMap[possibleKeys.first]!;
+        } else {
+          id = uuid.v4(); // fallback, but this should be rare
+        }
+        print(
+          'Synthesizing ToolPartKind.result with id: $id, name: ${part.name}, result: ${part.response}',
+        );
         Map<String, dynamic> resultMap;
         if (part.response == null) {
           resultMap = <String, dynamic>{};
@@ -326,11 +344,17 @@ extension on gemini.Content {
         parts.add(
           ToolPart(
             kind: ToolPartKind.result,
-            id: uuid.v4(),
+            id: id,
             name: part.name,
             result: resultMap,
           ),
         );
+      } else if (part is gemini.TextPart) {
+        parts.add(TextPart(part.text));
+      } else if (part is gemini.DataPart) {
+        final base64 = base64Encode(part.bytes);
+        final dataUri = 'data:${part.mimeType};base64,$base64';
+        parts.add(MediaPart(contentType: part.mimeType, url: dataUri));
       } else {
         assert(
           false,
@@ -338,13 +362,11 @@ extension on gemini.Content {
         );
       }
     }
-
     assert(
       parts.length == this.parts.length,
-      'Output parts length (${parts.length}) does not match input '
-      'Content parts length (${this.parts.length})',
+      'Output parts length (\u001b[32m${parts.length}\u001b[0m) does not match input '
+      'Content parts length (\u001b[32m${this.parts.length}\u001b[0m)',
     );
-
     return Message(role: role, content: parts);
   }
 }

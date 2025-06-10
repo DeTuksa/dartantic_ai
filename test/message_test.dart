@@ -349,22 +349,34 @@ void main() {
 
     Future<void> testToolCallHistory(Provider provider) async {
       final tool = Tool(
-        name: 'echo',
-        description: 'Echoes the input',
+        name: 'animal_sound_lookup',
+        description: 'Maps animal sounds to animal names.',
         inputType:
             {
               'type': 'object',
               'properties': {
-                'message': {'type': 'string'},
+                'sound': {'type': 'string'},
               },
-              'required': ['message'],
+              'required': ['sound'],
             }.toSchema(),
-        onCall: (input) async => {'echo': input['message']},
+        onCall: (input) async {
+          final sound = input['sound'] as String;
+          final animal =
+              {
+                'moo': 'cow',
+                'quack': 'duck',
+                'neigh': 'horse',
+                // add more as needed
+              }[sound] ??
+              'unknown';
+          return {'animal': animal, 'sound': sound};
+        },
       );
       final agent = Agent.provider(
         provider,
         tools: [tool],
-        systemPrompt: 'Use the echo tool to repeat the user message.',
+        systemPrompt:
+            'Use the animal sound lookup tool to repeat the user message.',
       );
       final responses = <AgentResponse>[];
       await agent.runStream('Repeat: hello world').forEach(responses.add);
@@ -465,34 +477,35 @@ void main() {
       String testName,
     ) async {
       final tool = Tool(
-        name: 'echo',
-        description: 'Echoes the input',
+        name: 'animal_sound_lookup',
+        description: 'Maps animal sounds to animal names.',
         inputType:
             {
               'type': 'object',
               'properties': {
-                'message': {'type': 'string'},
+                'sound': {'type': 'string'},
               },
-              'required': ['message'],
+              'required': ['sound'],
             }.toSchema(),
-        onCall: (input) async => {'echo': input['message']},
-      );
-      final schema = {
-        'type': 'object',
-        'properties': {
-          'animal': {'type': 'string'},
-          'sound': {'type': 'string'},
+        onCall: (input) async {
+          print('onCall: $input');
+          final sound = input['sound'] as String;
+          final animal =
+              {
+                'moo': 'cow',
+                'quack': 'duck',
+                'neigh': 'horse',
+                // add more as needed
+              }[sound] ??
+              'unknown';
+          return {'animal': animal, 'sound': sound};
         },
-        'required': ['animal', 'sound'],
-        'additionalProperties': false,
-      };
-      const systemPrompt = 'You are a test system prompt.';
-      var history = <Message>[
-        Message(
-          role: MessageRole.system,
-          content: [const TextPart(systemPrompt)],
-        ),
-      ];
+      );
+      const systemPrompt = '''
+You are an assistant that must always use the provided "animal_sound_lookup" tool to answer any question about what animal makes a particular sound. 
+Do not answer directly; always call the tool with the sound in question and return the tool's result to the user.
+''';
+      var history = <Message>[];
       var prompt = 'What animal says "moo"?';
       for (var i = 0; i < providers.length; i++) {
         final provider = providers[i];
@@ -500,24 +513,10 @@ void main() {
           provider,
           tools: [tool],
           systemPrompt: systemPrompt,
-          outputType: schema.toSchema(),
-          outputFromJson:
-              (json) => {'animal': json['animal'], 'sound': json['sound']},
         );
-        final result = await agent.runFor<Map<String, dynamic>>(
-          prompt,
-          messages: history,
-        );
+        final result = await agent.run(prompt, messages: history);
+        history = result.messages;
         print('Provider: ${provider.displayName}, output: ${result.output}');
-        // Append the new messages to the history, skipping duplicate system
-        // prompt
-        final newMessages = result.messages;
-        if (newMessages.isNotEmpty &&
-            newMessages.first.role == MessageRole.system) {
-          history = [history.first, ...newMessages.skip(1)];
-        } else {
-          history = [...history, ...newMessages];
-        }
         // Change the prompt for the next round
         prompt = 'What animal says "quack"?';
       }
@@ -575,19 +574,48 @@ void main() {
       ], 'OpenAI→Gemini→OpenAI→Gemini');
     });
 
+    test('growing history OpenAI→OpenAI→OpenAI→OpenAI', () async {
+      await testGrowingHistoryWithProviders([
+        OpenAiProvider(),
+        OpenAiProvider(),
+        OpenAiProvider(),
+        OpenAiProvider(),
+      ], 'OpenAI→OpenAI→OpenAI→OpenAI');
+    });
+
+    test('growing history Gemini→Gemini→Gemini→Gemini', () async {
+      await testGrowingHistoryWithProviders([
+        GeminiProvider(),
+        GeminiProvider(),
+        GeminiProvider(),
+        GeminiProvider(),
+      ], 'Gemini→Gemini→Gemini→Gemini');
+    });
+
     Future<void> testToolResultReferencedInContext(Provider provider) async {
       final tool = Tool(
-        name: 'echo',
-        description: 'Echoes the input',
+        name: 'animal_sound_lookup',
+        description: 'Maps animal sounds to animal names.',
         inputType:
             {
               'type': 'object',
               'properties': {
-                'message': {'type': 'string'},
+                'sound': {'type': 'string'},
               },
-              'required': ['message'],
+              'required': ['sound'],
             }.toSchema(),
-        onCall: (input) async => {'echo': input['message']},
+        onCall: (input) async {
+          final sound = input['sound'] as String;
+          final animal =
+              {
+                'moo': 'cow',
+                'quack': 'duck',
+                'neigh': 'horse',
+                // add more as needed
+              }[sound] ??
+              'unknown';
+          return {'animal': animal, 'sound': sound};
+        },
       );
       const systemPrompt = 'You are a test system prompt.';
       // Step 1: Run initial tool call

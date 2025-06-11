@@ -13,14 +13,23 @@ class OpenAiProvider extends Provider {
   ///
   /// The [modelName] is the name of the OpenAI model to use.
   /// If not provided, [defaultModelName] is used.
+  /// The [embeddingModelName] is the name of the OpenAI embedding model to use.
+  /// If not provided, [defaultEmbeddingModelName] is used.
   /// The [apiKey] is the API key to use for authentication.
   /// If not provided, it's retrieved from the environment.
-  OpenAiProvider({String? modelName, String? apiKey})
-    : modelName = modelName ?? defaultModelName,
-      apiKey = apiKey ?? platform.getEnv(apiKeyName);
+  OpenAiProvider({
+    String? modelName,
+    String? embeddingModelName,
+    String? apiKey,
+  }) : modelName = modelName ?? defaultModelName,
+       embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
+       apiKey = apiKey ?? platform.getEnv(apiKeyName);
 
   /// The default model name to use if none is provided.
   static const defaultModelName = 'gpt-4o';
+
+  /// The default embedding model name to use if none is provided.
+  static const defaultEmbeddingModelName = 'text-embedding-3-small';
 
   /// The name of the environment variable that contains the API key.
   static const apiKeyName = 'OPENAI_API_KEY';
@@ -32,6 +41,9 @@ class OpenAiProvider extends Provider {
   /// The name of the OpenAI model to use.
   final String modelName;
 
+  /// The name of the OpenAI embedding model to use.
+  final String embeddingModelName;
+
   /// The API key to use for authentication with the OpenAI API.
   final String apiKey;
 
@@ -42,6 +54,7 @@ class OpenAiProvider extends Provider {
   @override
   Model createModel(ModelSettings settings) => OpenAiModel(
     modelName: modelName,
+    embeddingModelName: embeddingModelName,
     apiKey: apiKey,
     outputType: settings.outputType,
     systemPrompt: settings.systemPrompt,

@@ -4,8 +4,9 @@ import 'dart:convert';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:dartantic_ai/src/models/message.dart';
-import 'package:dartantic_ai/src/providers/implementation/provider_table.dart';
 import 'package:test/test.dart';
+
+import 'test_utils.dart';
 
 // NOTE: some of these tests require environment variables to be set.
 // I recommend using .vscode/settings.json like so:
@@ -594,27 +595,8 @@ Do not answer directly; always call the tool with the sound in question and retu
 
     // use this to ensure that all new providers are history compatible
     test('growing history with every unique provider by type', () async {
-      // get all providers from the provider table
-      final providers = [
-        for (final providerName in ProviderTable.providers.keys)
-          ProviderTable.providerFor(
-            ProviderSettings(
-              providerName: providerName,
-              modelName: null,
-              apiKey: null,
-            ),
-          ),
-      ];
-
-      // grab a set of providers unique by runtime type, i.e. GeminiProvider,
-      // OpenAiProvider, etc.
-      final typeToProvider = <String, Provider>{};
-      for (final provider in providers) {
-        typeToProvider[provider.runtimeType.toString()] = provider;
-      }
-
       await testGrowingHistoryWithProviders(
-        typeToProvider.values,
+        allProvidersByType(),
         'all providers',
       );
     });

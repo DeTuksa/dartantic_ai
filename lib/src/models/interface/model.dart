@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../agent/agent.dart';
 import '../message.dart';
 
@@ -12,5 +14,18 @@ abstract class Model {
   Stream<AgentResponse> runStream({
     required String prompt,
     required List<Message> messages,
+  });
+
+  /// Generates an embedding vector for the given [text].
+  ///
+  /// The [type] parameter specifies whether this embedding is for a document
+  /// (content to be stored and searched) or a query (search input).
+  ///
+  /// Returns a Float64List of floating-point values representing the text's
+  /// position in high-dimensional semantic space, suitable for similarity
+  /// calculations.
+  Future<Float64List> createEmbedding(
+    String text, {
+    EmbeddingType type = EmbeddingType.document,
   });
 }

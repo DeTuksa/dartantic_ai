@@ -12,26 +12,31 @@ class ProviderTable {
     'openai':
         (settings) => OpenAiProvider(
           modelName: settings.modelName,
+          embeddingModelName: settings.embeddingModelName,
           apiKey: settings.apiKey,
         ),
     'gemini':
         (settings) => GeminiProvider(
           modelName: settings.modelName,
+          embeddingModelName: settings.embeddingModelName,
           apiKey: settings.apiKey,
         ),
     'google':
         (settings) => GeminiProvider(
           modelName: settings.modelName,
+          embeddingModelName: settings.embeddingModelName,
           apiKey: settings.apiKey,
         ),
     'googleai':
         (settings) => GeminiProvider(
           modelName: settings.modelName,
+          embeddingModelName: settings.embeddingModelName,
           apiKey: settings.apiKey,
         ),
     'google-gla':
         (settings) => GeminiProvider(
           modelName: settings.modelName,
+          embeddingModelName: settings.embeddingModelName,
           apiKey: settings.apiKey,
         ),
   };

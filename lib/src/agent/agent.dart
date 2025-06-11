@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:dotprompt_dart/dotprompt_dart.dart';
 import 'package:json_schema/json_schema.dart';
@@ -10,9 +12,11 @@ import '../providers/implementation/provider_table.dart';
 import '../providers/interface/provider.dart';
 import '../providers/interface/provider_settings.dart';
 import 'agent_response.dart';
+import 'embedding_type.dart';
 import 'tool.dart';
 
 export 'agent_response.dart';
+export 'embedding_type.dart';
 export 'tool.dart';
 
 /// An agent that can run prompts through an AI model and return responses.
@@ -35,14 +39,17 @@ class Agent {
   /// - [outputFromJson]: (Optional) A function to convert JSON output to a
   ///   typed object.
   /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
+  /// - [embeddingModel]: (Optional) The model name to use for embeddings. If
+  ///   not provided, uses the provider's default embedding model.
   factory Agent(
     String model, {
     String? systemPrompt,
     JsonSchema? outputType,
     dynamic Function(Map<String, dynamic> json)? outputFromJson,
     Iterable<Tool>? tools,
+    String? embeddingModel,
   }) => Agent.provider(
-    providerFor(model),
+    providerFor(model, embeddingModel: embeddingModel),
     systemPrompt: systemPrompt,
     outputType: outputType,
     outputFromJson: outputFromJson,
@@ -261,13 +268,35 @@ class Agent {
     tools: tools,
   ).runStream(prompt.render(input), messages: messages);
 
+  /// Generates vector embeddings for the given text.
+  ///
+  /// This method creates numerical vector representations of text that can be
+  /// used for similarity search, clustering, and other semantic operations.
+  ///
+  /// Uses the embedding model specified in the Agent constructor, or the
+  /// provider's default embedding model if none was specified.
+  ///
+  /// - [text]: The text to generate embeddings for.
+  /// - [type]: The type of embedding to generate (document or query).
+  ///   Defaults to [EmbeddingType.document].
+  ///
+  /// Returns a [Future] containing a Float64List representing the
+  /// embedding vector.
+  ///
+  /// Throws [UnsupportedError] if the underlying model/provider doesn't
+  /// support embedding generation.
+  Future<Float64List> createEmbedding(
+    String text, {
+    EmbeddingType type = EmbeddingType.document,
+  }) => _model.createEmbedding(text, type: type);
+
   /// Resolves the [Provider] for the given [model] string.
   ///
   /// [model] should be in the format "providerName", "providerName:modelName",
   /// or "providerName/modelName".
   ///
   /// Throws [ArgumentError] if [model] is empty.
-  static Provider providerFor(String model) {
+  static Provider providerFor(String model, {String? embeddingModel}) {
     if (model.isEmpty) throw ArgumentError('Model must be provided');
 
     final modelParts = model.split(RegExp('[:/]'));
@@ -279,7 +308,137 @@ class Agent {
         providerName: providerName,
         modelName: modelName,
         apiKey: null,
+        embeddingModelName: embeddingModel,
       ),
     );
+  }
+
+  /// Returns the [limit] items with highest cosine similarity to
+  /// [queryEmbedding].
+  ///
+  /// This method performs semantic similarity search by:
+  /// 1. Computing cosine similarity between the query and each item's embedding
+  /// 2. Ranking all items by similarity score (1.0 = identical, 0.0 =
+  ///    orthogonal, -1.0 = opposite)
+  /// 3. Returning the [limit] most similar items
+  ///
+  /// Cosine similarity measures the angle between two vectors, making it ideal
+  /// for semantic similarity since it's invariant to vector magnitude.
+  static List<T> findTopMatches<T>({
+    required Map<T, Float64List> embeddingMap,
+    required Float64List queryEmbedding,
+    int limit = 1,
+  }) {
+    if (embeddingMap.isEmpty) {
+      throw ArgumentError('embeddingMap cannot be empty');
+    }
+
+    // Store query dimensions and pre-compute its magnitude for efficiency
+    // (we'll reuse this for every similarity calculation)
+    final dim = queryEmbedding.length;
+    final queryMagnitude = _magnitude(queryEmbedding);
+
+    // Calculate cosine similarity score for each item in the embedding map
+    final scoredItems =
+        embeddingMap.entries.map((entry) {
+          final embedding = entry.value;
+
+          // Ensure all embeddings have the same dimensionality
+          if (embedding.length != dim) {
+            throw ArgumentError(
+              'Mismatched embedding dimension for item: ${entry.key}',
+            );
+          }
+
+          // Compute cosine similarity: dot(a,b) / (||a|| * ||b||)
+          // Higher scores indicate greater semantic similarity
+          final score = _cosineSimilarityWithMagnitudeA(
+            queryEmbedding,
+            queryMagnitude,
+            embedding,
+          );
+          return MapEntry(entry.key, score);
+        }).toList();
+
+    // Sort by similarity score in descending order (best matches first)
+    scoredItems.sort((a, b) => b.value.compareTo(a.value));
+
+    // Return the top K most similar items
+    return scoredItems.take(limit).map((e) => e.key).toList();
+  }
+
+  /// Computes cosine similarity between two vectors.
+  ///
+  /// Cosine similarity = dot(a,b) / (||a|| * ||b||)
+  ///
+  /// Returns a value between -1.0 and 1.0:
+  /// - 1.0: vectors point in the same direction (identical)
+  /// - 0.0: vectors are orthogonal (unrelated)
+  /// - -1.0: vectors point in opposite directions
+  static double cosineSimilarity(Float64List a, Float64List b) {
+    assert(a.length == b.length);
+    final dot = dotProduct(a, b);
+    final magnitudeA = _magnitude(a);
+    final magnitudeB = _magnitude(b);
+    return dot / (magnitudeA * magnitudeB); // Normalize by both magnitudes
+  }
+
+  /// Computes cosine similarity between two vectors with pre-computed magnitude
+  /// for [a].
+  ///
+  /// Cosine similarity = dot(a,b) / (||a|| * ||b||)
+  /// This optimized version takes the pre-computed magnitude of vector [a]
+  /// to avoid redundant calculations when comparing one query against many
+  /// items.
+  ///
+  /// Returns a value between -1.0 and 1.0:
+  /// - 1.0: vectors point in the same direction (identical)
+  /// - 0.0: vectors are orthogonal (unrelated)
+  /// - -1.0: vectors point in opposite directions
+  static double _cosineSimilarityWithMagnitudeA(
+    Float64List a,
+    double magnitudeA,
+    Float64List b,
+  ) {
+    assert(a.length == b.length);
+    final dot = dotProduct(a, b);
+    final magnitudeB = _magnitude(b);
+    return dot / (magnitudeA * magnitudeB); // Normalize by both magnitudes
+  }
+
+  /// Computes the dot product (scalar product) of two vectors.
+  ///
+  /// The dot product measures how much two vectors "align" with each other.
+  /// For vectors a and b: `dot(a,b) = sum(a[i] * b[i])` for all dimensions i.
+  ///
+  /// This is a key component in cosine similarity calculation.
+  static double dotProduct(Float64List a, Float64List b) {
+    assert(a.length == b.length);
+
+    // Sum the element-wise products across all dimensions
+    var sum = 0.0;
+    for (var i = 0; i < a.length; ++i) {
+      sum += a[i] * b[i];
+    }
+
+    return sum;
+  }
+
+  /// Computes the Euclidean magnitude (L2 norm) of a vector.
+  ///
+  /// The magnitude represents the "length" of the vector in n-dimensional
+  /// space.
+  /// Formula: `||v|| = sqrt(sum(v[i]^2))` for all dimensions i.
+  ///
+  /// This is used to normalize vectors in cosine similarity calculations,
+  /// making the similarity independent of vector magnitude.
+  static double _magnitude(Float64List v) {
+    // Sum the squared values of all vector components
+    var sum = 0.0;
+    for (var i = 0; i < v.length; ++i) {
+      sum += v[i] * v[i];
+    }
+
+    return sqrt(sum); // Return the square root to get the magnitude
   }
 }

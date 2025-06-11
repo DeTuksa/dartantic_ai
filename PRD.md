@@ -48,8 +48,8 @@ tools.
   and schemaMap.
 - As a developer, I want to define tools with typed input and output, and have
   the LLM call these tools as needed.
-- As a developer, I want to support both OpenAI and Gemini models, and easily
-  switch between them.
+- As a developer, I want to support multiple models (starting with OpenAI and
+  Gemini models), and easily switch between them.
 
 ## Requirements
 ### Functional
@@ -148,20 +148,20 @@ tools.
 - Message history serialization/deserialization is provider-agnostic and robust.
 - Remaining gaps: advanced agent loop (auto tool loop until schema is satisfied), multi-media input as prompt, and some advanced error handling.
 
-### Milestone 3: Multi-media input
+### Milestone 3: RAG and Embedding Support
+- [ ] **Embedding generation**: Add methods to generate vector embeddings for
+  text:
+  - `Future<List<double>> createEmbedding(String text, {EmbeddingType type})`
+  - Introduce `EmbeddingType` enum (document, query).
+
+### Milestone 4: Multi-media input
 - [ ] `Model.runStream` should take a `Message` as a prompt, so that it can
   include media parts
 - [ ] `Agent.runXxx()` should be updated to support a prompt message, including
   multi-media parts
 
-### Milestone 4: Dartantic provider for Flutter AI Toolkit
+### Milestone 5: Dartantic provider for Flutter AI Toolkit
 - [ ] Implement the `LlmProvider` interface in terms of `Agent`
-
-### Milestone 5: RAG and Embedding Support
-- [ ] **Embedding generation**: Add methods to generate vector embeddings for
-  text:
-  - `Future<List<double>> createEmbedding(String text, {EmbeddingType type})`
-  - Introduce `EmbeddingType` enum (document, query).
 
 ### Milestone 6: Typed Response + Tools + Simple Agent Loop
 - [ ] e.g. two tools, typed response and we keep looping till the LLM is done

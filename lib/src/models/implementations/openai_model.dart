@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
+import 'dart:typed_data';
 
 import 'package:json_schema/json_schema.dart';
 import 'package:openai_dart/openai_dart.dart' as openai;
@@ -17,15 +18,18 @@ class OpenAiModel extends Model {
   ///
   /// The [apiKey] is the API key to use for authentication.
   /// The [modelName] is the name of the OpenAI model to use.
+  /// The [embeddingModelName] is the name of the OpenAI embedding model to use.
   /// The [outputType] is an optional JSON schema for structured outputs.
   /// The [systemPrompt] is an optional system prompt to use.
   OpenAiModel({
     required String apiKey,
     required String modelName,
+    required String embeddingModelName,
     JsonSchema? outputType,
     String? systemPrompt,
     Iterable<Tool>? tools,
-  }) : _tools = tools,
+  }) : _embeddingModelName = embeddingModelName,
+       _tools = tools,
        _systemPrompt = systemPrompt,
        _modelName = modelName,
        _client = openai.OpenAIClient(apiKey: apiKey),
@@ -38,6 +42,7 @@ class OpenAiModel extends Model {
 
   final openai.OpenAIClient _client;
   final String _modelName;
+  final String _embeddingModelName;
   final openai.ResponseFormat? _responseFormat;
   final String? _systemPrompt;
   final Iterable<Tool>? _tools;
@@ -225,6 +230,33 @@ class OpenAiModel extends Model {
           ),
         );
       }
+    }
+  }
+
+  @override
+  Future<Float64List> createEmbedding(
+    String text, {
+    EmbeddingType type = EmbeddingType.document,
+  }) async {
+    final request = openai.CreateEmbeddingRequest(
+      model: openai.EmbeddingModel.modelId(_embeddingModelName),
+      input: openai.EmbeddingInput.string(text),
+    );
+
+    final response = await _client.createEmbedding(request: request);
+    final embeddingVector = response.data.first.embedding;
+
+    if (embeddingVector is openai.EmbeddingVectorListDouble) {
+      return Float64List.fromList(embeddingVector.value);
+    } else if (embeddingVector is openai.EmbeddingVectorString) {
+      // Decode base64 encoded embedding to float values
+      final base64String = embeddingVector.value;
+      final bytes = base64Decode(base64String);
+      return Float64List.view(bytes.buffer);
+    } else {
+      throw UnsupportedError(
+        'Unknown embedding vector type: ${embeddingVector.runtimeType}',
+      );
     }
   }
 

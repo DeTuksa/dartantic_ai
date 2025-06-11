@@ -7,6 +7,7 @@ import 'package:json_schema/json_schema.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../agent/agent_response.dart';
+import '../../agent/embedding_type.dart';
 import '../../agent/tool.dart';
 import '../../json_schema_extension.dart';
 import '../interface/model.dart';
@@ -20,16 +21,20 @@ class GeminiModel extends Model {
   /// Creates a new [GeminiModel] with the given parameters.
   ///
   /// The [modelName] is the name of the Gemini model to use.
+  /// The [embeddingModelName] is the name of the Gemini embedding model to use.
   /// The [apiKey] is the API key to use for authentication.
   /// The [outputType] is an optional JSON schema for structured outputs.
   /// The [systemPrompt] is an optional system prompt to use.
   GeminiModel({
     required String modelName,
+    required String embeddingModelName,
     required String apiKey,
     JsonSchema? outputType,
     String? systemPrompt,
     Iterable<Tool>? tools,
-  }) : _tools = tools,
+  }) : _embeddingModelName = embeddingModelName,
+       _apiKey = apiKey,
+       _tools = tools,
        _model = gemini.GenerativeModel(
          apiKey: apiKey,
          model: modelName,
@@ -46,6 +51,8 @@ class GeminiModel extends Model {
        );
 
   late final gemini.GenerativeModel _model;
+  final String _embeddingModelName;
+  final String _apiKey;
   final Iterable<Tool>? _tools;
 
   @override
@@ -99,6 +106,30 @@ class GeminiModel extends Model {
         );
       }
     }
+  }
+
+  @override
+  Future<Float64List> createEmbedding(
+    String text, {
+    EmbeddingType type = EmbeddingType.document,
+  }) async {
+    final taskType = switch (type) {
+      EmbeddingType.document => gemini.TaskType.retrievalDocument,
+      EmbeddingType.query => gemini.TaskType.retrievalQuery,
+    };
+
+    // Create a model instance specifically for embeddings
+    final embeddingModel = gemini.GenerativeModel(
+      apiKey: _apiKey,
+      model: _embeddingModelName,
+    );
+
+    final response = await embeddingModel.embedContent(
+      gemini.Content.text(text),
+      taskType: taskType,
+    );
+
+    return Float64List.fromList(response.embedding.values);
   }
 
   Future<Map<String, dynamic>?> _callTool(

@@ -13,14 +13,23 @@ class GeminiProvider extends Provider {
   ///
   /// The [modelName] is the name of the Gemini model to use.
   /// If not provided, [defaultModelName] is used.
+  /// The [embeddingModelName] is the name of the Gemini embedding model to use.
+  /// If not provided, [defaultEmbeddingModelName] is used.
   /// The [apiKey] is the API key to use for authentication.
   /// If not provided, it's retrieved from the environment.
-  GeminiProvider({String? modelName, String? apiKey})
-    : modelName = modelName ?? defaultModelName,
-      apiKey = apiKey ?? platform.getEnv(apiKeyName);
+  GeminiProvider({
+    String? modelName,
+    String? embeddingModelName,
+    String? apiKey,
+  }) : modelName = modelName ?? defaultModelName,
+       embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
+       apiKey = apiKey ?? platform.getEnv(apiKeyName);
 
   /// The default model name to use if none is provided.
   static const defaultModelName = 'gemini-2.0-flash';
+
+  /// The default embedding model name to use if none is provided.
+  static const defaultEmbeddingModelName = 'text-embedding-004';
 
   /// The name of the environment variable that contains the API key.
   static const apiKeyName = 'GEMINI_API_KEY';
@@ -32,6 +41,9 @@ class GeminiProvider extends Provider {
   /// The name of the Gemini model to use.
   final String modelName;
 
+  /// The name of the Gemini embedding model to use.
+  final String embeddingModelName;
+
   /// The API key to use for authentication with the Gemini API.
   final String apiKey;
 
@@ -42,6 +54,7 @@ class GeminiProvider extends Provider {
   @override
   Model createModel(ModelSettings settings) => GeminiModel(
     modelName: modelName,
+    embeddingModelName: embeddingModelName,
     apiKey: apiKey,
     outputType: settings.outputType,
     systemPrompt: settings.systemPrompt,

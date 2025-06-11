@@ -15,6 +15,7 @@ import 'agent_response.dart';
 import 'embedding_type.dart';
 import 'tool.dart';
 
+export '../models/message.dart';
 export 'agent_response.dart';
 export 'embedding_type.dart';
 export 'tool.dart';

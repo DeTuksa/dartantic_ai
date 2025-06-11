@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import '../../agent/agent.dart';
-import '../message.dart';
 
 /// Abstract interface for AI model implementations.
 ///

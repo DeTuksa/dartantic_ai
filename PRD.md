@@ -34,6 +34,7 @@ tools.
 - (Planned) JSON mode, functions mode, flexible decoding.
 - (Planned) Assistant/agent loop utilities.
 - (Planned) Per-call usage statistics.
+- (Planned) Instrumentation with dev.log or logging package.
 
 ## User Stories
 - As a developer, I want to create an agent with a system prompt and run a
@@ -149,10 +150,12 @@ tools.
 - Remaining gaps: advanced agent loop (auto tool loop until schema is satisfied), multi-media input as prompt, and some advanced error handling.
 
 ### Milestone 3: RAG and Embedding Support
-- [ ] **Embedding generation**: Add methods to generate vector embeddings for
+- [x] **Embedding generation**: Add methods to generate vector embeddings for
   text:
-  - `Future<List<double>> createEmbedding(String text, {EmbeddingType type})`
+  - `Future<Float64List> createEmbedding(String text, {EmbeddingType type})`
   - Introduce `EmbeddingType` enum (document, query).
+  - `Agent.cosineSimilarity()` static method for comparing embeddings.
+  - Comprehensive integration tests covering both OpenAI and Gemini providers.
 
 ### Milestone 4: Multi-media input
 - [ ] `Model.runStream` should take a `Message` as a prompt, so that it can

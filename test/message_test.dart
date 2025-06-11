@@ -3,7 +3,6 @@
 import 'dart:convert';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
-import 'package:dartantic_ai/src/models/message.dart';
 import 'package:test/test.dart';
 
 import 'test_utils.dart';

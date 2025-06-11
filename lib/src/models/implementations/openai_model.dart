@@ -7,7 +7,6 @@ import 'package:openai_dart/openai_dart.dart' as openai;
 
 import '../../../dartantic_ai.dart';
 import '../interface/model.dart';
-import '../message.dart';
 
 /// Implementation of [Model] that uses OpenAI's API.
 ///

@@ -21,6 +21,7 @@ The following are the target features for this package:
 - [x] Automatically generate LLM-specific tool/output schemas
 - [x] Bring your own provider
 - [x] Execute tools with validated inputs
+- [x] Embedding generation with `Agent.createEmbedding` and cosine similarity utilities
 - [ ] Chains and Sequential Execution
 - [ ] JSON Mode, Functions Mode, Flexible Decoding
 - [ ] Simple Assistant/Agent loop utilities
@@ -128,13 +129,13 @@ hand-written `fromJson` method and a hand-written `schemaMap` property.
 
 ```dart
 // Create a data class in your code
-class TownAndcountry {
+class TownAndCountry {
   final String town;
   final String country;
   
-  TownAndcountry({required this.town, required this.country});
+  TownAndCountry({required this.town, required this.country});
   
-  factory TownAndcountry.fromJson(Map<String, dynamic> json) => TownAndcountry(
+  factory TownAndCountry.fromJson(Map<String, dynamic> json) => TownAndCountry(
       town: json['town'],
       country: json['country'],
     );
@@ -150,22 +151,22 @@ class TownAndcountry {
   };
   
   @override
-  String toString() => 'TownAndcountry(town: $town, country: $country)';
+  String toString() => 'TownAndCountry(town: $town, country: $country)';
 }
 
 void main() async {
   // Use runFor with a type parameter for automatic conversion 
   final agent = Agent(
     'openai',
-    outputType: TownAndcountry.schemaMap.toSchema(),
-    outputFromJson: TownAndcountry.fromJson,
+    outputType: TownAndCountry.schemaMap.toSchema(),
+    outputFromJson: TownAndCountry.fromJson,
   );
 
-  final result = await agent.runFor<TownAndcountry>(
+  final result = await agent.runFor<TownAndCountry>(
     'The windy city in the US of A.',
   );
 
-  print(result.output); // Output: TownAndcountry(town: Chicago, country: United States)
+  print(result.output); // Output: TownAndCountry(town: Chicago, country: United States)
 }
 ```
 
@@ -180,37 +181,37 @@ automatic Json Schema definition.
 // Create a data class in your code
 @SotiSchema()
 @JsonSerializable()
-class TownAndcountry {
-  TownAndcountry({required this.town, required this.country});
+class TownAndCountry {
+  TownAndCountry({required this.town, required this.country});
 
-  factory TownAndcountry.fromJson(Map<String, dynamic> json) =>
-      _$TownAndcountryFromJson(json);
+  factory TownAndCountry.fromJson(Map<String, dynamic> json) =>
+      _$TownAndCountryFromJson(json);
 
   final String town;
   final String country;
 
-  Map<String, dynamic> toJson() => _$TownAndcountryToJson(this);
+  Map<String, dynamic> toJson() => _$TownAndCountryToJson(this);
 
   @jsonSchema
-  static Map<String, dynamic> get schemaMap => _$TownAndcountrySchemaMap;
+  static Map<String, dynamic> get schemaMap => _$TownAndCountrySchemaMap;
 
   @override
-  String toString() => 'TownAndcountry(town: $town, country: $country)';
+  String toString() => 'TownAndCountry(town: $town, country: $country)';
 }
 
 void main() async {
   // Use runFor with a type parameter for automatic conversion 
   final agent = Agent(
     'openai',
-    outputType: TownAndcountry.schemaMap.toSchema(),
-    outputFromJson: TownAndcountry.fromJson,
+    outputType: TownAndCountry.schemaMap.toSchema(),
+    outputFromJson: TownAndCountry.fromJson,
   );
 
-  final result = await agent.runFor<TownAndcountry>(
+  final result = await agent.runFor<TownAndCountry>(
     'The windy city in the US of A.',
   );
 
-  print(result.output); // Output: TownAndcountry(town: Chicago, country: United States)
+  print(result.output); // Output: TownAndCountry(town: Chicago, country: United States)
 }
 ```
 
@@ -325,37 +326,44 @@ for output.
 
 ### Multi-turn Chat (Message History)
 
-You can pass a list of `Message` objects to the agent for context-aware, multi-turn conversations. Each message has a role (`system`, `user`, `model`) and a list of content parts (text, media, etc.). Both OpenAI and Gemini providers support this interface.
+You can pass a list of `Message` objects to the agent for context-aware,
+multi-turn conversations. Each message has a role (`system`, `user`, `model`)
+and a list of content parts (text, media, etc.). All providers (just OpenAI and
+Gemini for now) support this interface.
 
 ```dart
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:dartantic_ai/src/models/message.dart';
 
 void main() async {
-  final agent = Agent('openai:gpt-4o');
-  final messages = [
-    Message(
-      role: MessageRole.system,
-      content: [TextPart('You are a helpful AI assistant.')],
-    ),
-    Message(
-      role: MessageRole.user,
-      content: [TextPart('Hello, can you help me with a task?')],
-    ),
-  ];
+  final agent = Agent(
+    'openai:gpt-4o',
+    systemPrompt: 'You are a helpful assistant. Keep responses concise.',
+  );
 
-  // Pass the prompt as the user message, and the previous messages as context
-  final prompt = 'What is 2 + 2?';
-  final response = await agent.run(prompt, messages: messages);
-  print(response.output); // Output: 4
+  // Start with empty message history
+  var messages = <Message>[];
 
-  // The response.messages contains the full updated message history:
-  // [
-  //   Message(role: MessageRole.system, content: [TextPart('You are a helpful AI assistant.')]),
-  //   Message(role: MessageRole.user, content: [TextPart('Hello, can you help me with a task?')]),
-  //   Message(role: MessageRole.user, content: [TextPart('What is 2 + 2?')]),
-  //   Message(role: MessageRole.model, content: [TextPart('4')]),
-  // ]
+  // First turn
+  final response1 = await agent.run(
+    'What is the capital of France?',
+    messages: messages,
+  );
+  print('User: What is the capital of France?');
+  print('Assistant: ${response1.output}'); // Output: The capital of France is Paris.
+
+  // Update message history with the response
+  messages = response1.messages;
+
+  // Second turn - the agent should remember the context
+  final response2 = await agent.run(
+    'What is the population of that city?',
+    messages: messages,
+  );
+  print('User: What is the population of that city?');
+  print('Assistant: ${response2.output}'); // Output: Paris has approximately 2.1 million people in the city proper.
+
+  print('Message history contains ${response2.messages.length} messages'); // Output: Message history contains 4 messages
 }
 ```
 
@@ -371,8 +379,96 @@ void main() async {
   final agent = Agent('openai:gpt-4o');
   final stream = agent.runStream('Tell me a short story about a brave robot.');
   await for (final response in stream) {
-    stdout.write(response.output);
+    stdout.write(response.output); // Output: Once upon a time, there was a brave robot named... (streaming in real-time)
   }
+}
+```
+
+## Embedding Generation
+
+dartantic_ai supports generating vector embeddings for text using both OpenAI and Gemini providers. Embeddings are useful for semantic search, clustering, and building RAG (Retrieval-Augmented Generation) applications.
+
+### Basic Embedding Usage
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final agent = Agent('openai');
+
+  // Generate a document embedding
+  final documentText = 'Machine learning is a subset of artificial intelligence.';
+  final documentEmbedding = await agent.createEmbedding(
+    documentText,
+    type: EmbeddingType.document,
+  );
+  print('Document embedding: ${documentEmbedding.length} dimensions'); // Output: Document embedding: 1536 dimensions
+
+  // Generate a query embedding
+  final queryText = 'What is machine learning?';
+  final queryEmbedding = await agent.createEmbedding(
+    queryText,
+    type: EmbeddingType.query,
+  );
+  print('Query embedding: ${queryEmbedding.length} dimensions'); // Output: Query embedding: 1536 dimensions
+}
+```
+
+### Embedding Similarity and Search
+
+Use the built-in cosine similarity function to compare embeddings for semantic search:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final agent = Agent('openai');
+
+  // Create embeddings for different texts
+  final text1 = 'The cat sat on the mat.';
+  final text2 = 'A cat is sitting on a mat.';
+  final text3 = 'The weather is sunny today.';
+
+  final embedding1 = await agent.createEmbedding(text1, type: EmbeddingType.document);
+  final embedding2 = await agent.createEmbedding(text2, type: EmbeddingType.document);
+  final embedding3 = await agent.createEmbedding(text3, type: EmbeddingType.document);
+
+  // Calculate similarities
+  final similarity1vs2 = Agent.cosineSimilarity(embedding1, embedding2);
+  final similarity1vs3 = Agent.cosineSimilarity(embedding1, embedding3);
+
+  print('Similarity between similar texts: ${similarity1vs2.toStringAsFixed(4)}'); // Output: Similarity between similar texts: 0.8934
+  print('Similarity between different texts: ${similarity1vs3.toStringAsFixed(4)}'); // Output: Similarity between different texts: 0.2156
+
+  // Similar texts should have higher similarity
+  if (similarity1vs2 > similarity1vs3) {
+    print('✓ Similar texts are more semantically related'); // Output: ✓ Similar texts are more semantically related
+  }
+}
+```
+
+### Cross-Provider Embedding Support
+
+Both OpenAI and Gemini providers support embedding generation with consistent APIs:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final text = 'Artificial intelligence is transforming technology.';
+
+  // OpenAI embeddings
+  final openaiAgent = Agent('openai');
+  final openaiEmbedding = await openaiAgent.createEmbedding(text, type: EmbeddingType.document);
+  print('OpenAI embedding: ${openaiEmbedding.length} dimensions'); // Output: OpenAI embedding: 1536 dimensions
+
+  // Gemini embeddings
+  final geminiAgent = Agent('gemini');
+  final geminiEmbedding = await geminiAgent.createEmbedding(text, type: EmbeddingType.document);
+  print('Gemini embedding: ${geminiEmbedding.length} dimensions'); // Output: Gemini embedding: 768 dimensions
+
+  // Note: Different providers may have different embedding dimensions
+  // But the API and similarity calculations work the same way
 }
 ```
 
@@ -397,21 +493,21 @@ void main() async {
 
   // Start conversation with OpenAI
   var response = await openaiAgent.run('What animal says "moo"?');
-  print('OpenAI: ${response.output}'); // cow
+  print('OpenAI: ${response.output}'); // Output: A cow says "moo".
   var history = response.messages;
 
   // Continue conversation with Gemini
   response = await geminiAgent.run('What animal says "quack"?', messages: history);
-  print('Gemini: ${response.output}'); // duck
+  print('Gemini: ${response.output}'); // Output: A duck says "quack".
   history = response.messages;
 
   // Store some info with OpenAI
   response = await openaiAgent.run('My favorite animal is the platypus.', messages: history);
-  print('OpenAI: ${response.output}'); // I like platypuses, too!
+  print('OpenAI: ${response.output}'); // Output: That's great! Platypuses are fascinating creatures.
   history = response.messages;
 
   // Retrieve info with Gemini
   response = await geminiAgent.run('What animal did I say I liked?', messages: history);
-  print('Gemini: ${response.output}'); // platypus
+  print('Gemini: ${response.output}'); // Output: You said your favorite animal is the platypus.
 }
 ```

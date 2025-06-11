@@ -9,13 +9,16 @@ import 'package:example/time_tool_call.dart';
 import 'package:example/town_and_country.dart';
 
 void main() async {
-  // await helloWorldExample();
-  // await outputTypeExampleWithJsonSchemaAndStringOutput();
-  // await outputTypeExampleWithJsonSchemaAndOutjectOutput();
-  // await outputTypeExampleWithSotiSchema();
+  await helloWorldExample();
+  await outputTypeExampleWithJsonSchemaAndStringOutput();
+  await outputTypeExampleWithJsonSchemaAndOutjectOutput();
+  await outputTypeExampleWithSotiSchema();
   await toolExample();
-  // await toolExampleWithTypedOutput();
-  // await dotPromptExample();
+  await toolExampleWithTypedOutput();
+  await dotPromptExample();
+  await multiTurnChatExample();
+  await providerSwitchingExample();
+  await embeddingExample();
   exit(0);
 }
 
@@ -45,11 +48,10 @@ Future<void> outputTypeExampleWithJsonSchemaAndStringOutput() async {
   };
 
   final agent = Agent('openai', outputType: tncSchema.toSchema());
-  await for (final result in agent.runStream(
-    'The windy city in the US of A.',
-  )) {
-    stdout.write(result.output);
-  }
+  await agent
+      .runStream('The windy city in the US of A.')
+      .map((result) => stdout.write(result.output))
+      .drain();
   print('');
 }
 
@@ -117,11 +119,10 @@ Future<void> toolExample() async {
     ],
   );
 
-  await for (final result in agent.runStream(
-    'What is the time and temperature in New York City?',
-  )) {
-    stdout.write(result.output);
-  }
+  await agent
+      .runStream('What is the time and temperature in New York City?')
+      .map((event) => stdout.write(event.output))
+      .drain();
   print('');
 }
 
@@ -151,11 +152,13 @@ Future<void> toolExampleWithTypedOutput() async {
     ],
   );
 
-  await for (final result in agent.runStream(
-    'What is the time and temperature in New York City and Chicago?',
-  )) {
-    stdout.write(result.output);
-  }
+  await agent
+      .runStream(
+        'What is the time and temperature in New York City and Chicago?',
+      )
+      .map((event) => stdout.write(event.output))
+      .drain();
+  print('');
 
   // TODO: this doesn't work yet; perhaps it needs a RefProvider.sync() to
   // resolve the LocTimeTemp schema? this would require a call to direct call to
@@ -185,7 +188,168 @@ input:
 Summarize this in {{length}} words: {{text}}
 ''');
 
-  await for (final result in Agent.runPromptStream(prompt)) {
-    stdout.write(result.output);
+  await Agent.runPromptStream(
+    prompt,
+  ).map((event) => stdout.write(event.output)).drain();
+  print('');
+}
+
+Future<void> multiTurnChatExample() async {
+  print('\nmultiTurnChatExample');
+
+  final agent = Agent(
+    'openai',
+    systemPrompt: 'You are a helpful assistant. Keep responses concise.',
+  );
+
+  // Start with empty message history
+  var messages = <Message>[];
+
+  // First turn
+  final response1 = await agent.run(
+    'What is the capital of France?',
+    messages: messages,
+  );
+  print('User: What is the capital of France?');
+  print('Assistant: ${response1.output}');
+
+  // Update message history with the response
+  messages = response1.messages;
+
+  // Second turn - the agent should remember the context
+  final response2 = await agent.run(
+    'What is the population of that city?',
+    messages: messages,
+  );
+  print('User: What is the population of that city?');
+  print('Assistant: ${response2.output}');
+
+  print('\nMessage history contains ${response2.messages.length} messages');
+}
+
+Future<void> providerSwitchingExample() async {
+  print('\nproviderSwitchingExample');
+
+  // Start with OpenAI agent
+  final openaiAgent = Agent(
+    'openai',
+    systemPrompt: 'Be helpful and call tools when needed.',
+    tools: [
+      Tool(
+        name: 'time',
+        description: 'Get the current time in a given time zone',
+        inputType: TimeFunctionInput.schemaMap.toSchema(),
+        onCall: onTimeCall,
+      ),
+    ],
+  );
+
+  // First interaction with OpenAI
+  final response1 = await openaiAgent.run('What time is it in London?');
+  print('OpenAI response: ${response1.output}');
+
+  // Switch to Gemini agent, passing the message history
+  final geminiAgent = Agent(
+    'gemini',
+    systemPrompt: 'Be helpful and call tools when needed.',
+    tools: [
+      Tool(
+        name: 'time',
+        description: 'Get the current time in a given time zone',
+        inputType: TimeFunctionInput.schemaMap.toSchema(),
+        onCall: onTimeCall,
+      ),
+    ],
+  );
+
+  // Continue conversation with Gemini using the message history
+  final response2 = await geminiAgent.run(
+    'What about New York?',
+    messages: response1.messages,
+  );
+  print('Gemini response: ${response2.output}');
+
+  print('\nTool calls work seamlessly across providers!');
+}
+
+Future<void> embeddingExample() async {
+  print('\nembeddingExample');
+
+  final agent = Agent('openai');
+
+  // Generate embeddings for different types of content
+  const documentText =
+      'Machine learning is a subset of artificial '
+      'intelligence that enables computers to learn and make decisions '
+      'from data.';
+  const queryText = 'What is machine learning?';
+  const unrelatedText = 'The weather today is sunny and warm.';
+
+  // Create document embedding
+  final documentEmbedding = await agent.createEmbedding(
+    documentText,
+    type: EmbeddingType.document,
+  );
+  print('Document embedding created: ${documentEmbedding.length} dimensions');
+
+  // Create query embedding
+  final queryEmbedding = await agent.createEmbedding(
+    queryText,
+    type: EmbeddingType.query,
+  );
+  print('Query embedding created: ${queryEmbedding.length} dimensions');
+
+  // Create embedding for unrelated content
+  final unrelatedEmbedding = await agent.createEmbedding(
+    unrelatedText,
+    type: EmbeddingType.document,
+  );
+  print('Unrelated embedding created: ${unrelatedEmbedding.length} dimensions');
+
+  // Calculate similarities using cosine similarity
+  final docQuerySimilarity = Agent.cosineSimilarity(
+    documentEmbedding,
+    queryEmbedding,
+  );
+  final docUnrelatedSimilarity = Agent.cosineSimilarity(
+    documentEmbedding,
+    unrelatedEmbedding,
+  );
+
+  print(
+    '\nSimilarity between document and query: '
+    '${docQuerySimilarity.toStringAsFixed(4)}',
+  );
+  print(
+    'Similarity between document and unrelated: '
+    '${docUnrelatedSimilarity.toStringAsFixed(4)}',
+  );
+
+  // The query should be more similar to the document than the unrelated text
+  if (docQuerySimilarity > docUnrelatedSimilarity) {
+    print('✓ Query is more similar to document than unrelated text');
+  } else {
+    print('✗ Unexpected similarity results');
   }
+
+  // Test with Gemini provider for comparison
+  print('\nTesting with Gemini provider...');
+  final geminiAgent = Agent('gemini');
+
+  final geminiDocEmbedding = await geminiAgent.createEmbedding(
+    documentText,
+    type: EmbeddingType.document,
+  );
+  print('Gemini document embedding: ${geminiDocEmbedding.length} dimensions');
+
+  final geminiQueryEmbedding = await geminiAgent.createEmbedding(
+    queryText,
+    type: EmbeddingType.query,
+  );
+
+  final geminiSimilarity = Agent.cosineSimilarity(
+    geminiDocEmbedding,
+    geminiQueryEmbedding,
+  );
+  print('Gemini similarity: ${geminiSimilarity.toStringAsFixed(4)}');
 }

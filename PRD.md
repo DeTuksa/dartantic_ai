@@ -157,14 +157,27 @@ tools.
   - `Agent.cosineSimilarity()` static method for comparing embeddings.
   - Comprehensive integration tests covering both OpenAI and Gemini providers.
 
-### Milestone 4: Multi-media input
+### Milestone 3.1: Message API Convenience Methods
+- [x] **Enhanced Message Construction**: Added convenience methods to simplify message and content creation:
+  - `Content` type alias for `List<Part>` to improve readability and semantic clarity.
+  - Convenience constructors for `Message` class:
+    - `Message.system(Content content)` - Creates system messages
+    - `Message.user(Content content)` - Creates user messages  
+    - `Message.model(Content content)` - Creates model messages
+  - `Content.text(String text)` extension method to easily create text-only content.
+  - Convenience constructors for `ToolPart` class:
+    - `ToolPart.call({required String id, required String name, Map<String, dynamic> arguments})` - Creates tool calls
+    - `ToolPart.result({required String id, required String name, Map<String, dynamic> result})` - Creates tool results
+  - These methods significantly reduce boilerplate when working with messages, making the API more ergonomic for common use cases like creating simple text messages or tool interactions.
+
+### Milestone 4: Dartantic provider for Flutter AI Toolkit
+- [ ] Implement the `LlmProvider` interface in terms of `Agent`
+
+### Milestone 5: Multi-media input
 - [ ] `Model.runStream` should take a `Message` as a prompt, so that it can
   include media parts
 - [ ] `Agent.runXxx()` should be updated to support a prompt message, including
   multi-media parts
-
-### Milestone 5: Dartantic provider for Flutter AI Toolkit
-- [ ] Implement the `LlmProvider` interface in terms of `Agent`
 
 ### Milestone 6: Typed Response + Tools + Simple Agent Loop
 - [ ] e.g. two tools, typed response and we keep looping till the LLM is done

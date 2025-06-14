@@ -2,6 +2,9 @@
 
 import 'dart:convert';
 
+/// Type alias for a list of content parts.
+typedef Content = List<Part>;
+
 /// Enum representing the role of a message in a conversation.
 enum MessageRole {
   /// Instructions or context for the conversation.
@@ -41,17 +44,29 @@ class Message {
     content:
         json['content'] == null
             ? []
-            : List<Part>.from(json['content']!.map((x) => Part.fromJson(x))),
+            : Content.from(json['content']!.map((x) => Part.fromJson(x))),
   );
+
+  /// Creates a system message with the given [content].
+  Message.system(Content content)
+      : this(role: MessageRole.system, content: content);
+
+  /// Creates a user message with the given [content].
+  Message.user(Content content)
+      : this(role: MessageRole.user, content: content);
+
+  /// Creates a model message with the given [content].
+  Message.model(Content content)
+      : this(role: MessageRole.model, content: content);
 
   /// The role of the message (system, user, or model).
   final MessageRole role;
 
   /// The list of content parts in the message.
-  final List<Part> content;
+  final Content content;
 
   /// Returns a copy of this message with optional new [role] and/or [content].
-  Message copyWith({MessageRole? role, List<Part>? content}) =>
+  Message copyWith({MessageRole? role, Content? content}) =>
       Message(role: role ?? this.role, content: content ?? this.content);
 
   /// Converts this message to a raw JSON string.
@@ -186,6 +201,32 @@ class ToolPart extends Part {
     );
   }
 
+  /// Creates a tool call [ToolPart] with the given [id], [name], and 
+  /// [arguments].
+  ToolPart.call({
+    required String id,
+    required String name,
+    Map<String, dynamic> arguments = const {},
+  }) : this(
+          kind: ToolPartKind.call,
+          id: id,
+          name: name,
+          arguments: arguments,
+        );
+
+  /// Creates a tool result [ToolPart] with the given [id], [name], and 
+  /// [result].
+  ToolPart.result({
+    required String id,
+    required String name,
+    Map<String, dynamic> result = const {},
+  }) : this(
+          kind: ToolPartKind.result,
+          id: id,
+          name: name,
+          result: result,
+        );
+
   /// The kind of tool part: call or result.
   final ToolPartKind kind;
 
@@ -220,4 +261,10 @@ class ToolPart extends Part {
     ToolPartKind.result =>
       'ToolPart(kind: result, id: $id, name: $name, result: $result)',
   };
+}
+
+/// Extension methods for [Content].
+extension ContentExtension on Content {
+  /// Creates a [Content] with a single [TextPart] containing the given [text].
+  static Content text(String text) => [TextPart(text)];
 }

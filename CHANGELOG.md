@@ -1,3 +1,10 @@
+## TODO
+- Message construction convenience methods:
+  - Added `Content` type alias for `List<Part>` to improve readability
+  - Added convenience constructors for `Message`: `Message.system()`, `Message.user()`, `Message.model()`
+  - Added `Content.text()` extension method for easy text content creation
+  - Added convenience constructors for `ToolPart`: `ToolPart.call()` and `ToolPart.result()`
+
 ## 0.5.0
 - Embedding generation: Add methods to generate vector embeddings for text:
   - `Future<Float64List> createEmbedding(String text, {EmbeddingType type})`

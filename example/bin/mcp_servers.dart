@@ -3,8 +3,48 @@
 import 'dart:io';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:logging/logging.dart';
 
 void main() async {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen(
+    (record) => print('[${record.level.name}]: ${record.message}'),
+  );
+
+  await singleMcpServer();
+  await multipleToolsAndMcpServers();
+  exit(0);
+}
+
+Future<void> singleMcpServer() async {
+  print('\nSingle MCP Server');
+
+  final huggingFace = McpServer.remote(
+    'huggingface',
+    url: 'https://huggingface.co/mcp',
+  );
+
+  final agent = Agent(
+    'google',
+    systemPrompt:
+        'You are a helpful assistant with access to various tools; '
+        'use the right one for the right job!',
+    tools: [...await huggingFace.getTools()],
+  );
+
+  try {
+    const query = 'Who is hugging face?';
+    await agent.runStream(query).map((r) => stdout.write(r.output)).drain();
+  } finally {
+    await huggingFace.disconnect();
+  }
+
+  print('');
+}
+
+Future<void> multipleToolsAndMcpServers() async {
+  print('\nMultiple Tools and MCP Servers');
+
   final localTime = Tool(
     name: 'local_time',
     description: 'Returns the current local time in ISO 8601 format.',
@@ -45,10 +85,10 @@ void main() async {
         'Where am I and what time is it and '
         'who is hugging face and '
         'what model providers does csells/dartantic_ai currently support?';
-    await agent.runStream(query).map((r) => print(r.output)).drain();
+    await agent.runStream(query).map((r) => stdout.write(r.output)).drain();
   } finally {
     await Future.wait([deepwiki.disconnect(), huggingFace.disconnect()]);
   }
 
-  exit(0);
+  print('');
 }

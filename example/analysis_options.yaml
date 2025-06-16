@@ -7,6 +7,8 @@ analyzer:
     - "test/.test_coverage.dart"
     - "bin/cache/**"
     - "lib/generated_plugin_registrant.dart"
+    - "lib/pubspec.dart"
+
   errors:
     # without ignore here, we cause import of all_lint_rules to warn, because
     # some rules conflict; instead, we're explicitly enabling even conflicting
@@ -15,7 +17,7 @@ analyzer:
     document_ignores: ignore
     included_file_warning: ignore
     public_member_api_docs: ignore
-    specify_nonobvious_local_variable_types: ignore 
+    specify_nonobvious_local_variable_types: ignore
 
 linter:
   rules:

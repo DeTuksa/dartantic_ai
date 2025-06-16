@@ -7,6 +7,8 @@ analyzer:
     - "test/.test_coverage.dart"
     - "bin/cache/**"
     - "lib/generated_plugin_registrant.dart"
+    - "lib/pubspec.dart"
+
   errors:
     # without ignore here, we cause import of all_lint_rules to warn, because
     # some rules conflict; instead, we're explicitly enabling even conflicting

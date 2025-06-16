@@ -3,7 +3,7 @@
 // ignore_for_file: public_member_api_docs, constant_identifier_names, avoid_classes_with_only_static_members
 
 mixin Pubspec {
-  static final buildDate = DateTime.utc(2025, 6, 16, 20, 50, 17);
+  static final buildDate = DateTime.utc(2025, 6, 16, 20, 58, 16);
 
   static const name = 'dartantic_ai';
 
@@ -49,5 +49,9 @@ mixin Pubspec {
     'build_runner': '^2.5.0',
     'pubspec_extract': '^2.0.8',
     'test': '^1.24.0',
+  };
+
+  static const pubspec_extract = <dynamic, dynamic>{
+    'format': true,
   };
 }

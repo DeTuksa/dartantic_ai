@@ -11,14 +11,10 @@ mixin Pubspec {
 
   static const publish_to = 'none';
 
-  static const environment = <dynamic, dynamic>{
-    'sdk': '^3.7.2',
-  };
+  static const environment = <dynamic, dynamic>{'sdk': '^3.7.2'};
 
   static const dependencies = <dynamic, dynamic>{
-    'dartantic_ai': <dynamic, dynamic>{
-      'path': '..',
-    },
+    'dartantic_ai': <dynamic, dynamic>{'path': '..'},
     'dotprompt_dart': '^0.2.0',
     'google_generative_ai': '^0.4.7',
     'http': '^1.2.0',

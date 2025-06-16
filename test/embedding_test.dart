@@ -3,9 +3,8 @@
 import 'dart:typed_data';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:dartantic_ai/src/providers/implementation/provider_table.dart';
 import 'package:test/test.dart';
-
-import 'test_utils.dart';
 
 // NOTE: these tests require environment variables to be set.
 // I recommend using .vscode/settings.json like so:
@@ -245,7 +244,10 @@ void main() {
     });
 
     test('createEmbedding with all provider types', () async {
-      final allProviders = allProvidersByType();
+      final allProviders = [
+        for (final providerName in ProviderTable.primaryProviders.keys)
+          Agent.providerFor(providerName),
+      ];
 
       for (final provider in allProviders) {
         final agent = Agent.provider(provider);

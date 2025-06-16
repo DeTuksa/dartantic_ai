@@ -11,7 +11,7 @@ void main() {
       test('creates remote server with required parameters', () {
         final server = McpServer.remote(
           'test-server',
-          url: 'https://example.com/mcp',
+          url: Uri.parse('https://example.com/mcp'),
         );
 
         expect(server.name, equals('test-server'));
@@ -22,7 +22,7 @@ void main() {
       test('creates remote server with headers', () {
         final server = McpServer.remote(
           'test-server',
-          url: 'https://example.com/mcp',
+          url: Uri.parse('https://example.com/mcp'),
           headers: {'Authorization': 'Bearer token'},
         );
 
@@ -61,7 +61,7 @@ void main() {
       setUp(() {
         huggingFaceServer = McpServer.remote(
           'huggingface',
-          url: 'https://huggingface.co/mcp',
+          url: Uri.parse('https://huggingface.co/mcp'),
         );
       });
 
@@ -89,7 +89,7 @@ void main() {
       test('handles connection errors gracefully', () async {
         final badServer = McpServer.remote(
           'bad-server',
-          url: 'https://nonexistent.invalid/mcp',
+          url: Uri.parse('https://nonexistent.invalid/mcp'),
         );
 
         expect(
@@ -225,7 +225,7 @@ void main() {
 
         final huggingFaceServer = McpServer.remote(
           'huggingface',
-          url: 'https://huggingface.co/mcp',
+          url: Uri.parse('https://huggingface.co/mcp'),
         );
 
         final mcpTools = await huggingFaceServer.getTools();

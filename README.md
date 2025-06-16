@@ -618,7 +618,7 @@ import 'package:dartantic_ai/dartantic_ai.dart';
 void main() async {
   final huggingFace = McpServer.remote(
     'huggingface',
-    url: 'https://huggingface.co/mcp',
+    url: Uri.parse('https://huggingface.co/mcp'),
   );
 
   final agent = Agent(

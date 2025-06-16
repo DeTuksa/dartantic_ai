@@ -21,7 +21,7 @@ Future<void> singleMcpServer() async {
 
   final huggingFace = McpServer.remote(
     'huggingface',
-    url: 'https://huggingface.co/mcp',
+    url: Uri.parse('https://huggingface.co/mcp'),
   );
 
   final agent = Agent(
@@ -59,12 +59,12 @@ Future<void> multipleToolsAndMcpServers() async {
 
   final deepwiki = McpServer.remote(
     'deepwiki',
-    url: 'https://mcp.deepwiki.com/mcp',
+    url: Uri.parse('https://mcp.deepwiki.com/mcp'),
   );
 
   final huggingFace = McpServer.remote(
     'huggingface',
-    url: 'https://huggingface.co/mcp',
+    url: Uri.parse('https://huggingface.co/mcp'),
   );
 
   final agent = Agent(

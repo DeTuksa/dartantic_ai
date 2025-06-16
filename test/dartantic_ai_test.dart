@@ -1,4 +1,5 @@
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:dartantic_ai/src/providers/implementation/provider_table.dart';
 import 'package:dotprompt_dart/dotprompt_dart.dart';
 import 'package:test/test.dart';
 
@@ -443,6 +444,73 @@ Summarize this in {{length}} words: {{text}}
         final resultOutput = output.toString();
         expect(resultOutput, isNotEmpty);
         expect(resultOutput, contains('New York'));
+      });
+    });
+
+    group('Provider Aliases', () {
+      test('googleai alias creates GeminiProvider', () {
+        final settings = ProviderSettings(
+          providerName: 'googleai',
+          modelName: 'gemini-2.0-flash',
+          embeddingModelName: null,
+          apiKey: null,
+          baseUrl: null,
+          temperature: null,
+        );
+        final provider = ProviderTable.providerFor(settings);
+        expect(provider, isA<GeminiProvider>());
+      });
+
+      test('google-gla alias creates GeminiProvider', () {
+        final settings = ProviderSettings(
+          providerName: 'google-gla',
+          modelName: 'gemini-2.0-flash',
+          embeddingModelName: null,
+          apiKey: null,
+          baseUrl: null,
+          temperature: null,
+        );
+        final provider = ProviderTable.providerFor(settings);
+        expect(provider, isA<GeminiProvider>());
+      });
+
+      test('gemini alias creates GeminiProvider', () {
+        final settings = ProviderSettings(
+          providerName: 'gemini',
+          modelName: 'gemini-2.0-flash',
+          embeddingModelName: null,
+          apiKey: null,
+          baseUrl: null,
+          temperature: null,
+        );
+        final provider = ProviderTable.providerFor(settings);
+        expect(provider, isA<GeminiProvider>());
+      });
+
+      test('google provider creates GeminiProvider', () {
+        final settings = ProviderSettings(
+          providerName: 'google',
+          modelName: 'gemini-2.0-flash',
+          embeddingModelName: null,
+          apiKey: null,
+          baseUrl: null,
+          temperature: null,
+        );
+        final provider = ProviderTable.providerFor(settings);
+        expect(provider, isA<GeminiProvider>());
+      });
+
+      test('openai provider creates OpenAiProvider', () {
+        final settings = ProviderSettings(
+          providerName: 'openai',
+          modelName: 'gpt-4o',
+          embeddingModelName: null,
+          apiKey: null,
+          baseUrl: null,
+          temperature: null,
+        );
+        final provider = ProviderTable.providerFor(settings);
+        expect(provider, isA<OpenAiProvider>());
       });
     });
   });

@@ -58,7 +58,7 @@ class McpServer {
   /// - [headers]: Optional HTTP headers to include in requests.
   McpServer.remote(
     String name, {
-    required String url,
+    required Uri url,
     Map<String, String>? headers,
   }) : this._(
          kind: McpServerKind.remote,
@@ -90,7 +90,7 @@ class McpServer {
   // Remote server properties (null for local servers)
 
   /// The HTTP URL for remote servers.
-  final String? url;
+  final Uri? url;
 
   /// HTTP headers for remote servers.
   final Map<String, String>? headers;
@@ -164,7 +164,7 @@ class McpServer {
 
       case McpServerKind.remote:
         _transport = mcp.StreamableHttpClientTransport(
-          Uri.parse(url!),
+          url!,
           opts:
               headers == null
                   ? null

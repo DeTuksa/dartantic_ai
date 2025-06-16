@@ -1,3 +1,10 @@
+## 0.7.0
+
+- baseUrl support to enable OpenAI-compatibility.
+- temperature support.
+- Breaking change: `McpServer.remote` now takes a `Uri` instead of a `String` for
+  the URL.
+
 ## 0.6.0
 
 - MCP (Model Context Protocol) Server Support

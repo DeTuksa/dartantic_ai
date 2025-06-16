@@ -44,13 +44,22 @@ class Agent {
   ///   not provided, uses the provider's default embedding model.
   factory Agent(
     String model, {
+    String? embeddingModel,
+    String? apiKey,
+    Uri? baseUrl,
     String? systemPrompt,
     JsonSchema? outputSchema,
     dynamic Function(Map<String, dynamic> json)? outputFromJson,
     Iterable<Tool>? tools,
-    String? embeddingModel,
+    double? temperature,
   }) => Agent.provider(
-    providerFor(model, embeddingModel: embeddingModel),
+    providerFor(
+      model,
+      embeddingModel: embeddingModel,
+      apiKey: apiKey,
+      baseUrl: baseUrl,
+      temperature: temperature,
+    ),
     systemPrompt: systemPrompt,
     outputSchema: outputSchema,
     outputFromJson: outputFromJson,
@@ -296,9 +305,19 @@ class Agent {
   ///
   /// [model] should be in the format "providerName", "providerName:modelName",
   /// or "providerName/modelName".
+  /// [embeddingModel] is optional and specifies the embedding model to use.
+  /// [apiKey] is optional and specifies the API key for authentication.
+  /// [baseUrl] is optional and specifies the base URL for the provider.
+  /// [temperature] is optional and specifies the temperature for the provider.
   ///
   /// Throws [ArgumentError] if [model] is empty.
-  static Provider providerFor(String model, {String? embeddingModel}) {
+  static Provider providerFor(
+    String model, {
+    String? embeddingModel,
+    String? apiKey,
+    Uri? baseUrl,
+    double? temperature,
+  }) {
     if (model.isEmpty) throw ArgumentError('Model must be provided');
 
     final modelParts = model.split(RegExp('[:/]'));
@@ -309,8 +328,10 @@ class Agent {
       ProviderSettings(
         providerName: providerName,
         modelName: modelName,
-        apiKey: null,
         embeddingModelName: embeddingModel,
+        apiKey: apiKey,
+        baseUrl: baseUrl,
+        temperature: temperature,
       ),
     );
   }

@@ -13,8 +13,10 @@ class ProviderSettings {
   ProviderSettings({
     required this.providerName,
     required this.modelName,
+    required this.embeddingModelName,
     required this.apiKey,
-    this.embeddingModelName,
+    required this.baseUrl,
+    required this.temperature,
   });
 
   /// The provider family name (e.g., "openai", "google-gla").
@@ -29,4 +31,10 @@ class ProviderSettings {
 
   /// The API key for authentication with the provider.
   final String? apiKey;
+
+  /// The base URL for the provider.
+  final Uri? baseUrl;
+
+  /// The temperature for the provider.
+  final double? temperature;
 }

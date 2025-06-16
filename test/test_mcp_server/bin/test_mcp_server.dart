@@ -42,5 +42,5 @@ void main() async {
     },
   );
 
-  server.connect(StdioServerTransport());
+  await server.connect(StdioServerTransport());
 }

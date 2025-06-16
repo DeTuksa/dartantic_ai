@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:mcp_dart/mcp_dart.dart' as mcp;
 
 import '../../pubspec.dart';
@@ -155,6 +157,8 @@ class McpServer {
             args: args ?? [],
             environment: environment,
             workingDirectory: workingDirectory,
+            // Fix mcp_dart bug: must use normal mode to access stdout/stdin pipes
+            stderrMode: ProcessStartMode.normal,
           ),
         );
 

@@ -3,7 +3,6 @@
 import 'dart:io';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
-import 'package:mcp_dart/mcp_dart.dart' as mcp;
 import 'package:test/test.dart';
 
 void main() {
@@ -160,38 +159,31 @@ void main() {
       });
 
       test('can connect to local MCP server directly', () async {
-        // final localServer = McpServer.local(
-        //   'test-mcp-server',
-        //   command: 'dart',
-        //   args: ['test/test_mcp_server/bin/test_mcp_server.dart'],
-        // );
-
-        final client = mcp.Client(
-          const mcp.Implementation(name: 'mcp_server_test', version: '0.0.0'),
+        final localServer = McpServer.local(
+          'test-mcp-server',
+          command: 'dart',
+          args: ['test/test_mcp_server/bin/test_mcp_server.dart'],
         );
 
-        final exists =
-            File('test/test_mcp_server/bin/test_mcp_server.dart').existsSync();
-        print(exists);
+        // Test that we can get tools from the local server
+        final tools = await localServer.getTools();
+        expect(tools, isNotEmpty);
 
-        final transport = mcp.StdioClientTransport(
-          const mcp.StdioServerParameters(
-            command: 'dart',
-            args: ['test/test_mcp_server/bin/test_mcp_server.dart'],
-          ),
+        // Find the calculate tool
+        final calculateTool = tools.firstWhere(
+          (tool) => tool.name == 'calculate',
         );
 
-        await client.connect(transport);
+        // Test calling the tool
+        final result = await calculateTool.onCall({
+          'operation': 'add',
+          'a': 5,
+          'b': 3,
+        });
+        print(result);
 
-        final response = await client.callTool(
-          const mcp.CallToolRequestParams(
-            name: 'calculate',
-            arguments: {'operation': 'add', 'a': 5, 'b': 3},
-          ),
-        );
-
-        await transport.close();
-        expect(response, contains('8'));
+        expect(result['result'], contains('Result: 8'));
+        await localServer.disconnect();
       });
     });
 

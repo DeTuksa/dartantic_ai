@@ -108,9 +108,9 @@ class McpServer {
   ///
   /// Returns the result from the tool execution.
   Future<Map<String, dynamic>> call(
-    String toolName,
-    Map<String, dynamic>? arguments,
-  ) async {
+    String toolName, [
+    Map<String, dynamic>? arguments = const {},
+  ]) async {
     if (!isConnected) await _connect();
 
     final result = await _client!.callTool(

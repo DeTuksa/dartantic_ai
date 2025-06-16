@@ -3,7 +3,7 @@
 // ignore_for_file: public_member_api_docs, constant_identifier_names, avoid_classes_with_only_static_members
 
 mixin Pubspec {
-  static final buildDate = DateTime.utc(2025, 6, 16, 20, 50, 17);
+  static final buildDate = DateTime.utc(2025, 6, 16, 21, 12, 22);
 
   static const name = 'example';
 
@@ -30,4 +30,6 @@ mixin Pubspec {
     'build_runner': '^2.4.15',
     'json_serializable': '^6.9.0',
   };
+
+  static const pubspec_extract = <dynamic, dynamic>{'format': true};
 }

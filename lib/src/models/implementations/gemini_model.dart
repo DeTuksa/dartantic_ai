@@ -64,7 +64,7 @@ class GeminiModel extends Model {
       '[GeminiModel] Starting stream with ${messages.length} messages, '
       'prompt length: ${prompt.length}',
     );
-    
+
     final history = _geminiHistoryFrom(messages);
     final chat = _model.startChat(history: history.isEmpty ? null : history);
     final stream = chat.sendMessageStream(gemini.Content.text(prompt));
@@ -108,9 +108,7 @@ class GeminiModel extends Model {
         );
         final result = await _callTool(functionCall.name, functionCall.args);
         responses.add(gemini.FunctionResponse(functionCall.name, result));
-        log.fine(
-          '[GeminiModel] Tool response: ${functionCall.name} = $result',
-        );
+        log.fine('[GeminiModel] Tool response: ${functionCall.name} = $result');
       }
 
       // Send function responses back to the model
@@ -141,7 +139,7 @@ class GeminiModel extends Model {
       '[GeminiModel] Creating embedding for text (length: ${text.length}, '
       'type: $type)',
     );
-    
+
     final taskType = switch (type) {
       EmbeddingType.document => gemini.TaskType.retrievalDocument,
       EmbeddingType.query => gemini.TaskType.retrievalQuery,
@@ -162,7 +160,7 @@ class GeminiModel extends Model {
     log.fine(
       '[GeminiModel] Created embedding with ${embedding.length} dimensions',
     );
-    
+
     return embedding;
   }
 

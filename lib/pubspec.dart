@@ -3,7 +3,7 @@
 // ignore_for_file: public_member_api_docs, constant_identifier_names, avoid_classes_with_only_static_members
 
 mixin Pubspec {
-  static final buildDate = DateTime.utc(2025, 6, 16, 20, 58, 16);
+  static final buildDate = DateTime.utc(2025, 6, 16, 21, 14, 17);
 
   static const name = 'dartantic_ai';
 
@@ -30,9 +30,7 @@ mixin Pubspec {
 
   static const repository = 'https://github.com/csells/dartantic_ai';
 
-  static const environment = <dynamic, dynamic>{
-    'sdk': '^3.7.2',
-  };
+  static const environment = <dynamic, dynamic>{'sdk': '^3.7.2'};
 
   static const dependencies = <dynamic, dynamic>{
     'dotprompt_dart': '^0.2.0',
@@ -51,7 +49,5 @@ mixin Pubspec {
     'test': '^1.24.0',
   };
 
-  static const pubspec_extract = <dynamic, dynamic>{
-    'format': true,
-  };
+  static const pubspec_extract = <dynamic, dynamic>{'format': true};
 }

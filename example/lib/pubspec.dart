@@ -1,9 +1,9 @@
 // This file is generated automatically, do not modify
 
-// ignore_for_file: public_member_api_docs, constant_identifier_names
+// ignore_for_file: public_member_api_docs, constant_identifier_names, avoid_classes_with_only_static_members
 
 mixin Pubspec {
-  static final buildDate = DateTime.utc(2025, 6, 16, 18, 9, 19);
+  static final buildDate = DateTime.utc(2025, 6, 16, 20, 50, 17);
 
   static const name = 'example';
 
@@ -11,14 +11,19 @@ mixin Pubspec {
 
   static const publish_to = 'none';
 
-  static const environment = <dynamic, dynamic>{'sdk': '^3.7.2'};
+  static const environment = <dynamic, dynamic>{
+    'sdk': '^3.7.2',
+  };
 
   static const dependencies = <dynamic, dynamic>{
-    'dartantic_ai': <dynamic, dynamic>{'path': '..'},
+    'dartantic_ai': <dynamic, dynamic>{
+      'path': '..',
+    },
     'dotprompt_dart': '^0.2.0',
     'google_generative_ai': '^0.4.7',
     'http': '^1.2.0',
     'json_annotation': '^4.9.0',
+    'logging': '^1.3.0',
     'openai_dart': '^0.4.5',
     'soti_schema': '^1.0.0',
     'timezone': '^0.10.1',

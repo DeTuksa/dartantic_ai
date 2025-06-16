@@ -14,13 +14,21 @@ class ProviderTable {
           modelName: settings.modelName,
           embeddingModelName: settings.embeddingModelName,
           apiKey: settings.apiKey,
+          baseUrl: settings.baseUrl,
+          temperature: settings.temperature,
         ),
-    'google':
-        (settings) => GeminiProvider(
-          modelName: settings.modelName,
-          embeddingModelName: settings.embeddingModelName,
-          apiKey: settings.apiKey,
-        ),
+    'google': (settings) {
+      if (settings.baseUrl != null) {
+        throw ArgumentError('Google provider does not support baseUrl');
+      }
+
+      return GeminiProvider(
+        modelName: settings.modelName,
+        embeddingModelName: settings.embeddingModelName,
+        apiKey: settings.apiKey,
+        temperature: settings.temperature,
+      );
+    },
   };
 
   /// Aliases for provider names to support different naming conventions.

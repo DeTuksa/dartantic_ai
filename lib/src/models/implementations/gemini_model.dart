@@ -32,6 +32,7 @@ class GeminiModel extends Model {
     JsonSchema? outputSchema,
     String? systemPrompt,
     Iterable<Tool>? tools,
+    double? temperature,
   }) : _embeddingModelName = embeddingModelName,
        _apiKey = apiKey,
        _tools = tools,
@@ -44,6 +45,7 @@ class GeminiModel extends Model {
                  : gemini.GenerationConfig(
                    responseMimeType: 'application/json',
                    responseSchema: _geminiSchemaFrom(outputSchema),
+                   temperature: temperature,
                  ),
          systemInstruction:
              systemPrompt != null ? gemini.Content.text(systemPrompt) : null,

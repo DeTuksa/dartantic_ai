@@ -21,6 +21,7 @@ class GeminiProvider extends Provider {
     String? modelName,
     String? embeddingModelName,
     String? apiKey,
+    this.temperature,
   }) : modelName = modelName ?? defaultModelName,
        embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
        apiKey = apiKey ?? platform.getEnv(apiKeyName);
@@ -47,6 +48,9 @@ class GeminiProvider extends Provider {
   /// The API key to use for authentication with the Gemini API.
   final String apiKey;
 
+  /// The temperature to use for the Gemini API.
+  final double? temperature;
+
   /// Creates a [Model] instance using this provider's configuration.
   ///
   /// The [settings] parameter contains additional configuration options
@@ -59,5 +63,6 @@ class GeminiProvider extends Provider {
     outputSchema: settings.outputSchema,
     systemPrompt: settings.systemPrompt,
     tools: settings.tools,
+    temperature: temperature,
   );
 }

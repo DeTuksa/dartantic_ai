@@ -24,20 +24,26 @@ class OpenAiModel extends Model {
     required String apiKey,
     required String modelName,
     required String embeddingModelName,
+    Uri? baseUrl,
     JsonSchema? outputSchema,
     String? systemPrompt,
     Iterable<Tool>? tools,
+    double? temperature,
   }) : _embeddingModelName = embeddingModelName,
        _tools = tools,
        _systemPrompt = systemPrompt,
        _modelName = modelName,
-       _client = openai.OpenAIClient(apiKey: apiKey),
+       _client = openai.OpenAIClient(
+         apiKey: apiKey,
+         baseUrl: baseUrl?.toString(),
+       ),
        _responseFormat =
            outputSchema != null
                ? openai.ResponseFormat.jsonSchema(
                  jsonSchema: _openaiSchemaFrom(outputSchema),
                )
-               : null;
+               : null,
+       _temperature = temperature;
 
   final openai.OpenAIClient _client;
   final String _modelName;
@@ -45,6 +51,7 @@ class OpenAiModel extends Model {
   final openai.ResponseFormat? _responseFormat;
   final String? _systemPrompt;
   final Iterable<Tool>? _tools;
+  final double? _temperature;
 
   @override
   Stream<AgentResponse> runStream({
@@ -82,6 +89,7 @@ class OpenAiModel extends Model {
                     ),
                   )
                   .toList(),
+          temperature: _temperature,
         ),
       );
 

@@ -21,6 +21,8 @@ class OpenAiProvider extends Provider {
     String? modelName,
     String? embeddingModelName,
     String? apiKey,
+    this.baseUrl,
+    this.temperature,
   }) : modelName = modelName ?? defaultModelName,
        embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
        apiKey = apiKey ?? platform.getEnv(apiKeyName);
@@ -47,6 +49,12 @@ class OpenAiProvider extends Provider {
   /// The API key to use for authentication with the OpenAI API.
   final String apiKey;
 
+  /// The base URL for the OpenAI API.
+  final Uri? baseUrl;
+
+  /// The temperature to use for the OpenAI API.
+  final double? temperature;
+
   /// Creates a [Model] instance using this provider's configuration.
   ///
   /// The [settings] parameter contains additional configuration options
@@ -59,5 +67,7 @@ class OpenAiProvider extends Provider {
     outputSchema: settings.outputSchema,
     systemPrompt: settings.systemPrompt,
     tools: settings.tools,
+    baseUrl: baseUrl,
+    temperature: temperature,
   );
 }

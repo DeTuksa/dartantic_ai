@@ -125,6 +125,10 @@ class OpenAiModel extends Model {
           'finishReason: ${choice.finishReason}',
         );
 
+        if (delta == null) {
+          continue;
+        }
+
         // Handle content streaming
         if (delta.content != null) {
           log.fine('[OpenAiModel] Yielding content: ${delta.content!}');

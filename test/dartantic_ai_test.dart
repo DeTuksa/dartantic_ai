@@ -1,4 +1,5 @@
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:dartantic_ai/src/platform/platform.dart' as platform;
 import 'package:dotprompt_dart/dotprompt_dart.dart';
 import 'package:test/test.dart';
 
@@ -443,6 +444,25 @@ Summarize this in {{length}} words: {{text}}
         final resultOutput = output.toString();
         expect(resultOutput, isNotEmpty);
         expect(resultOutput, contains('New York'));
+      });
+
+      test('OpenAI Provider with Google AI OpenAI-compatible API', () async {
+        final agent = Agent(
+          'openai:gemini-2.0-flash',
+          baseUrl: Uri.parse('https://generativelanguage.googleapis.com/v1beta/openai'),
+          apiKey: platform.getEnv('GEMINI_API_KEY'),
+          systemPrompt: 'Be concise, reply with one sentence.',
+        );
+
+        final output = StringBuffer();
+        await for (final chunk in agent.runStream(
+          'Where does "hello world" come from?',
+        )) {
+          output.write(chunk.output);
+        }
+        final resultOutput = output.toString();
+        expect(resultOutput, isNotEmpty);
+        expect(RegExp(r'\.').allMatches(resultOutput).length, equals(1));
       });
     });
 

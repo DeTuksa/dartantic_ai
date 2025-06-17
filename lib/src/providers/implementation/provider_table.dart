@@ -1,4 +1,3 @@
-import '../../platform/platform.dart' as platform;
 import '../providers.dart';
 
 /// Manages the mapping between provider family names and provider factories.
@@ -19,23 +18,24 @@ class ProviderTable {
           temperature: settings.temperature,
         ),
 
-    'gemini-compat':
-        // we're using the OpenAI-compatible Gemini API, but we still have to
-        // use Google model names and API keys
-        (settings) => OpenAiProvider(
-          modelName: settings.modelName ?? GeminiProvider.defaultModelName,
-          embeddingModelName:
-              settings.embeddingModelName ??
-              GeminiProvider.defaultEmbeddingModelName,
-          apiKey: settings.apiKey ?? platform.getEnv(GeminiProvider.apiKeyName),
-          baseUrl:
-              settings.baseUrl ??
-              Uri.parse(
-                'https://generativelanguage.googleapis.com/v1beta/openai',
-              ),
-          temperature: settings.temperature,
-        ),
-
+    // waiting on https://github.com/davidmigloz/langchain_dart/issues/726
+    // 'gemini-compat':
+    //     // we're using the OpenAI-compatible Gemini API, but we still have to
+    //     // use Google model names and API keys
+    //     (settings) => OpenAiProvider(
+    //       modelName: settings.modelName ?? GeminiProvider.defaultModelName,
+    //       embeddingModelName:
+    //           settings.embeddingModelName ??
+    //           GeminiProvider.defaultEmbeddingModelName,
+    //       apiKey: settings.apiKey ?? platform.getEnv(GeminiProvider.apiKeyName),
+    //       baseUrl:
+    //           settings.baseUrl ??
+    //           Uri.parse(
+    //             'https://generativelanguage.googleapis.com/v1beta/openai',
+    //           ),
+    //       temperature: settings.temperature,
+    //     ),
+    
     'google': (settings) {
       if (settings.baseUrl != null) {
         throw ArgumentError('Google provider does not support baseUrl');

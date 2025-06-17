@@ -78,7 +78,7 @@ class GeminiModel extends Model {
       final text = chunk.text ?? '';
       if (text.isNotEmpty) {
         chunks.add(text);
-        log.fine('[GeminiModel] Yielding content: $text');
+        log.finest('[GeminiModel] Yielding content: $text');
         yield AgentResponse(output: text, messages: []);
       }
 
@@ -87,7 +87,7 @@ class GeminiModel extends Model {
         final callsDesc = chunk.functionCalls
             .map((fc) => '${fc.name}(${fc.args})')
             .join(', ');
-        log.fine('[GeminiModel] Function calls received: $callsDesc');
+        log.finest('[GeminiModel] Function calls received: $callsDesc');
       }
       functionCalls.addAll(chunk.functionCalls);
     }
@@ -98,7 +98,7 @@ class GeminiModel extends Model {
 
     // If there are function calls, handle them
     if (functionCalls.isNotEmpty) {
-      log.fine(
+      log.finest(
         '[GeminiModel] Processing ${functionCalls.length} function calls',
       );
       final responses = <gemini.FunctionResponse>[];
@@ -108,18 +108,27 @@ class GeminiModel extends Model {
           '[GeminiModel] Calling tool: '
           '${functionCall.name}(${functionCall.args})',
         );
-        final result = await _callTool(functionCall.name, functionCall.args);
-        responses.add(gemini.FunctionResponse(functionCall.name, result));
-        log.fine('[GeminiModel] Tool response: ${functionCall.name} = $result');
+
+        try {
+          final result = await _callTool(functionCall.name, functionCall.args);
+          responses.add(gemini.FunctionResponse(functionCall.name, result));
+          log.fine(
+            '[GeminiModel] Tool response: ${functionCall.name} = $result',
+          );
+        } on Exception catch (ex) {
+          log.severe('[GeminiModel] Error calling tool: $ex');
+          responses.add(
+            gemini.FunctionResponse(functionCall.name, {
+              'error': ex.toString(),
+            }),
+          );
+        }
       }
 
       // Send function responses back to the model
       log.fine('[GeminiModel] Sending function responses back to model');
       final result = await chat.sendMessage(
-        gemini.Content.multi([
-          gemini.TextPart(''), // Gemini requires a text part
-          ...responses,
-        ]),
+        gemini.Content.functionResponses(responses),
       );
 
       if (result.text != null && result.text!.isNotEmpty) {

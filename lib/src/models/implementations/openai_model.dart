@@ -35,7 +35,7 @@ class OpenAiModel extends Model {
        _modelName = modelName,
        _client = openai.OpenAIClient(
          apiKey: apiKey,
-         baseUrl: _openaiUrl(baseUrl),
+         baseUrl: baseUrl?.toString(),
        ),
        _responseFormat =
            outputSchema != null
@@ -514,13 +514,6 @@ class OpenAiModel extends Model {
     );
 
     return result;
-  }
-
-  // trim trailing /, which OpenAI dislikes for some reason
-  static String? _openaiUrl(Uri? baseUrl) {
-    if (baseUrl == null) return null;
-    final url = baseUrl.toString();
-    return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
   }
 }
 

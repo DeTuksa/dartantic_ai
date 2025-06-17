@@ -16,7 +16,7 @@ void main() {
 
         expect(server.name, equals('test-server'));
         expect(server.kind, equals(McpServerKind.remote));
-        expect(server.url, equals('https://example.com/mcp'));
+        expect(server.url, equals(Uri.parse('https://example.com/mcp')));
       });
 
       test('creates remote server with headers', () {

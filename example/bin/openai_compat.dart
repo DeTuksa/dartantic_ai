@@ -1,16 +1,24 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, unreachable_from_main
 
 import 'dart:io';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
 
 // OpenRouter via OpenAI compatibility
-final provider = Agent.providerFor('openrouter');
+// final provider = Agent.providerFor('openrouter');
+// final provider = Agent.providerFor('gemini-compat');
+final provider = OpenAiProvider(
+  alias: 'gemini-compat',
+  modelName: GeminiModel.defaultModelName,
+  embeddingModelName: GeminiModel.defaultEmbeddingModelName,
+  apiKey: Platform.environment[GeminiProvider.apiKeyName],
+  baseUrl: Uri.parse('https://generativelanguage.googleapis.com/v1beta/openai'),
+);
 
 void main() async {
-  await textGeneration();
-  await embeddings();
-  await chat();
+  // await textGeneration();
+  // await embeddings();
+  // await chat();
   await tools();
   await fileUploads();
   exit(0);

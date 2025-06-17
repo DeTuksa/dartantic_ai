@@ -6,7 +6,6 @@ import 'package:openai_dart/openai_dart.dart' as openai;
 
 import '../../../dartantic_ai.dart';
 import '../../utils.dart';
-import '../interface/model.dart';
 
 /// Implementation of [Model] that uses OpenAI's API.
 ///
@@ -125,9 +124,8 @@ class OpenAiModel extends Model {
           'finishReason: ${choice.finishReason}',
         );
 
-        if (delta == null) {
-          continue;
-        }
+        // fix for https://github.com/davidmigloz/langchain_dart/issues/726
+        if (delta == null) continue;
 
         // Handle content streaming
         if (delta.content != null) {

@@ -9,10 +9,10 @@ import '../../agent/agent_response.dart';
 import '../../agent/embedding_type.dart';
 import '../../agent/tool.dart';
 import '../../json_schema_extension.dart';
+import '../../message.dart';
 import '../../providers/interface/provider_caps.dart';
 import '../../utils.dart';
 import '../interface/model.dart';
-import '../message.dart';
 
 /// Implementation of [Model] that uses Google's Gemini API.
 ///

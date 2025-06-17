@@ -5,9 +5,9 @@ import 'dart:typed_data';
 import 'package:dotprompt_dart/dotprompt_dart.dart';
 import 'package:json_schema/json_schema.dart';
 
+import '../message.dart';
 import '../models/interface/model.dart';
 import '../models/interface/model_settings.dart';
-import '../models/message.dart';
 import '../providers/implementation/provider_table.dart';
 import '../providers/interface/provider.dart';
 import '../providers/interface/provider_caps.dart';
@@ -16,7 +16,7 @@ import 'agent_response.dart';
 import 'embedding_type.dart';
 import 'tool.dart';
 
-export '../models/message.dart';
+export '../message.dart';
 export 'agent_response.dart';
 export 'embedding_type.dart';
 export 'tool.dart';

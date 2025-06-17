@@ -1,4 +1,4 @@
-import '../models/message.dart';
+import '../message.dart';
 
 /// A response from an agent.
 ///

@@ -2,13 +2,13 @@
 
 - Provider Capabilities System: Add support for providers to declare their
   capabilities
-- baseUrl support to enable OpenAI-compatibility.
+- baseUrl support to enable OpenAI-compatibility
 - Added new "openrouter" provider
   - it's an OpenAI API implementation, but doesn't support embeddings
-  - which drove support for provider capabilities
-- temperature support.
+  - which drove support for provider capabilities...
+- temperature support
 - Breaking change: `McpServer.remote` now takes a `Uri` instead of a `String`
-  for the URL.
+  for the URL
 - Breaking change: Renamed model interface properties for clarity:
   - `Model.modelName` → `Model.generativeModelName`
   - Also added `Model.embeddingModelName`

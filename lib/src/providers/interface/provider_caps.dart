@@ -26,5 +26,5 @@ enum ProviderCaps {
 
   /// Returns all capabilities except those specified in [these].
   static Set<ProviderCaps> allExcept(Set<ProviderCaps> these) =>
-      all.where((c) => !these.contains(c)).toSet();
+      all.difference(these);
 }

@@ -727,7 +727,7 @@ void main() async {
     final embedding = await agent.createEmbedding('test text');
     print('Embedding generated: ${embedding.length} dimensions');
   } else {
-    print('Provider ${agent.displayName} does not support embeddings');
+    print('Provider ${agent.model} does not support embeddings');
     // Use alternative approach or different provider
   }
 }

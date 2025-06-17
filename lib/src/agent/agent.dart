@@ -100,7 +100,7 @@ class Agent {
   final String? _systemPrompt;
 
   /// Returns the model used by this agent in the format:
-  ///   (providerName|alias):modelName, e.g.
+  ///   (providerName|alias):generativeModelName, e.g.
   ///   openai:gpt-4o
   ///   google:gemini-2.0-flash
   ///   openrouter:gpt-4o
@@ -486,5 +486,5 @@ class Agent {
   }
 
   /// The capabilities of this agent's model.
-  Set<ProviderCaps> get caps => _model.caps;
+  Iterable<ProviderCaps> get caps => _model.caps;
 }

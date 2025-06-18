@@ -9,6 +9,7 @@ multiple LLMs.
 - [Features](#features)
 - [Usage](#usage)
 - [Typed Tool Calling](#typed-tool-calling)
+- [Multi-media Input](#multi-media-input)
 - [Embedding Generation](#embedding-generation)
 - [Logging and Debugging](#logging-and-debugging)
 - [MCP (Model Context Protocol) Server Support](#mcp-model-context-protocol-server-support)
@@ -33,6 +34,8 @@ The following are the target features for this package:
 - [x] Automatically generate LLM-specific tool/output schemas
 - [x] Bring your own provider
 - [x] Execute tools with validated inputs
+- [x] Multi-media input support via the `attachments` parameter for files,
+  images, and web content
 - [x] Embedding generation with `Agent.createEmbedding` and cosine similarity
   utilities
 - [x] MCP (Model Context Protocol) server support for integrating external tools
@@ -448,6 +451,67 @@ void main() async {
   }
 }
 ```
+
+## Multi-media Input
+
+dartantic_ai supports including files, images, and other media as attachments to
+your prompts. Both OpenAI and Gemini providers can process multimedia content
+alongside text.
+
+### DataPart - Local Files
+
+Use `DataPart.file()` to include local files (text, images, etc.):
+
+```dart
+import 'dart:io';
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final agent = Agent('google');
+  
+  // Text file
+  final response1 = await agent.run(
+    'Can you summarize the attached file?',
+    attachments: [await DataPart.file(File('bio.txt'))],
+  );
+  print(response1.output);
+  
+  // Image file  
+  final response2 = await agent.run(
+    'What food do I have on hand?',
+    attachments: [await DataPart.file(File('cupboard.jpg'))],
+  );
+  print(response2.output);
+}
+```
+
+### LinkPart - Web URLs
+
+Use `LinkPart()` to reference web images:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final agent = Agent('openai:gpt-4o');
+  
+  final imageUrl = Uri.parse(
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/'
+    'Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-'
+    'Gfp-wisconsin-madison-the-nature-boardwalk.jpg'
+  );
+  
+  final response = await agent.run(
+    'Can you describe this image?',
+    attachments: [LinkPart(imageUrl)],
+  );
+  print(response.output);
+}
+```
+
+**Note**: Different providers may have varying support for specific file types
+and web URLs. At the time of this writing, Gemini requires files uploaded to
+Google AI File Service for LinkPart URLs.
 
 ## Embedding Generation
 

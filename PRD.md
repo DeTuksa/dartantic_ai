@@ -241,11 +241,26 @@ tools.
 ### Milestone 8: Dartantic provider for Flutter AI Toolkit
 - [ ] Implement the `LlmProvider` interface in terms of `Agent`
 
-### Milestone 9: Multi-media input
-- [ ] `Model.runStream` should take a `Message` as a prompt, so that it can
-  include media parts
-- [ ] `Agent.runXxx()` should be updated to support a prompt message, including
-  multi-media parts
+### Milestone 9: Multi-media input and output
+- [x] **Multi-media input support**: Added `attachments` parameter to
+  Agent and Model interfaces for including files, images, and other media:
+  - `Agent.runStream()`, `Agent.run()`, and related methods accept
+    `attachments: Content` parameter
+  - `Model.runStream()` interface includes `required Content attachments`
+  - Support for text files via `DataPart.file(File('path.txt'))`
+  - Support for image files via `DataPart.file(File('image.jpg'))`  
+  - Support for web images via `LinkPart(Uri.parse('https://...'))`
+  - Both OpenAI and Gemini providers handle multimedia content appropriately
+  - Comprehensive examples in `example/bin/multimedia.dart` demonstrate file
+    summaries, image descriptions, and visual content analysis
+
+- [ ] **Multi-media output support**: Enable agents to generate multimedia 
+  content (images, audio, etc.) in addition to text:
+  - Update `AgentResponse` to support multimedia content parts in output
+  - Support models that can generate images (e.g., DALL-E, Imagen)
+  - Support models that can generate audio or other media types
+  - Handle multimedia content in message history for multi-turn conversations
+  - Examples demonstrating image generation, audio synthesis, etc.
 
 ### Milestone 10: Typed Response + Tools + Simple Agent Loop
 - [ ] e.g. two tools, typed response and we keep looping till the LLM is done

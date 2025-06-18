@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:test/test.dart';
 
+import 'test_utils.dart';
+
 // NOTE: these tests require environment variables to be set.
 // I recommend using .vscode/settings.json like so:
 //
@@ -233,17 +235,6 @@ void main() {
     });
 
     test('createEmbedding with all primary providers', () async {
-      final allProviders = [
-        for (final providerName in ProviderTable.providers.keys)
-          Agent.providerFor(providerName),
-      ];
-
-      expect(
-        allProviders,
-        isNotEmpty,
-        reason: 'At least one provider should be available',
-      );
-
       for (final provider in allProviders.where(
         (p) => p.caps.contains(ProviderCaps.embeddings),
       )) {

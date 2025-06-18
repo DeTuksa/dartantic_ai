@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:json_schema/json_schema.dart';
 import 'package:openai_dart/openai_dart.dart' as openai;
+import 'package:uuid/uuid.dart';
 
 import '../../../dartantic_ai.dart';
 import '../../utils.dart';
@@ -142,7 +143,7 @@ class OpenAiModel extends Model {
           // If this chunk starts a new tool call, record its id and name
           if (id != null && name != null) {
             // Generate synthetic ID if empty
-            final actualId = id.isEmpty ? generateToolCallId() : id;
+            final actualId = id.isEmpty ? const Uuid().v4() : id;
             toolCallIdByIndex[index] = actualId;
             toolCallBuffers.putIfAbsent(
               actualId,
@@ -166,9 +167,7 @@ class OpenAiModel extends Model {
     // Add assistant message with content to conversation
     if (chunks.isNotEmpty) {
       oiaMessages.add(
-        openai.ChatCompletionMessage.assistant(
-          content: chunks.join(),
-        ),
+        openai.ChatCompletionMessage.assistant(content: chunks.join()),
       );
     }
 
@@ -186,18 +185,19 @@ class OpenAiModel extends Model {
         }
       });
 
-      final validToolCalls = toolCallBuffers.entries
-          .map(
-            (entry) => openai.ChatCompletionMessageToolCall(
-              id: entry.key,
-              type: openai.ChatCompletionMessageToolCallType.function,
-              function: openai.ChatCompletionMessageFunctionCall(
-                name: entry.value.name,
-                arguments: entry.value.args.toString(),
-              ),
-            ),
-          )
-          .toList();
+      final validToolCalls =
+          toolCallBuffers.entries
+              .map(
+                (entry) => openai.ChatCompletionMessageToolCall(
+                  id: entry.key,
+                  type: openai.ChatCompletionMessageToolCallType.function,
+                  function: openai.ChatCompletionMessageFunctionCall(
+                    name: entry.value.name,
+                    arguments: entry.value.args.toString(),
+                  ),
+                ),
+              )
+              .toList();
 
       toolCalls.addAll(validToolCalls);
     }
@@ -207,9 +207,7 @@ class OpenAiModel extends Model {
 
     // If there are tool calls, handle them
     if (toolCalls.isNotEmpty) {
-      log.finest(
-        '[OpenAiModel] Processing ${toolCalls.length} tool calls',
-      );
+      log.finest('[OpenAiModel] Processing ${toolCalls.length} tool calls');
 
       // Add assistant message with tool calls
       oiaMessages.add(
@@ -227,8 +225,8 @@ class OpenAiModel extends Model {
         );
 
         try {
-          final args = jsonDecode(toolCall.function.arguments) 
-              as Map<String, dynamic>;
+          final args =
+              jsonDecode(toolCall.function.arguments) as Map<String, dynamic>;
           final result = await _callTool(toolCall.function.name, args);
 
           // Add tool response to messages
@@ -268,10 +266,10 @@ class OpenAiModel extends Model {
         log.fine(
           '[OpenAiModel] Final response after tools: ${finalMessage.content!}',
         );
-        
+
         // Add the final assistant response to messages
         oiaMessages.add(finalMessage);
-        
+
         yield AgentResponse(
           output: finalMessage.content!,
           messages: _messagesFrom(oiaMessages),
@@ -536,14 +534,13 @@ class OpenAiModel extends Model {
             for (final call in toolCalls) {
               // Generate synthetic ID if empty (some providers like Gemini
               // may not provide them)
-              final toolCallId = 
-                  call.id.isEmpty ? generateToolCallId() : call.id;
-              
+              final toolCallId = call.id.isEmpty ? const Uuid().v4() : call.id;
+
               toolCallIdToName[toolCallId] = call.function.name;
               parts.add(
                 ToolPart(
-                kind: ToolPartKind.call,
-                id: toolCallId,
+                  kind: ToolPartKind.call,
+                  id: toolCallId,
                   name: call.function.name,
                   arguments: () {
                     try {

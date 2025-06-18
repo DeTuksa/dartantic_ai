@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:test/test.dart';
 
+import 'test_utils.dart';
+
 // NOTE: some of these tests require environment variables to be set.
 // I recommend using .vscode/settings.json like so:
 //
@@ -592,11 +594,6 @@ Do not answer directly; always call the tool with the sound in question and retu
 
     // use this to ensure that all new providers are history compatible
     test('growing history with all primary providers', () async {
-      final allProviders = [
-        for (final providerName in ProviderTable.providers.keys)
-          Agent.providerFor(providerName),
-      ];
-
       await testGrowingHistoryWithProviders(allProviders, 'all providers');
     });
 

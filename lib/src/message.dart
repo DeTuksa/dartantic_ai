@@ -149,7 +149,7 @@ class DataPart extends Part {
   factory DataPart.fromJson(Map<String, dynamic> json) {
     final data = json['data'] as Map<String, dynamic>?;
     final mimeType = data?['mimeType'] as String? ?? _defaultMimeType;
-    final bytes = base64Decode((data?['bytes'] as String?) ?? '');
+    final bytes = base64Decode((data?['data'] as String?) ?? '');
     return DataPart(bytes, mimeType: mimeType);
   }
 

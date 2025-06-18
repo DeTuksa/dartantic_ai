@@ -45,7 +45,7 @@ void main() {
             {
               "data": {
                 "mimeType": "image/jpeg",
-                "url": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAg..."
+                "data": "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgab"
               }
             }
           ]

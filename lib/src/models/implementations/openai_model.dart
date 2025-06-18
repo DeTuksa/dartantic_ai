@@ -69,6 +69,11 @@ class OpenAiModel extends Model {
     required List<Message> messages,
     required Content attachments,
   }) async* {
+    log.fine(
+      '[OpenAiModel] Starting stream with ${messages.length} messages, '
+      'prompt length: ${prompt.length}',
+    );
+
     final message = Message.user([TextPart(prompt), ...attachments]);
     final oiaMessages = <openai.ChatCompletionMessage>[
       if (_systemPrompt != null && _systemPrompt.isNotEmpty && messages.isEmpty)
@@ -77,107 +82,98 @@ class OpenAiModel extends Model {
       _openaiMessagesFrom([message]).first,
     ];
 
-    // Track the last assistant message with tool_calls
-    var lastToolCallIds = <String>[];
-
-    while (true) {
-      final stream = _client.createChatCompletionStream(
-        request: openai.CreateChatCompletionRequest(
-          model: openai.ChatCompletionModel.modelId(generativeModelName),
-          responseFormat: _responseFormat,
-          messages: oiaMessages,
-          tools:
-              _tools
-                  ?.map(
-                    (tool) => openai.ChatCompletionTool(
-                      type: openai.ChatCompletionToolType.function,
-                      function: openai.FunctionObject(
-                        name: tool.name,
-                        description: tool.description,
-                        parameters: tool.inputSchema?.toMap(),
-                      ),
+    final stream = _client.createChatCompletionStream(
+      request: openai.CreateChatCompletionRequest(
+        model: openai.ChatCompletionModel.modelId(generativeModelName),
+        responseFormat: _responseFormat,
+        messages: oiaMessages,
+        tools:
+            _tools
+                ?.map(
+                  (tool) => openai.ChatCompletionTool(
+                    type: openai.ChatCompletionToolType.function,
+                    function: openai.FunctionObject(
+                      name: tool.name,
+                      description: tool.description,
+                      parameters: tool.inputSchema?.toMap(),
                     ),
-                  )
-                  .toList(),
-          temperature: _temperature,
-        ),
+                  ),
+                )
+                .toList(),
+        temperature: _temperature,
+      ),
+    );
+
+    final chunks = <String>[];
+    final toolCalls = <openai.ChatCompletionMessageToolCall>[];
+
+    // Accumulate tool call data during streaming
+    final toolCallIdByIndex = <int, String?>{};
+    final toolCallBuffers = <String, ({String name, StringBuffer args})>{};
+    var syntheticIndex = 0;
+
+    await for (final chunk in stream) {
+      final choice = chunk.choices.first;
+      final delta = choice.delta;
+
+      log.fine(
+        '[OpenAiModel] Raw delta: $delta, '
+        'finishReason: ${choice.finishReason}',
       );
 
-      // Accumulate tool call arguments by tool call index and ID
-      final toolCallIdByIndex = <int, String?>{};
-      final toolCallBuffers = <String, ({String name, StringBuffer args})>{};
-      var isFinished = false;
+      // fix for https://github.com/davidmigloz/langchain_dart/issues/726
+      if (delta == null) continue;
 
-      // Accumulate the assistant/model response as it streams in
-      final assistantBuffer = StringBuffer();
+      // Handle content streaming
+      if (delta.content != null) {
+        chunks.add(delta.content!);
+        log.finest('[OpenAiModel] Yielding content: ${delta.content!}');
+        yield AgentResponse(output: delta.content!, messages: []);
+      }
 
-      await for (final chunk in stream) {
-        final choice = chunk.choices.first;
-        final delta = choice.delta;
+      // Handle tool calls during streaming
+      if (delta.toolCalls != null && delta.toolCalls!.isNotEmpty) {
+        for (final toolCall in delta.toolCalls!) {
+          final index = toolCall.index ?? syntheticIndex++;
+          final id = toolCall.id;
+          final name = toolCall.function?.name;
+          final args = toolCall.function?.arguments;
 
-        if (choice.finishReason != null) {
-          isFinished = true;
-        }
-
-        log.fine(
-          '[OpenAiModel] Raw delta: $delta, '
-          'finishReason: ${choice.finishReason}',
-        );
-
-        // fix for https://github.com/davidmigloz/langchain_dart/issues/726
-        if (delta == null) continue;
-
-        // Handle content streaming
-        if (delta.content != null) {
-          log.fine('[OpenAiModel] Yielding content: ${delta.content!}');
-          assistantBuffer.write(delta.content);
-          yield AgentResponse(
-            output: delta.content!,
-            messages: _messagesFrom(oiaMessages),
-          );
-        }
-
-        // Handle tool calls
-        if (delta.toolCalls != null && delta.toolCalls!.isNotEmpty) {
-          for (final toolCall in delta.toolCalls!) {
-            final index = toolCall.index;
-            final id = toolCall.id;
-            final name = toolCall.function?.name;
-            final args = toolCall.function?.arguments;
-
-            // If this chunk starts a new tool call, record its id and name
-            if (id != null && name != null) {
-              toolCallIdByIndex[index] = id;
-              toolCallBuffers.putIfAbsent(
-                id,
-                () => (name: name, args: StringBuffer()),
-              );
-            }
-            // Use the most recent id for this index
-            final currentId = toolCallIdByIndex[index];
-            if (currentId != null && args != null) {
-              toolCallBuffers[currentId]!.args.write(args);
-              log.fine(
-                '[OpenAiModel] Tool call received: index=$index, '
-                'id=$currentId, name=${toolCallBuffers[currentId]!.name}, '
-                'args=$args',
-              );
-            }
+          // If this chunk starts a new tool call, record its id and name
+          if (id != null && name != null) {
+            // Generate synthetic ID if empty
+            final actualId = id.isEmpty ? generateToolCallId() : id;
+            toolCallIdByIndex[index] = actualId;
+            toolCallBuffers.putIfAbsent(
+              actualId,
+              () => (name: name, args: StringBuffer()),
+            );
+          }
+          // Use the most recent id for this index
+          final currentId = toolCallIdByIndex[index];
+          if (currentId != null && args != null) {
+            toolCallBuffers[currentId]!.args.write(args);
+            log.fine(
+              '[OpenAiModel] Tool call received: index=$index, '
+              'id=$currentId, name=${toolCallBuffers[currentId]!.name}, '
+              'args=$args',
+            );
           }
         }
       }
+    }
 
-      // After streaming, append the assistant message to the conversation
-      if (assistantBuffer.isNotEmpty) {
-        oiaMessages.add(
-          openai.ChatCompletionMessage.assistant(
-            content: assistantBuffer.toString(),
-          ),
-        );
-      }
-      // Yield the full message list including the model's response
-      yield AgentResponse(output: '', messages: _messagesFrom(oiaMessages));
+    // Add assistant message with content to conversation
+    if (chunks.isNotEmpty) {
+      oiaMessages.add(
+        openai.ChatCompletionMessage.assistant(
+          content: chunks.join(),
+        ),
+      );
+    }
 
+    // Convert tool call buffers to tool calls
+    if (toolCallBuffers.isNotEmpty) {
       // Remove incomplete tool call buffers (empty or invalid JSON)
       toolCallBuffers.removeWhere((_, v) {
         final argsStr = v.args.toString().trim();
@@ -190,64 +186,95 @@ class OpenAiModel extends Model {
         }
       });
 
-      // If the model has finished its turn and there are no tool calls, break.
-      if (isFinished && toolCallBuffers.isEmpty) {
-        log.fine('[OpenAiModel] Finished and no tool calls, breaking loop.');
-        break;
-      }
+      final validToolCalls = toolCallBuffers.entries
+          .map(
+            (entry) => openai.ChatCompletionMessageToolCall(
+              id: entry.key,
+              type: openai.ChatCompletionMessageToolCallType.function,
+              function: openai.ChatCompletionMessageFunctionCall(
+                name: entry.value.name,
+                arguments: entry.value.args.toString(),
+              ),
+            ),
+          )
+          .toList();
 
-      // Add the assistant message with tool_calls before tool responses
-      if (toolCallBuffers.isNotEmpty) {
-        final toolCalls =
-            toolCallBuffers.entries
-                .map(
-                  (entry) => openai.ChatCompletionMessageToolCall(
-                    id: entry.key,
-                    type: openai.ChatCompletionMessageToolCallType.function,
-                    function: openai.ChatCompletionMessageFunctionCall(
-                      name: entry.value.name,
-                      arguments: entry.value.args.toString(),
-                    ),
-                  ),
-                )
-                .toList();
-        oiaMessages.add(
-          openai.ChatCompletionMessage.assistant(
-            content: null,
-            toolCalls: toolCalls,
-          ),
+      toolCalls.addAll(validToolCalls);
+    }
+
+    // Output a blank response to include the current history
+    yield AgentResponse(output: '', messages: _messagesFrom(oiaMessages));
+
+    // If there are tool calls, handle them
+    if (toolCalls.isNotEmpty) {
+      log.finest(
+        '[OpenAiModel] Processing ${toolCalls.length} tool calls',
+      );
+
+      // Add assistant message with tool calls
+      oiaMessages.add(
+        openai.ChatCompletionMessage.assistant(
+          content: null,
+          toolCalls: toolCalls,
+        ),
+      );
+
+      // Execute all tool calls and collect responses
+      for (final toolCall in toolCalls) {
+        log.fine(
+          '[OpenAiModel] Calling tool: id=${toolCall.id}, '
+          'name=${toolCall.function.name}, args=${toolCall.function.arguments}',
         );
-        lastToolCallIds = toolCalls.map((tc) => tc.id).toList();
-      }
 
-      // Only respond to tool calls present in the last assistant message
-      final validToolCallIds = lastToolCallIds.toSet();
+        try {
+          final args = jsonDecode(toolCall.function.arguments) 
+              as Map<String, dynamic>;
+          final result = await _callTool(toolCall.function.name, args);
 
-      for (final entry in toolCallBuffers.entries) {
-        final toolCallId = entry.key;
-        if (!validToolCallIds.contains(toolCallId)) {
-          continue; // Only respond to valid tool calls
+          // Add tool response to messages
+          log.fine(
+            '[OpenAiModel] Tool response: ${toolCall.function.name} = $result',
+          );
+          oiaMessages.add(
+            openai.ChatCompletionMessage.tool(
+              toolCallId: toolCall.id,
+              content: jsonEncode(result),
+            ),
+          );
+        } on Exception catch (ex) {
+          log.severe('[OpenAiModel] Error calling tool: $ex');
+          oiaMessages.add(
+            openai.ChatCompletionMessage.tool(
+              toolCallId: toolCall.id,
+              content: jsonEncode({'error': ex.toString()}),
+            ),
+          );
         }
-        final toolCallName = entry.value.name;
-        final toolCallArgs = entry.value.args.toString();
-        if (toolCallArgs.trim().isEmpty) continue; // skip empty args
-        log.fine(
-          '[OpenAiModel] Calling tool: id=$toolCallId, name=$toolCallName, '
-          'args=$toolCallArgs',
-        );
-        final args = jsonDecode(toolCallArgs) as Map<String, dynamic>;
-        final result = await _callTool(toolCallName, args);
+      }
 
-        // Add the tool response to the messages
+      // Send tool responses back to the model with a final non-streaming call
+      log.fine('[OpenAiModel] Sending tool responses back to model');
+      final response = await _client.createChatCompletion(
+        request: openai.CreateChatCompletionRequest(
+          model: openai.ChatCompletionModel.modelId(generativeModelName),
+          responseFormat: _responseFormat,
+          messages: oiaMessages,
+          temperature: _temperature,
+        ),
+      );
+
+      final finalMessage = response.choices.first.message;
+      if (finalMessage.content != null && finalMessage.content!.isNotEmpty) {
         log.fine(
-          '[OpenAiModel] Adding tool response to messages: id=$toolCallId, '
-          'result=${jsonEncode(result)}',
+          '[OpenAiModel] Final response after tools: ${finalMessage.content!}',
         );
-        oiaMessages.add(
-          openai.ChatCompletionMessage.tool(
-            toolCallId: toolCallId,
-            content: jsonEncode(result),
-          ),
+        
+        // Add the final assistant response to messages
+        oiaMessages.add(finalMessage);
+        
+        yield AgentResponse(
+          output: finalMessage.content!,
+          messages: _messagesFrom(oiaMessages),
         );
       }
     }
@@ -507,11 +534,16 @@ class OpenAiModel extends Model {
           final toolCalls = assistantMsg.toolCalls;
           if (toolCalls != null) {
             for (final call in toolCalls) {
-              toolCallIdToName[call.id] = call.function.name;
+              // Generate synthetic ID if empty (some providers like Gemini
+              // may not provide them)
+              final toolCallId = 
+                  call.id.isEmpty ? generateToolCallId() : call.id;
+              
+              toolCallIdToName[toolCallId] = call.function.name;
               parts.add(
                 ToolPart(
-                  kind: ToolPartKind.call,
-                  id: call.id,
+                kind: ToolPartKind.call,
+                id: toolCallId,
                   name: call.function.name,
                   arguments: () {
                     try {

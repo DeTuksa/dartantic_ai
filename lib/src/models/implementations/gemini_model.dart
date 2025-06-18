@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:google_generative_ai/google_generative_ai.dart' as gemini;
 import 'package:json_schema/json_schema.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../agent/agent_response.dart';
 import '../../agent/embedding_type.dart';
@@ -387,12 +386,11 @@ extension on gemini.Content {
   Message toMessageWithToolIdQueue(Map<String, List<String>> toolCallIdQueue) {
     final role = this.role.messageRole;
     final parts = <Part>[];
-    const uuid = Uuid();
     for (final part in this.parts) {
       if (part is gemini.FunctionCall) {
         final callKey = part.name; // Use only the function name
         // Always generate a new unique ID for each call
-        final id = uuid.v4();
+        final id = generateToolCallId();
         toolCallIdQueue.putIfAbsent(callKey, () => <String>[]).add(id);
         final argsMap = Map<String, dynamic>.from(
           (part.args as Map).map((k, v) => MapEntry(k as String, v)),

@@ -6,14 +6,9 @@ import 'package:dartantic_ai/dartantic_ai.dart';
 
 // OpenRouter via OpenAI compatibility
 // final provider = Agent.providerFor('openrouter');
-// final provider = Agent.providerFor('gemini-compat');
-final provider = OpenAiProvider(
-  alias: 'gemini-compat',
-  modelName: GeminiModel.defaultModelName,
-  embeddingModelName: GeminiModel.defaultEmbeddingModelName,
-  apiKey: Platform.environment[GeminiProvider.apiKeyName],
-  baseUrl: Uri.parse('https://generativelanguage.googleapis.com/v1beta/openai'),
-);
+
+// Gemini via OpenAI compatibility
+final provider = Agent.providerFor('gemini-compat');
 
 void main() async {
   await textGeneration();
@@ -90,9 +85,14 @@ Future<void> fileUploads() async {
 
   if (!provider.supports(ProviderCaps.fileUploads)) return;
 
-  // TODO: upload a file
-  // final agent = Agent.provider(provider);
-  // print('## Agent: ${agent.model}');
+  final agent = Agent.provider(provider);
+  print('## Agent: ${agent.model}');
+
+  final response = await agent.run(
+    'Can you summarize this file for me?',
+    attachments: [await DataPart.file(File('bin/files/bio.txt'))],
+  );
+  print(response.output);
 }
 
 extension on Provider {

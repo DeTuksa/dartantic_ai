@@ -1,3 +1,4 @@
+import '../../models/implementations/gemini_model.dart';
 import '../../platform/platform.dart' as platform;
 import '../providers.dart';
 
@@ -31,26 +32,24 @@ class ProviderTable {
           temperature: settings.temperature,
           caps: ProviderCaps.allExcept({ProviderCaps.embeddings}),
         ),
-    // waiting on https://github.com/davidmigloz/langchain_dart/issues/728
-    // 'gemini-compat':
-    //     // we're using the OpenAI-compatible Gemini API, but we still have to
-    //     // use Google model names and API keys
-    //     (settings) => OpenAiProvider(
-    //       alias: settings.providerAlias ?? 'gemini-compat',
-    //       modelName: settings.modelName ?? GeminiModel.defaultModelName,
-    //       embeddingModelName:
-    //           settings.embeddingModelName ??
-    //           GeminiModel.defaultEmbeddingModelName,
-    //       apiKey: settings.apiKey ??
-    // platform.getEnv(GeminiProvider.apiKeyName),
-    //       baseUrl:
-    //           settings.baseUrl ??
-    //           Uri.parse(
-    //             'https://generativelanguage.googleapis.com/v1beta/openai',
-    //           ),
-    //       temperature: settings.temperature,
-    //       caps: ProviderCaps.all,
-    //     ),
+    'gemini-compat':
+        // we're using the OpenAI-compatible Gemini API, but we still have to
+        // use Google model names and API keys
+        (settings) => OpenAiProvider(
+          alias: settings.providerAlias ?? 'gemini-compat',
+          modelName: settings.modelName ?? GeminiModel.defaultModelName,
+          embeddingModelName:
+              settings.embeddingModelName ??
+              GeminiModel.defaultEmbeddingModelName,
+          apiKey: settings.apiKey ?? platform.getEnv(GeminiProvider.apiKeyName),
+          baseUrl:
+              settings.baseUrl ??
+              Uri.parse(
+                'https://generativelanguage.googleapis.com/v1beta/openai',
+              ),
+          temperature: settings.temperature,
+          caps: ProviderCaps.all,
+        ),
     'google': (settings) {
       if (settings.baseUrl != null) {
         throw ArgumentError('Google provider does not support baseUrl');

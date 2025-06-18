@@ -1,6 +1,6 @@
 name: dartantic_ai
 description: A Dart library for easily interacting with LLMs in a typed manner.
-version: 0.7.0
+version: 0.8.0
 repository: https://github.com/csells/dartantic_ai
 
 environment:

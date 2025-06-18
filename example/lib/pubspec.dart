@@ -3,7 +3,7 @@
 // ignore_for_file: public_member_api_docs, constant_identifier_names, avoid_classes_with_only_static_members
 
 mixin Pubspec {
-  static final buildDate = DateTime.utc(2025, 6, 16, 21, 12, 22);
+  static final buildDate = DateTime.utc(2025, 6, 18, 17, 58, 19);
 
   static const name = 'example';
 
@@ -20,7 +20,6 @@ mixin Pubspec {
     'http': '^1.2.0',
     'json_annotation': '^4.9.0',
     'logging': '^1.3.0',
-    'openai_dart': '^0.4.5',
     'soti_schema': '^1.0.0',
     'timezone': '^0.10.1',
   };

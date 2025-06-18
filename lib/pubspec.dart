@@ -3,22 +3,22 @@
 // ignore_for_file: public_member_api_docs, constant_identifier_names, avoid_classes_with_only_static_members
 
 mixin Pubspec {
-  static final buildDate = DateTime.utc(2025, 6, 17, 3, 35, 14);
+  static final buildDate = DateTime.utc(2025, 6, 18, 17, 58, 27);
 
   static const name = 'dartantic_ai';
 
   static const description =
       'A Dart library for easily interacting with LLMs in a typed manner.';
 
-  static const versionFull = '0.7.0';
+  static const versionFull = '0.8.0';
 
-  static const version = '0.7.0';
+  static const version = '0.8.0';
 
-  static const versionSmall = '0.7';
+  static const versionSmall = '0.8';
 
   static const versionMajor = 0;
 
-  static const versionMinor = 7;
+  static const versionMinor = 8;
 
   static const versionPatch = 0;
 
@@ -35,10 +35,12 @@ mixin Pubspec {
   static const dependencies = <dynamic, dynamic>{
     'dotprompt_dart': '^0.2.0',
     'google_generative_ai': '^0.4.7',
+    'http': '^1.4.0',
     'json_schema': '^5.2.1',
     'logging': '^1.3.0',
     'mcp_dart': '^0.5.1',
-    'openai_dart': '^0.4.5',
+    'mime': '^2.0.0',
+    'openai_dart': '^0.5.1',
     'uuid': '^4.3.3',
   };
 

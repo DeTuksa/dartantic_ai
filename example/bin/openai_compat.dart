@@ -53,7 +53,7 @@ Future<void> chat() async {
   print('User: My name is Alice');
   print('AI: ${response.output}');
 
-  messages = response.messages;
+  messages = response.messages.toList();
   response = await agent.run('What is my name?', messages: messages);
   print('User: What is my name?');
   print('AI: ${response.output}');

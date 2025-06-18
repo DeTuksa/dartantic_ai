@@ -24,25 +24,25 @@ void main() {
 [
         {
           "role": "system",
-          "content": [
+          "parts": [
             {"text": "You are a helpful AI assistant."}
           ]
         },
         {
           "role": "user",
-          "content": [
+          "parts": [
             {"text": "Hello, can you help me with a task?"}
           ]
         },
         {
           "role": "model",
-          "content": [
+          "parts": [
             {"text": "Of course! I'd be happy to help you with a task. What kind of task do you need assistance with? Please provide me with more details, and I'll do my best to help you."}
           ]
         },
         {
           "role": "user",
-          "content": [
+          "parts": [
             {"text": "Can you analyze this image and tell me what you see?"},
             {
               "data": {
@@ -88,9 +88,7 @@ void main() {
       );
 
       expect(
-        messages.first.content.whereType<TextPart>().any(
-          (p) => p.text == prompt,
-        ),
+        messages.first.parts.whereType<TextPart>().any((p) => p.text == prompt),
         isTrue,
         reason:
             '${agent.model}: prompt should be present in first user '
@@ -116,14 +114,14 @@ void main() {
 
     Future<void> testMessageHistoryWithInitialMessages(
       Provider provider,
-      List<Message> initialMessages,
+      Iterable<Message> initialMessages,
     ) async {
       final agent = Agent.provider(
         provider,
         systemPrompt:
             initialMessages.isNotEmpty &&
                     initialMessages.first.role == MessageRole.system
-                ? (initialMessages.first.content.first as TextPart).text
+                ? (initialMessages.first.parts.first as TextPart).text
                 : null,
       );
 
@@ -134,7 +132,7 @@ void main() {
       print('# ${agent.model} messages:');
       for (var i = 0; i < messages.length; i++) {
         final m = messages[i];
-        print('- ${m.role}: ${m.content.map((p) => p.toJson()).join(' | ')}');
+        print('- ${m.role}: ${m.parts.map((p) => p.toJson()).join(' | ')}');
       }
 
       expect(
@@ -145,7 +143,7 @@ void main() {
       final systemPrompt =
           initialMessages.isNotEmpty &&
                   initialMessages.first.role == MessageRole.system
-              ? (initialMessages.first.content.first as TextPart).text
+              ? (initialMessages.first.parts.first as TextPart).text
               : null;
       if (systemPrompt != null) {
         expect(
@@ -154,7 +152,7 @@ void main() {
           reason: '${agent.model}: first message should be system',
         );
         expect(
-          (messages.first.content.first as TextPart).text,
+          (messages.first.parts.first as TextPart).text,
           systemPrompt,
           reason: '${agent.model}: system prompt text should match',
         );
@@ -206,7 +204,7 @@ void main() {
       );
       expect(
         messages.any(
-          (m) => m.content.whereType<TextPart>().any(
+          (m) => m.parts.whereType<TextPart>().any(
             (p) => p.text.contains('Italy'),
           ),
         ),
@@ -219,18 +217,18 @@ void main() {
     final initialNoSystem = <Message>[
       Message(
         role: MessageRole.user,
-        content: [const TextPart('What is the capital of France?')],
+        parts: [const TextPart('What is the capital of France?')],
       ),
       Message(
         role: MessageRole.model,
-        content: [const TextPart('The capital of France is Paris.')],
+        parts: [const TextPart('The capital of France is Paris.')],
       ),
     ];
 
     final initialWithSystem = <Message>[
       Message(
         role: MessageRole.system,
-        content: [const TextPart('You are a test system prompt.')],
+        parts: [const TextPart('You are a test system prompt.')],
       ),
       ...initialNoSystem,
     ];
@@ -278,7 +276,7 @@ void main() {
           messages.isNotEmpty && messages.first.role == MessageRole.system,
           isTrue,
         );
-        expect((messages.first.content.first as TextPart).text, systemPrompt);
+        expect((messages.first.parts.first as TextPart).text, systemPrompt);
       } else {
         expect(
           messages.isEmpty || messages.first.role != MessageRole.system,
@@ -315,17 +313,17 @@ void main() {
       final initialMessages = [
         Message(
           role: MessageRole.user,
-          content: [const TextPart('What animal says "moo"?')],
+          parts: [const TextPart('What animal says "moo"?')],
         ),
         Message(
           role: MessageRole.model,
-          content: [
+          parts: [
             TextPart(jsonEncode({'animal': 'cow', 'sound': 'moo'})),
           ],
         ),
         Message(
           role: MessageRole.user,
-          content: [const TextPart('What animal says "quack"?')],
+          parts: [const TextPart('What animal says "quack"?')],
         ),
       ];
       final result = await agent.runFor<Map<String, dynamic>>(
@@ -389,19 +387,17 @@ void main() {
       for (var i = 0; i < messages.length; i++) {
         final m = messages[i];
         print('Message #$i: role=${m.role}, content:');
-        for (final part in m.content) {
+        for (final part in m.parts) {
           print('  $part');
         }
       }
 
       final hasToolCall = messages.any(
-        (m) =>
-            m.content.any((p) => p is ToolPart && p.kind == ToolPartKind.call),
+        (m) => m.parts.any((p) => p is ToolPart && p.kind == ToolPartKind.call),
       );
       final hasToolResult = messages.any(
-        (m) => m.content.any(
-          (p) => p is ToolPart && p.kind == ToolPartKind.result,
-        ),
+        (m) =>
+            m.parts.any((p) => p is ToolPart && p.kind == ToolPartKind.result),
       );
       expect(hasToolCall, isTrue, reason: 'Should include a tool call message');
       expect(
@@ -417,10 +413,10 @@ void main() {
       expect(
         messages.any(
           (m) =>
-              m.content.whereType<TextPart>().any(
+              m.parts.whereType<TextPart>().any(
                 (p) => p.text.contains('hello world'),
               ) ||
-              m.content.whereType<ToolPart>().any(
+              m.parts.whereType<ToolPart>().any(
                 (p) =>
                     p.kind == ToolPartKind.result &&
                     p.result.toString().contains('hello world'),
@@ -524,16 +520,15 @@ Do not answer directly; always call the tool with the sound in question and retu
       // valid for both providers
       expect(
         history.any(
-          (m) => m.content.any(
-            (p) => p is ToolPart && p.kind == ToolPartKind.call,
-          ),
+          (m) =>
+              m.parts.any((p) => p is ToolPart && p.kind == ToolPartKind.call),
         ),
         isTrue,
         reason: 'History should contain at least one tool call',
       );
       expect(
         history.any(
-          (m) => m.content.any(
+          (m) => m.parts.any(
             (p) => p is ToolPart && p.kind == ToolPartKind.result,
           ),
         ),
@@ -547,7 +542,7 @@ Do not answer directly; always call the tool with the sound in question and retu
       );
       expect(
         history.any(
-          (m) => m.content.whereType<TextPart>().any(
+          (m) => m.parts.whereType<TextPart>().any(
             (p) => p.text.contains('moo') || p.text.contains('quack'),
           ),
         ),
@@ -638,7 +633,7 @@ Do not answer directly; always call the tool with the sound in question and retu
       for (var i = 0; i < history.length; i++) {
         final m = history[i];
         print('Message #$i: role=\\${m.role}, content:');
-        for (final part in m.content) {
+        for (final part in m.parts) {
           print('  $part');
         }
       }
@@ -660,7 +655,7 @@ Do not answer directly; always call the tool with the sound in question and retu
       for (var i = 0; i < followupMessages.length; i++) {
         final m = followupMessages[i];
         print('Message #$i: role=\\${m.role}, content:');
-        for (final part in m.content) {
+        for (final part in m.parts) {
           print('  $part');
         }
       }

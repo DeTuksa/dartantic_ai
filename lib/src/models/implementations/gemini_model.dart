@@ -36,7 +36,7 @@ class GeminiModel extends Model {
   }) : generativeModelName = modelName ?? defaultModelName,
        embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
        _apiKey = apiKey,
-       _tools = tools,
+       _tools = tools?.toList(),
        _model = gemini.GenerativeModel(
          apiKey: apiKey,
          model: modelName ?? defaultModelName,
@@ -50,7 +50,7 @@ class GeminiModel extends Model {
                  ),
          systemInstruction:
              systemPrompt != null ? gemini.Content.text(systemPrompt) : null,
-         tools: tools != null ? _toolsFrom(tools) : null,
+         tools: tools != null ? _toolsFrom(tools).toList() : null,
        );
 
   /// The default model name to use if none is provided.
@@ -61,7 +61,7 @@ class GeminiModel extends Model {
 
   late final gemini.GenerativeModel _model;
   final String _apiKey;
-  final Iterable<Tool>? _tools;
+  final List<Tool>? _tools;
 
   @override
   final String generativeModelName;
@@ -73,14 +73,14 @@ class GeminiModel extends Model {
   Stream<AgentResponse> runStream({
     required String prompt,
     required Iterable<Message> messages,
-    required Content attachments,
+    required Iterable<Part> attachments,
   }) async* {
     log.fine(
       '[GeminiModel] Starting stream with ${messages.length} messages, '
       'prompt length: ${prompt.length}',
     );
 
-    final history = _geminiHistoryFrom(messages);
+    final history = _geminiHistoryFrom(messages).toList();
     final chat = _model.startChat(history: history.isEmpty ? null : history);
     final message = Message.user([TextPart(prompt), ...attachments]);
     final stream = chat.sendMessageStream(message.geminiContent);
@@ -239,7 +239,8 @@ class GeminiModel extends Model {
           jsonSchema['properties'] ?? {},
           rootSchema,
         ),
-        requiredProperties: _extractRequiredProperties(jsonSchema['required']),
+        requiredProperties:
+            _extractRequiredProperties(jsonSchema['required'])?.toList(),
         description: jsonSchema['description'],
         nullable: jsonSchema['nullable'],
       ),
@@ -286,7 +287,7 @@ class GeminiModel extends Model {
     return result;
   }
 
-  static List<String>? _extractRequiredProperties(dynamic required) {
+  static Iterable<String>? _extractRequiredProperties(dynamic required) {
     if (required == null) return null;
     return List<String>.from(required);
   }
@@ -303,7 +304,7 @@ class GeminiModel extends Model {
     _ => gemini.SchemaType.object, // Default to object if type is not specified
   };
 
-  static List<gemini.Tool> _toolsFrom(Iterable<Tool> tools) {
+  static Iterable<gemini.Tool> _toolsFrom(Iterable<Tool> tools) {
     final result = <gemini.Tool>[];
 
     for (final tool in tools) {
@@ -327,7 +328,9 @@ class GeminiModel extends Model {
     return result;
   }
 
-  static List<gemini.Content> _geminiHistoryFrom(Iterable<Message> messages) {
+  static Iterable<gemini.Content> _geminiHistoryFrom(
+    Iterable<Message> messages,
+  ) {
     // Gemini Content with system role is not supported; remove initial system
     // message if present.
     final filtered =
@@ -345,7 +348,7 @@ class GeminiModel extends Model {
     return history;
   }
 
-  static List<Message> _messagesFrom(Iterable<gemini.Content> history) {
+  static Iterable<Message> _messagesFrom(Iterable<gemini.Content> history) {
     final toolCallIdQueue = <String, List<String>>{};
     final messages = [
       for (final content in history)
@@ -452,14 +455,14 @@ extension on gemini.Content {
       'Content parts length (${this.parts.length})',
     );
 
-    return Message(role: role, content: parts);
+    return Message(role: role, parts: parts);
   }
 }
 
 extension on Message {
   gemini.Content get geminiContent {
     final parts = [
-      for (final p in content)
+      for (final p in this.parts)
         switch (p) {
           TextPart() => gemini.TextPart(p.text),
           DataPart() => gemini.DataPart(p.mimeType, p.bytes),
@@ -472,9 +475,9 @@ extension on Message {
     ];
 
     assert(
-      parts.length == content.length,
+      parts.length == this.parts.length,
       'Output gemini parts length (${parts.length}) does not match input '
-      'Message content length (${content.length})',
+      'Message content length (${this.parts.length})',
     );
 
     return gemini.Content(role.geminiRole, parts);

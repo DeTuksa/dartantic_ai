@@ -7,13 +7,11 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
 
-/// Type alias for a list of content parts.
-typedef Content = List<Part>;
-
-/// Extension methods for [Content].
-extension ContentExtension on Content {
-  /// Creates a [Content] with a single [TextPart] containing the given [text].
-  static Content text(String text) => [TextPart(text)];
+/// Extension methods for [Iterable<Part>].
+extension ContentExtension on Iterable<Part> {
+  /// Creates a [Iterable<Part>] with a single [TextPart] containing the given
+  /// [text].
+  static Iterable<Part> text(String text) => [TextPart(text)];
 }
 
 /// Enum representing the role of a message in a conversation.
@@ -40,11 +38,11 @@ enum ToolPartKind {
 /// Represents a message in a conversation, consisting of a role and a list of
 /// content parts.
 ///
-/// Each message has a [role] (system, user, or model) and a [content] list,
+/// Each message has a [role] (system, user, or model) and a [parts] list,
 /// where each item is a [Part] (e.g., text, media, or tool call).
 class Message {
-  /// Creates a [Message] with the given [role] and [content] parts.
-  Message({required this.role, required this.content});
+  /// Creates a [Message] with the given [role] and [parts] parts.
+  Message({required this.role, required this.parts});
 
   /// Creates a [Message] from a raw JSON string.
   factory Message.fromRawJson(String str) => Message.fromJson(json.decode(str));
@@ -52,33 +50,33 @@ class Message {
   /// Creates a [Message] from a JSON map.
   factory Message.fromJson(Map<String, dynamic> json) => Message(
     role: MessageRole.values.byName(json['role']),
-    content:
-        json['content'] == null
+    parts:
+        json['parts'] == null
             ? []
-            : Content.from(json['content']!.map((x) => Part.fromJson(x))),
+            : List<Part>.from(json['parts']!.map((x) => Part.fromJson(x))),
   );
 
-  /// Creates a system message with the given [content].
-  Message.system(Content content)
-    : this(role: MessageRole.system, content: content);
+  /// Creates a system message with the given [parts].
+  Message.system(Iterable<Part> parts)
+    : this(role: MessageRole.system, parts: parts);
 
-  /// Creates a user message with the given [content].
-  Message.user(Content content)
-    : this(role: MessageRole.user, content: content);
+  /// Creates a user message with the given [parts].
+  Message.user(Iterable<Part> parts)
+    : this(role: MessageRole.user, parts: parts);
 
-  /// Creates a model message with the given [content].
-  Message.model(Content content)
-    : this(role: MessageRole.model, content: content);
+  /// Creates a model message with the given [parts].
+  Message.model(Iterable<Part> parts)
+    : this(role: MessageRole.model, parts: parts);
 
   /// The role of the message (system, user, or model).
   final MessageRole role;
 
   /// The list of content parts in the message.
-  final Content content;
+  final Iterable<Part> parts;
 
-  /// Returns a copy of this message with optional new [role] and/or [content].
-  Message copyWith({MessageRole? role, Content? content}) =>
-      Message(role: role ?? this.role, content: content ?? this.content);
+  /// Returns a copy of this message with optional new [role] and/or [parts].
+  Message copyWith({MessageRole? role, Iterable<Part>? parts}) =>
+      Message(role: role ?? this.role, parts: parts ?? this.parts);
 
   /// Converts this message to a raw JSON string.
   String toRawJson() => json.encode(toJson());
@@ -86,7 +84,7 @@ class Message {
   /// Converts this message to a JSON map.
   Map<String, dynamic> toJson() => {
     'role': role.name,
-    'content': List<dynamic>.from(content.map((x) => x.toJson())),
+    'parts': List<dynamic>.from(parts.map((x) => x.toJson())),
   };
 }
 

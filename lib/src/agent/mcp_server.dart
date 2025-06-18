@@ -24,12 +24,12 @@ class McpServer {
     required this.kind,
     required this.name,
     this.command,
-    this.args,
+    Iterable<String>? args,
     this.environment,
     this.workingDirectory,
     this.url,
     this.headers,
-  });
+  }) : args = args?.toList();
 
   /// Creates a configuration for a local MCP server accessed via stdio.
   ///
@@ -40,7 +40,7 @@ class McpServer {
   McpServer.local(
     String name, {
     required String command,
-    List<String> args = const [],
+    Iterable<String> args = const [],
     Map<String, String>? environment,
     String? workingDirectory,
   }) : this._(
@@ -130,7 +130,7 @@ class McpServer {
 
   /// Gets all tools from this MCP server as Agent Tool objects.
   /// Automatically connects if not already connected.
-  Future<List<Tool>> getTools() async {
+  Future<Iterable<Tool>> getTools() async {
     if (!isConnected) await _connect();
 
     final result = await _client!.listTools();

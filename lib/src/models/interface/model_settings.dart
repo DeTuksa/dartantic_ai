@@ -31,8 +31,8 @@ class ModelSettings {
   final JsonSchema? outputSchema;
 
   /// The tools to use for the model.
-  final Iterable<Tool>? tools;
+  final List<Tool>? tools;
 
   /// The capabilities of the model.
-  final Iterable<ProviderCaps> caps;
+  final Set<ProviderCaps> caps;
 }

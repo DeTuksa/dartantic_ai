@@ -22,7 +22,7 @@ void main() async {
   print('Assistant: ${response1.output}');
 
   // Update message history with the response
-  messages = response1.messages;
+  messages = response1.messages.toList();
 
   // Second turn - the agent should remember the context
   final response2 = await agent.run(

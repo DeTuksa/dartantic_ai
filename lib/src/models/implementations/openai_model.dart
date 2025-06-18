@@ -32,7 +32,7 @@ class OpenAiModel extends Model {
     double? temperature,
   }) : generativeModelName = modelName ?? defaultModelName,
        embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
-       _tools = tools,
+       _tools = tools?.toList(),
        _systemPrompt = systemPrompt,
        _client = openai.OpenAIClient(
          apiKey: apiKey,
@@ -55,7 +55,7 @@ class OpenAiModel extends Model {
   final openai.OpenAIClient _client;
   final openai.ResponseFormat? _responseFormat;
   final String? _systemPrompt;
-  final Iterable<Tool>? _tools;
+  final List<Tool>? _tools;
   final double? _temperature;
 
   @override
@@ -68,7 +68,7 @@ class OpenAiModel extends Model {
   Stream<AgentResponse> runStream({
     required String prompt,
     required Iterable<Message> messages,
-    required Content attachments,
+    required Iterable<Part> attachments,
   }) async* {
     log.fine(
       '[OpenAiModel] Starting stream with ${messages.length} messages, '
@@ -397,7 +397,7 @@ class OpenAiModel extends Model {
     return result;
   }
 
-  static List<openai.ChatCompletionMessage> _openaiMessagesFrom(
+  static Iterable<openai.ChatCompletionMessage> _openaiMessagesFrom(
     Iterable<Message> messages,
   ) {
     final result = <openai.ChatCompletionMessage>[];
@@ -406,7 +406,7 @@ class OpenAiModel extends Model {
       final toolCalls = <openai.ChatCompletionMessageToolCall>[];
       ToolPart? toolResult;
       final textParts = <String>[];
-      for (final part in message.content) {
+      for (final part in message.parts) {
         if (part is TextPart) {
           textParts.add(part.text);
         } else if (part is LinkPart) {
@@ -478,8 +478,8 @@ class OpenAiModel extends Model {
     return result;
   }
 
-  static List<Message> _messagesFrom(
-    List<openai.ChatCompletionMessage> openMessages,
+  static Iterable<Message> _messagesFrom(
+    Iterable<openai.ChatCompletionMessage> openMessages,
   ) {
     // Map tool call IDs to tool names
     final toolCallIdToName = <String, String>{};
@@ -558,7 +558,7 @@ class OpenAiModel extends Model {
           }
         }
       }
-      result.add(Message(role: message.role.messageRole, content: parts));
+      result.add(Message(role: message.role.messageRole, parts: parts));
     }
 
     assert(

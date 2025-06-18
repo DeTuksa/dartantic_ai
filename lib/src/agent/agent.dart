@@ -89,7 +89,7 @@ class Agent {
          ModelSettings(
            systemPrompt: systemPrompt,
            outputSchema: outputSchema,
-           tools: tools,
+           tools: tools?.toList(),
            caps: provider.caps,
          ),
        ) {
@@ -116,16 +116,13 @@ class Agent {
   /// needed. Some LLMs add the system prompt to the first message and some
   /// don't. By always adding it, we can be sure that the messages are
   /// consistent, at least wrt the system prompt.
-  List<Message> _ensureSystemPromptMessage(List<Message> messages) =>
+  Iterable<Message> _ensureSystemPromptMessage(Iterable<Message> messages) =>
       messages.isNotEmpty &&
               _systemPrompt != null &&
               _systemPrompt.isNotEmpty &&
               messages.first.role != MessageRole.system
           ? [
-            Message(
-              role: MessageRole.system,
-              content: [TextPart(_systemPrompt)],
-            ),
+            Message(role: MessageRole.system, parts: [TextPart(_systemPrompt)]),
             ...messages,
           ]
           : messages;
@@ -143,7 +140,7 @@ class Agent {
   Future<AgentResponse> run(
     String prompt, {
     Iterable<Message> messages = const [],
-    Content attachments = const [],
+    Iterable<Part> attachments = const [],
   }) async {
     final stream = runStream(
       prompt,
@@ -168,7 +165,7 @@ class Agent {
   Stream<AgentResponse> runStream(
     String prompt, {
     Iterable<Message> messages = const [],
-    Content attachments = const [],
+    Iterable<Part> attachments = const [],
   }) async* {
     await for (final chunk in _model.runStream(
       prompt: prompt,
@@ -190,7 +187,7 @@ class Agent {
   Future<AgentResponseFor<T>> runFor<T>(
     String prompt, {
     Iterable<Message> messages = const [],
-    Content attachments = const [],
+    Iterable<Part> attachments = const [],
   }) async {
     final response = await run(
       prompt,
@@ -230,7 +227,7 @@ class Agent {
     Iterable<Tool>? tools,
     Map<String, dynamic> input = const {},
     Iterable<Message> messages = const [],
-    Content attachments = const [],
+    Iterable<Part> attachments = const [],
   }) => Agent(
     prompt.frontMatter.model ?? 'google',
     systemPrompt: systemPrompt,
@@ -268,7 +265,7 @@ class Agent {
     Iterable<Tool>? tools,
     Map<String, dynamic> input = const {},
     Iterable<Message> messages = const [],
-    Content attachments = const [],
+    Iterable<Part> attachments = const [],
   }) => Agent(
     prompt.frontMatter.model ?? 'google',
     systemPrompt: systemPrompt,
@@ -305,7 +302,7 @@ class Agent {
     Iterable<Tool>? tools,
     Map<String, dynamic> input = const {},
     Iterable<Message> messages = const [],
-    Content attachments = const [],
+    Iterable<Part> attachments = const [],
   }) => Agent(
     prompt.frontMatter.model ?? 'google',
     systemPrompt: systemPrompt,
@@ -393,7 +390,7 @@ class Agent {
   ///
   /// Cosine similarity measures the angle between two vectors, making it ideal
   /// for semantic similarity since it's invariant to vector magnitude.
-  static List<T> findTopMatches<T>({
+  static Iterable<T> findTopMatches<T>({
     required Map<T, Float64List> embeddingMap,
     required Float64List queryEmbedding,
     int limit = 1,
@@ -512,5 +509,5 @@ class Agent {
   }
 
   /// The capabilities of this agent's model.
-  Iterable<ProviderCaps> get caps => _model.caps;
+  Set<ProviderCaps> get caps => _model.caps;
 }

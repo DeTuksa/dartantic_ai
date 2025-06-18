@@ -14,7 +14,8 @@ class AgentResponseFor<T> {
   /// Creates a new [AgentResponseFor] with the given [output].
   ///
   /// The [output] is the typed object response from the agent.
-  AgentResponseFor({required this.output, required this.messages});
+  AgentResponseFor({required this.output, required Iterable<Message> messages})
+    : messages = messages.toList();
 
   /// The typed object output from the agent.
   final T output;

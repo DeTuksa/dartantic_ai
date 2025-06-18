@@ -1,14 +1,18 @@
+## 0.8.2
+
+- Better docs!
+
 ## 0.8.1
 
-  - Breaking change: Content=>List<Part>, lots more List<> => Iterable<>
+- Breaking change: Content=>List<Part>, lots more List<> => Iterable<>
 
 ## 0.8.0
 
 - Multimedia Input Support: Added `attachments` parameter to Agent and Model
   interfaces for including files, data and links.
 - Improved OpenAI compatibility for tool calls
-- Added the 'gemini-compat' provider for access to Gemini models via the
-  OpenAI endpoint.
+- Added the 'gemini-compat' provider for access to Gemini models via the OpenAI
+  endpoint.
 - Breaking change: everywhere I passed List<Message> I now pass
   Iterable<Message>
 

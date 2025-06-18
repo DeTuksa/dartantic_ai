@@ -120,7 +120,6 @@ class McpServer {
     );
 
     // Convert MCP result to simple format
-    // TODO: Handle different content types (text, image, etc.)
     final resultText = result.content
         .whereType<mcp.TextContent>()
         .map((content) => content.text)

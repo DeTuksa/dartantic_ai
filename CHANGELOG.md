@@ -5,6 +5,8 @@
 - Improvided OpenAI compatibiliy for tool calls
 - Added the 'gemini-compat' provider for access to Gemini models via the
   OpenAI endpoint.
+- Breaking change: everywhere I passed List<Message> I now pass
+  Iterable<Message>
 
 ## 0.7.0
 

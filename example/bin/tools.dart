@@ -74,17 +74,4 @@ Future<void> toolExampleWithTypedOutput() async {
       .map((event) => stdout.write(event.output))
       .drain();
   print('');
-
-  // TODO: this doesn't work yet; perhaps it needs a RefProvider.sync() to
-  // resolve the LocTimeTemp schema? this would require a call to direct call to
-  // JsonSchema.create() instead of the toSchema() extension method.
-  // final agent2 = Agent(
-  //   'openai',
-  //   systemPrompt: "Translate the user's prompt into a tool call.",
-  //   outputType: ListOfLocTimeTemps.schemaMap.toSchema(),
-  //   outputFromJson: ListOfLocTimeTemps.fromJson,
-  // );
-
-  // final result2 = await agent2.runFor<ListOfLocTimeTemps>(result.output);
-  // print(result2.output);
 }

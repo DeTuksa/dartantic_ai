@@ -21,23 +21,21 @@ class OpenAiProvider extends Provider {
   /// The [apiKey] is the API key to use for authentication.
   /// If not provided, it's retrieved from the environment.
   OpenAiProvider({
-    this.alias,
+    String? alias,
     this.modelName,
     this.embeddingModelName,
     String? apiKey,
     this.baseUrl,
     this.temperature,
     this.caps = ProviderCaps.all,
-  }) : apiKey = apiKey ?? platform.getEnv(apiKeyName);
+  }) : apiKey = apiKey ?? platform.getEnv(apiKeyName),
+       _alias = alias;
 
   /// The name of the environment variable that contains the API key.
   static const apiKeyName = 'OPENAI_API_KEY';
 
   @override
-  String get name => 'openai';
-
-  @override
-  final String? alias;
+  String get name => _alias ?? 'openai';
 
   /// The name of the OpenAI model to use.
   final String? modelName;
@@ -53,6 +51,8 @@ class OpenAiProvider extends Provider {
 
   /// The temperature to use for the OpenAI API.
   final double? temperature;
+
+  final String? _alias;
 
   /// Creates a [Model] instance using this provider's configuration.
   ///
@@ -95,7 +95,7 @@ class OpenAiProvider extends Provider {
           return ModelKind.chat; // default assumption
         }();
 
-        return ModelInfo(name: id, providerName: handle, kind: kind);
+        return ModelInfo(name: id, providerName: name, kinds: {kind});
       }).toList();
     } finally {
       client.endSession();

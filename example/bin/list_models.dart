@@ -5,15 +5,11 @@ import 'package:dartantic_ai/dartantic_ai.dart';
 void main() async {
   for (final providerName in ProviderTable.providers.keys) {
     final provider = Agent.providerFor(providerName);
-    final aliasOrName = provider.alias ?? provider.name;
-    print('\n# Provider: $aliasOrName');
-    assert(aliasOrName == providerName);
+    print('\n# Provider: ${provider.name}');
     try {
       final models = await provider.listModels();
       for (final model in models) {
-        print('- Model: ${model.name}');
-        print('  - Kind: ${model.kind}');
-        print('  - Provider: ${model.providerName}');
+        print('- Model: ${model.providerName}:${model.name} => ${model.kinds}');
       }
     } on Exception catch (e) {
       print('Exception: $e');

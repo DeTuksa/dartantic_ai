@@ -10,21 +10,11 @@ import 'provider_caps.dart';
 /// AI service (e.g., OpenAI, Google Gemini) and creating models that can
 /// execute prompts and handle responses.
 abstract class Provider {
-  /// The provider name for this provider, e.g. "openai"
+  /// The provider name for this provider, e.g. "openai" or "openrouter"
   ///
   /// This is used to identify the provider type and should be unique
   /// across all provider implementations.
   String get name;
-
-  /// The alias for this provider, e.g. "openrouter"
-  ///
-  /// This allows providers to be referenced by an alternative name,
-  /// useful for providers that act as proxies or wrappers for other services.
-  String? get alias;
-
-  /// The name referenced in the provider table, i.e. either an alias or the
-  /// name, depending on which is available.
-  String get handle => alias ?? name;
 
   /// Creates a model instance with the specified settings.
   ///
@@ -66,6 +56,9 @@ enum ModelKind {
   /// Text-to-speech models
   tts,
 
+  /// Count the number of tokens in a text string
+  countTokens,
+
   /// Other specialized model types
   other,
 }
@@ -79,7 +72,7 @@ class ModelInfo {
   const ModelInfo({
     required this.providerName,
     required this.name,
-    required this.kind,
+    required this.kinds,
   });
 
   /// The name of the provider that offers this model.
@@ -89,5 +82,5 @@ class ModelInfo {
   final String name;
 
   /// The type of model based on its primary capability.
-  final Set<ModelKind> kind;
+  final Set<ModelKind> kinds;
 }

@@ -98,10 +98,7 @@ Future<void> fileUploads() async {
 extension on Provider {
   bool supports(ProviderCaps cap) {
     final supports = provider.caps.contains(cap);
-    if (!supports) {
-      final displayName = provider.alias ?? provider.name;
-      print('❌ $displayName does NOT support ${cap.name}');
-    }
+    if (!supports) print('❌ ${provider.name} does NOT support ${cap.name}');
     return supports;
   }
 }

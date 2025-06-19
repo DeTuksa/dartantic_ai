@@ -91,7 +91,7 @@ class Agent {
            caps: provider.caps,
          ),
        ) {
-    model = '${provider.handle}:${_model.generativeModelName}';
+    model = '${provider.name}:${_model.generativeModelName}';
   }
 
   final Model _model;

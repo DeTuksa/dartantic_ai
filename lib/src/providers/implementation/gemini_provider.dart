@@ -6,6 +6,7 @@ import '../../models/implementations/gemini_model.dart' show GeminiModel;
 import '../../models/interface/model.dart';
 import '../../models/interface/model_settings.dart';
 import '../../platform/platform.dart' as platform;
+import '../../utils.dart';
 import '../interface/provider.dart';
 import '../interface/provider_caps.dart';
 
@@ -23,21 +24,19 @@ class GeminiProvider extends Provider {
   /// The [apiKey] is the API key to use for authentication.
   /// If not provided, it's retrieved from the environment.
   GeminiProvider({
-    this.alias,
+    String? alias,
     this.modelName,
     this.embeddingModelName,
     String? apiKey,
     this.temperature,
-  }) : apiKey = apiKey ?? platform.getEnv(apiKeyName);
+  }) : apiKey = apiKey ?? platform.getEnv(apiKeyName),
+       _alias = alias;
 
   /// The name of the environment variable that contains the API key.
   static const apiKeyName = 'GEMINI_API_KEY';
 
   @override
-  String get name => 'google';
-
-  @override
-  final String? alias;
+  String get name => _alias ?? 'google';
 
   /// The name of the Gemini model to use.
   final String? modelName;
@@ -50,6 +49,8 @@ class GeminiProvider extends Provider {
 
   /// The temperature to use for the Gemini API.
   final double? temperature;
+
+  final String? _alias;
 
   /// Creates a [Model] instance using this provider's configuration.
   ///
@@ -69,6 +70,15 @@ class GeminiProvider extends Provider {
   @override
   final caps = ProviderCaps.all;
 
+  static const _methodToKind = {
+    'embedContent': ModelKind.embedding,
+    'embedText': ModelKind.embedding,
+    'generateImage': ModelKind.image,
+    'generateContent': ModelKind.chat,
+    'countTokens': ModelKind.countTokens,
+    'countTextTokens': ModelKind.countTokens,
+  };
+
   @override
   Future<Iterable<ModelInfo>> listModels() async {
     final uri = Uri.https(
@@ -83,23 +93,33 @@ class GeminiProvider extends Provider {
     }
 
     final body = jsonDecode(res.body) as Map<String, dynamic>;
-    return (body['models'] as List<dynamic>).map<ModelInfo>((model) {
+    final allModels = <ModelInfo>[];
+
+    for (final model in body['models'] as List<dynamic>) {
+      final modelName =
+      // ignore: avoid_dynamic_calls
+      (model['name'] as String).replaceFirst('models/', '');
+
       final methods =
           // ignore: avoid_dynamic_calls
           model['supportedGenerationMethods'] as List<dynamic>;
-      final kind = () {
-        if (methods.contains('embedContent')) return ModelKind.embedding;
-        if (methods.contains('generateImage')) return ModelKind.image;
-        if (methods.contains('generateContent')) return ModelKind.chat;
-        return ModelKind.other;
-      }();
+      final remainingMethods = methods.map((m) => m.toString().trim()).toList();
 
-      return ModelInfo(
-        // ignore: avoid_dynamic_calls
-        name: (model['name'] as String).replaceFirst('models/', ''),
-        providerName: handle,
-        kind: kind,
+      final kinds = {
+        for (final entry in _methodToKind.entries)
+          if (remainingMethods.remove(entry.key)) entry.value,
+      };
+
+      if (remainingMethods.isNotEmpty) {
+        log.finer('Other kind(s): [$modelName] $remainingMethods');
+        kinds.add(ModelKind.other);
+      }
+
+      allModels.add(
+        ModelInfo(name: modelName, providerName: name, kinds: kinds),
       );
-    }).toList();
+    }
+
+    return allModels;
   }
 }

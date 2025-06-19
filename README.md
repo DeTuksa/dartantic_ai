@@ -5,21 +5,45 @@ provide easy, typed access to LLM outputs and tool/function calls across
 multiple LLMs.
 
 # Table of Contents
-- [Features](#features)
-- [Supported Providers](#supported-providers)
-- [Basic Agent Usage](#basic-agent-usage)
-- [Using DotPrompt](#using-dotprompt)
-- [JSON Output with JSON Schema](#json-output-with-json-schema)
-- [Manual Typed Output with Object Mapping](#manual-typed-output-with-object-mapping)
-- [Automatic Typed Output with Object Mapping](#automatic-typed-output-with-object-mapping)
-- [Typed Tool Calling](#typed-tool-calling)
-- [Streaming Output](#streaming-output)
-- [Multi-media Input](#multi-media-input)
-- [Embeddings](#embeddings)
-- [Logging](#logging)
-- [MCP (Model Context Protocol) Server Support](#mcp-model-context-protocol-server-support)
-- [Provider Capabilities](#provider-capabilities)
-- [Provider Switching](#provider-switching)
+- [dartantic\_ai](#dartantic_ai)
+- [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Supported Providers](#supported-providers)
+    - [Model Naming Conventions](#model-naming-conventions)
+    - [Provider Aliases](#provider-aliases)
+    - [API Key Environment Variables](#api-key-environment-variables)
+  - [Basic Agent Usage](#basic-agent-usage)
+  - [Using DotPrompt](#using-dotprompt)
+  - [JSON Output with JSON Schema](#json-output-with-json-schema)
+  - [Manual Typed Output with Object Mapping](#manual-typed-output-with-object-mapping)
+  - [Automatic Typed Output with Object Mapping](#automatic-typed-output-with-object-mapping)
+  - [Typed Tool Calling](#typed-tool-calling)
+    - [Multi-turn Chat (Message History)](#multi-turn-chat-message-history)
+    - [Message Construction Convenience Methods](#message-construction-convenience-methods)
+      - [Content Type Alias and Text Creation](#content-type-alias-and-text-creation)
+      - [Message Role Constructors](#message-role-constructors)
+  - [Streaming Output](#streaming-output)
+  - [Multi-media Input](#multi-media-input)
+    - [DataPart - Local Files](#datapart---local-files)
+    - [LinkPart - Web URLs](#linkpart---web-urls)
+  - [Embeddings](#embeddings)
+    - [Basic Embedding Usage](#basic-embedding-usage)
+    - [Embedding Similarity and Search](#embedding-similarity-and-search)
+    - [Cross-Provider Embedding Support](#cross-provider-embedding-support)
+  - [Logging](#logging)
+    - [Enabling Logging](#enabling-logging)
+    - [Filtering dartantic\_ai Logs Only](#filtering-dartantic_ai-logs-only)
+  - [Model Discovery](#model-discovery)
+  - [MCP (Model Context Protocol) Server Support](#mcp-model-context-protocol-server-support)
+    - [MCP Server Features](#mcp-server-features)
+    - [Remote MCP Server Usage](#remote-mcp-server-usage)
+    - [Local MCP Server Usage](#local-mcp-server-usage)
+  - [Provider Capabilities](#provider-capabilities)
+    - [Checking Provider Capabilities](#checking-provider-capabilities)
+    - [Capability Types](#capability-types)
+    - [Graceful Capability Handling](#graceful-capability-handling)
+  - [Provider Switching](#provider-switching)
+    - [Example: Switching Providers in a Conversation](#example-switching-providers-in-a-conversation)
 
 ## Features
 The following are the target features for this package:
@@ -44,6 +68,8 @@ The following are the target features for this package:
   from local and remote servers
 - [x] Logging support using the standard Dart `logging` package
 - [x] Capabilities capture and reporting
+- [x] Model discovery via `Provider.listModels()` to enumerate available models
+  and their capabilities
 - [ ] Chains and Sequential Execution
 - [ ] JSON Mode, Functions Mode, Flexible Decoding
 - [ ] Simple Assistant/Agent loop utilities
@@ -682,6 +708,25 @@ void main() async {
 
 This is particularly useful for debugging tool execution, understanding provider
 behavior, or troubleshooting unexpected responses.
+
+## Model Discovery
+
+dartantic_ai supports discovering available models from providers using the
+`listModels()` method. This returns information about each model including its
+name and what kinds of operations it supports.
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final provider = Agent.providerFor('openai');
+  final models = await provider.listModels();
+  
+  for (final model in models) {
+    print('- Model: ${model.providerName}:${model.name} => ${model.kinds}');
+  }
+}
+```
 
 ## MCP (Model Context Protocol) Server Support
 

@@ -31,6 +31,8 @@ tools.
 - Custom provider support (bring your own provider).
 - Logging support using the standard Dart `logging` package with configurable
   levels.
+- Model discovery via `Provider.listModels()` to enumerate available models
+  and the kinds of operations they support.
 - (Planned) Tool execution with validated inputs.
 - (Planned) Chains and sequential execution.
 - (Planned) JSON mode, functions mode, flexible decoding.

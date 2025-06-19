@@ -12,7 +12,7 @@ void main() {
     final imageFile = File('test/files/pikachu.webp');
 
     for (final provider in allProviders) {
-      group('Provider: ${provider.handle}', () {
+      group('Provider: ${provider.name}', () {
         late Agent agent;
 
         setUp(() {

@@ -1,3 +1,8 @@
+## TODO
+
+- Model discovery: Added `Provider.listModels()` to enumerate available models
+  and the kinds of operations they support
+
 ## 0.8.2
 
 - Better docs!

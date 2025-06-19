@@ -3,6 +3,8 @@
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:test/test.dart';
 
+import 'test_utils.dart';
+
 // NOTE: these tests require environment variables to be set.
 // I recommend using .vscode/settings.json like so:
 //
@@ -205,7 +207,21 @@ void main() {
   test('provider aliases', () {
     for (final providerName in ProviderTable.providers.keys) {
       final provider = Agent.providerFor(providerName);
-      expect(provider.handle, providerName);
+      expect(provider.name, providerName);
+    }
+  });
+
+  test('all providers can return a list of models', () async {
+    for (final provider in allProviders) {
+      try {
+        final models = await provider.listModels();
+        expect(models, isA<Iterable<ModelInfo>>());
+        print('${provider.name} returned ${models.length} models');
+      } catch (e) {
+        print('Provider ${provider.name} failed to list models: $e');
+        // TODO: fix this when the bug is fixed:
+        // https://github.com/davidmigloz/langchain_dart/issues/734
+      }
     }
   });
 }

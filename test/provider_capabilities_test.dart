@@ -213,15 +213,30 @@ void main() {
 
   test('all providers can return a list of models', () async {
     for (final provider in allProviders) {
-      try {
-        final models = await provider.listModels();
-        expect(models, isA<Iterable<ModelInfo>>());
-        print('${provider.name} returned ${models.length} models');
-      } catch (e) {
-        print('Provider ${provider.name} failed to list models: $e');
-        // TODO: fix this when the bug is fixed:
-        // https://github.com/davidmigloz/langchain_dart/issues/734
-      }
+      final models = await provider.listModels();
+      expect(models, isA<Iterable<ModelInfo>>());
+      print('${provider.name} returned ${models.length} models');
     }
   });
+
+  test(
+    'Agent.model matches fully qualified model name for all models on all providers',
+    () async {
+      for (final provider in allProviders) {
+        final models = await provider.listModels();
+
+        for (final modelInfo in models) {
+          final model = '${provider.name}:${modelInfo.name}';
+          final agent = Agent(model);
+
+          expect(
+            agent.model,
+            equals(model),
+            reason:
+                'Agent.model should match the fully qualified model name used to create it',
+          );
+        }
+      }
+    },
+  );
 }

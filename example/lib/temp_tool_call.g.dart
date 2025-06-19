@@ -7,14 +7,10 @@ part of 'temp_tool_call.dart';
 // **************************************************************************
 
 TempFunctionInput _$TempFunctionInputFromJson(Map<String, dynamic> json) =>
-    TempFunctionInput(
-      location: json['location'] as String,
-    );
+    TempFunctionInput(location: json['location'] as String);
 
 Map<String, dynamic> _$TempFunctionInputToJson(TempFunctionInput instance) =>
-    <String, dynamic>{
-      'location': instance.location,
-    };
+    <String, dynamic>{'location': instance.location};
 
 // **************************************************************************
 // SotiSchemaGenerator
@@ -27,9 +23,9 @@ const _$TempFunctionInputSchemaMap = <String, dynamic>{
     r'location': {
       r'type': r'string',
       r'description':
-          r'/// The location to get the temperature in (e.g. "New York, NY")'
-    }
+          r'/// The location to get the temperature in (e.g. "New York, NY")',
+    },
   },
   r'required': [r'location'],
-  r'$defs': {}
+  r'$defs': {},
 };

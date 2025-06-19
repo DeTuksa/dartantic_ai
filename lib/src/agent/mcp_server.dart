@@ -134,15 +134,19 @@ class McpServer {
     if (!isConnected) await _connect();
 
     final result = await _client!.listTools();
-    return [
-      for (final mcpTool in result.tools)
+    final tools = <Tool>[];
+    for (final mcpTool in result.tools) {
+      final inputSchema = mcpTool.inputSchema.toJson().toSchema();
+      tools.add(
         Tool(
           name: mcpTool.name,
           description: '[$name] ${mcpTool.description}',
-          inputSchema: mcpTool.inputSchema.toJson().toSchema(),
+          inputSchema: inputSchema,
           onCall: (args) => call(mcpTool.name, args),
         ),
-    ];
+      );
+    }
+    return tools;
   }
 
   Future<void> _connect() async {

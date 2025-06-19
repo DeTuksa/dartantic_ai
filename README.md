@@ -1,49 +1,26 @@
 # dartantic_ai
-The [dartantic_ai package for Dart](https://pub.dev/packages/dartantic_ai) is
-inspired by [the pydantic-ai package for Python](https://ai.pydantic.dev/) to
-provide easy, typed access to LLM outputs and tool/function calls across
-multiple LLMs.
+The [dartantic_ai package](https://pub.dev/packages/dartantic_ai) is an agent
+framework inspired by [the pydantic-ai](https://ai.pydantic.dev/) and designed
+to make building client and server-side apps in Dart with generative AI easier
+and more fun!
 
 # Table of Contents
-- [dartantic\_ai](#dartantic_ai)
-- [Table of Contents](#table-of-contents)
-  - [Features](#features)
-  - [Supported Providers](#supported-providers)
-    - [Model Naming Conventions](#model-naming-conventions)
-    - [Provider Aliases](#provider-aliases)
-    - [API Key Environment Variables](#api-key-environment-variables)
-  - [Basic Agent Usage](#basic-agent-usage)
-  - [Using DotPrompt](#using-dotprompt)
-  - [JSON Output with JSON Schema](#json-output-with-json-schema)
-  - [Manual Typed Output with Object Mapping](#manual-typed-output-with-object-mapping)
-  - [Automatic Typed Output with Object Mapping](#automatic-typed-output-with-object-mapping)
-  - [Typed Tool Calling](#typed-tool-calling)
-    - [Multi-turn Chat (Message History)](#multi-turn-chat-message-history)
-    - [Message Construction Convenience Methods](#message-construction-convenience-methods)
-      - [Content Type Alias and Text Creation](#content-type-alias-and-text-creation)
-      - [Message Role Constructors](#message-role-constructors)
-  - [Streaming Output](#streaming-output)
-  - [Multi-media Input](#multi-media-input)
-    - [DataPart - Local Files](#datapart---local-files)
-    - [LinkPart - Web URLs](#linkpart---web-urls)
-  - [Embeddings](#embeddings)
-    - [Basic Embedding Usage](#basic-embedding-usage)
-    - [Embedding Similarity and Search](#embedding-similarity-and-search)
-    - [Cross-Provider Embedding Support](#cross-provider-embedding-support)
-  - [Logging](#logging)
-    - [Enabling Logging](#enabling-logging)
-    - [Filtering dartantic\_ai Logs Only](#filtering-dartantic_ai-logs-only)
-  - [Model Discovery](#model-discovery)
-  - [MCP (Model Context Protocol) Server Support](#mcp-model-context-protocol-server-support)
-    - [MCP Server Features](#mcp-server-features)
-    - [Remote MCP Server Usage](#remote-mcp-server-usage)
-    - [Local MCP Server Usage](#local-mcp-server-usage)
-  - [Provider Capabilities](#provider-capabilities)
-    - [Checking Provider Capabilities](#checking-provider-capabilities)
-    - [Capability Types](#capability-types)
-    - [Graceful Capability Handling](#graceful-capability-handling)
-  - [Provider Switching](#provider-switching)
-    - [Example: Switching Providers in a Conversation](#example-switching-providers-in-a-conversation)
+- [Features](#features)
+- [Supported Providers](#supported-providers)
+- [Basic Agent Usage](#basic-agent-usage)
+- [Using DotPrompt](#using-dotprompt)
+- [JSON Output with JSON Schema](#json-output-with-json-schema)
+- [Manual Typed Output with Object Mapping](#manual-typed-output-with-object-mapping)
+- [Automatic Typed Output with Object Mapping](#automatic-typed-output-with-object-mapping)
+- [Typed Tool Calling](#typed-tool-calling)
+- [Streaming Output](#streaming-output)
+- [Multi-media Input](#multi-media-input)
+- [Embeddings](#embeddings)
+- [Logging](#logging)
+- [Model Discovery](#model-discovery)
+- [MCP (Model Context Protocol) Server Support](#mcp-model-context-protocol-server-support)
+- [Provider Capabilities](#provider-capabilities)
+- [Provider Switching](#provider-switching)
 
 ## Features
 The following are the target features for this package:
@@ -70,21 +47,35 @@ The following are the target features for this package:
 - [x] Capabilities capture and reporting
 - [x] Model discovery via `Provider.listModels()` to enumerate available models
   and their capabilities
-- [ ] Chains and Sequential Execution
-- [ ] JSON Mode, Functions Mode, Flexible Decoding
-- [ ] Simple Assistant/Agent loop utilities
-- [ ] Per call usage statistics
+- [ ] Firebase AI provider (no API keys!)
+- [ ] Multimedia output
+- [ ] Audio transcription
+- [ ] Agentic workflows (we're not done just cuz the tool call is done)
+- [ ] Tools + Typed Output (that's a little sticky right now)
+- [ ] More OpenAI-compat providers (local and remote, e.g. Ollama, Gemma, xAI, Groq, etc.)
+
 
 ## Supported Providers
 
 dartantic_ai currently supports the following AI model providers:
 
-| Provider | Provider Prefix | Aliases | API Key | Provider Type | Default Model | Default Embedding Model | Capabilities | Notes |
-|----------|-------------|---------|---------|---------------|---------------|-------------------------|-------------|-------|
-| **OpenAI** | `openai` | - | `OPENAI_API_KEY` | `OpenAiProvider` | `gpt-4o` | `text-embedding-3-small` | Text Generation, Embeddings, Chat, File Uploads, Tools | Full feature support |
-| **OpenRouter** | `openrouter` | - | `OPENROUTER_API_KEY` | `OpenAiProvider` | `gpt-4o` | N/A | Text Generation, Chat, File Uploads, Tools | No embedding support |
-| **Google Gemini** | `google` | `gemini`, `googleai`, `google-gla` | `GEMINI_API_KEY` | `GeminiProvider` | `gemini-2.0-flash` | `text-embedding-004` | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses native Gemini API |
-| **Gemini (OpenAI-compatible)** | `gemini-compat` | - | `GEMINI_API_KEY` | `OpenAiProvider` | `gemini-2.0-flash` | `text-embedding-004` | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses OpenAI-compatible Gemini endpoint |
+### Provider Capabilities
+
+| Provider | Default Model | Default Embedding Model | Capabilities | Notes |
+|----------|---------------|-------------------------|-------------|-------|
+| **OpenAI** | `gpt-4o` | `text-embedding-3-small` | Text Generation, Embeddings, Chat, File Uploads, Tools | Full feature support |
+| **OpenRouter** | `gpt-4o` | N/A | Text Generation, Chat, File Uploads, Tools | No embedding support |
+| **Google Gemini** | `gemini-2.0-flash` | `text-embedding-004` | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses native Gemini API |
+| **Gemini (OpenAI-compat)** | `gemini-2.0-flash` | `text-embedding-004` | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses OpenAI-compatible Gemini endpoint |
+
+### Provider Configuration
+
+| Provider | Provider Prefix | Aliases | API Key | Provider Type |
+|----------|-------------|---------|---------|---------------|
+| **OpenAI** | `openai` | - | `OPENAI_API_KEY` | `OpenAiProvider` |
+| **OpenRouter** | `openrouter` | - | `OPENROUTER_API_KEY` | `OpenAiProvider` |
+| **Google Gemini** | `google` | `gemini`, `googleai`, `google-gla` | `GEMINI_API_KEY` | `GeminiProvider` |
+| **Gemini (OpenAI-compatible)** | `gemini-compat` | - | `GEMINI_API_KEY` | `OpenAiProvider` |
 
 ### Model Naming Conventions
 The model string used by `Agent` can be specified in several ways:
@@ -721,9 +712,9 @@ import 'package:dartantic_ai/dartantic_ai.dart';
 void main() async {
   final provider = Agent.providerFor('openai');
   final models = await provider.listModels();
-  
+
   for (final model in models) {
-    print('- Model: ${model.providerName}:${model.name} => ${model.kinds}');
+    print('${model.providerName}:${model.name} (${model.kinds})');
   }
 }
 ```

@@ -7,24 +7,16 @@ part of 'time_tool_call.dart';
 // **************************************************************************
 
 TimeFunctionInput _$TimeFunctionInputFromJson(Map<String, dynamic> json) =>
-    TimeFunctionInput(
-      timeZoneName: json['timeZoneName'] as String,
-    );
+    TimeFunctionInput(timeZoneName: json['timeZoneName'] as String);
 
 Map<String, dynamic> _$TimeFunctionInputToJson(TimeFunctionInput instance) =>
-    <String, dynamic>{
-      'timeZoneName': instance.timeZoneName,
-    };
+    <String, dynamic>{'timeZoneName': instance.timeZoneName};
 
 TimeFunctionOutput _$TimeFunctionOutputFromJson(Map<String, dynamic> json) =>
-    TimeFunctionOutput(
-      time: DateTime.parse(json['time'] as String),
-    );
+    TimeFunctionOutput(time: DateTime.parse(json['time'] as String));
 
 Map<String, dynamic> _$TimeFunctionOutputToJson(TimeFunctionOutput instance) =>
-    <String, dynamic>{
-      'time': instance.time.toIso8601String(),
-    };
+    <String, dynamic>{'time': instance.time.toIso8601String()};
 
 // **************************************************************************
 // SotiSchemaGenerator
@@ -37,9 +29,9 @@ const _$TimeFunctionInputSchemaMap = <String, dynamic>{
     r'timeZoneName': {
       r'type': r'string',
       r'description':
-          r'/// The name of the time zone to get the time in (e.g. "America/New_York")'
-    }
+          r'/// The name of the time zone to get the time in (e.g. "America/New_York")',
+    },
   },
   r'required': [r'timeZoneName'],
-  r'$defs': {}
+  r'$defs': {},
 };

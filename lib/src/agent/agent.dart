@@ -354,9 +354,9 @@ class Agent {
   }) {
     if (model.isEmpty) throw ArgumentError('Model must not be empty');
 
-    final parts = model.split(RegExp('[:/]'));
-    final providerName = parts[0];
-    final modelName = parts.length != 1 ? parts[1] : null;
+    final index = model.indexOf(RegExp('[:/]'));
+    final providerName = index == -1 ? model : model.substring(0, index);
+    final modelName = index == -1 ? null : model.substring(index + 1);
     final providerAlias =
         (ProviderTable.providers.containsKey(providerName)
             ? null

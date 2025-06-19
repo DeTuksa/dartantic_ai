@@ -9,7 +9,8 @@ void main() async {
     try {
       final models = await provider.listModels();
       for (final model in models) {
-        print('- Model: ${model.providerName}:${model.name} => ${model.kinds}');
+        final kinds = model.kinds.map((k) => k.name).join(', ');
+        print('- Model: ${model.providerName}:${model.name} => $kinds');
       }
     } on Exception catch (e) {
       print('Exception: $e');

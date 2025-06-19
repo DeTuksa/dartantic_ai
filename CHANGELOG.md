@@ -2,6 +2,11 @@
 
 - Model discovery: Added `Provider.listModels()` to enumerate available models
   and the kinds of operations they support
+- Breaking Change: made aliases an implementation detail of providers -- the
+  Dart type is available to understand what endpoint you're calling, e.g. Gemini
+  vs OpenAI. I got tired of checking for provider name vs. alias vs. handle. I
+  just made it be the same thing it is in the provider table so that you can
+  programmatically create a fully-qualified model string.
 
 ## 0.8.2
 

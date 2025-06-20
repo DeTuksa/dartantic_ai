@@ -234,7 +234,8 @@ class OpenAiModel extends Model {
         for (final toolCall in toolCalls) {
           log.fine(
             '[OpenAiModel] Calling tool: '
-            'name=${toolCall.function.name}, args=${toolCall.function.arguments}',
+            'name=${toolCall.function.name}, '
+            'args=${toolCall.function.arguments}',
           );
           try {
             final args =

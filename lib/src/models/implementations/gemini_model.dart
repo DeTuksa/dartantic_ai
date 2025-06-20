@@ -139,31 +139,43 @@ class GeminiModel extends Model {
         }
       }
 
-      // Send function responses back to the model
+      // Send function responses back to the model using streaming
       log.finest('[GeminiModel] Sending function responses back to model');
-      final result = await chat.sendMessage(
+      final stream = chat.sendMessageStream(
         gemini.Content.functionResponses(responses),
       );
 
-      // Check if there are more function calls to process
+      // Clear old function calls and collect new response
       functionCalls.clear();
-      functionCalls.addAll(result.functionCalls);
       
+      // Stream the response as it comes in
+      await for (final chunk in stream) {
+        final text = chunk.text ?? '';
+        if (text.isNotEmpty) {
+          log.finest('[GeminiModel] Streaming after tools: $text');
+          yield AgentResponse(output: text, messages: []);
+        }
+
+        // Collect any new function calls from this response
+        if (chunk.functionCalls.isNotEmpty) {
+          final newCalls = chunk.functionCalls
+              .map((fc) => '${fc.name}(${fc.args})')
+              .join(', ');
+          log.finest('[GeminiModel] New function calls: $newCalls');
+          functionCalls.addAll(chunk.functionCalls);
+        }
+      }
+
       if (functionCalls.isNotEmpty) {
         final additionalCalls = functionCalls
             .map((fc) => '${fc.name}(${fc.args})')
             .join(', ');
         log.finest('[GeminiModel] Additional function calls: $additionalCalls');
-      } else {
-        // No more function calls, yield final response
-        final finalText = result.text ?? '';
-        log.finer('[GeminiModel] Final response after tools: $finalText');
-        yield AgentResponse(
-          output: finalText,
-          messages: _messagesFrom(chat.history),
-        );
       }
     }
+
+    // Yield final response with complete message history
+    yield AgentResponse(output: '', messages: _messagesFrom(chat.history));
   }
 
   @override

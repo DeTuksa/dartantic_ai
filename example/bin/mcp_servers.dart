@@ -12,51 +12,9 @@ void main() async {
     (record) => print('\n[${record.level.name}]: ${record.message}\n'),
   );
 
-  await zapierGoogleCalendar();
-  // await singleMcpServer();
-  // await multipleToolsAndMcpServers();
+  await singleMcpServer();
+  await multipleToolsAndMcpServers();
   exit(0);
-}
-
-Future<void> zapierGoogleCalendar() async {
-  print('\nZapier Google Calendar');
-  final zapierServer = McpClient.remote(
-    'google-calendar',
-    url: Uri.parse(Platform.environment['ZAPIER_MCP_URL']!),
-  );
-
-  final zapierTools = await zapierServer.listTools();
-  // _dumpTools('zapier google calendar', zapierTools);
-
-  final agent = Agent(
-    'openai',
-    systemPrompt: '''
-You are a helpful calendar assistant.
-Make sure you use the get-current-date-time tool FIRST to ground yourself.
-You have access to tools to interact with Google Calendar.
-You already have permission to call any Google Calendar tool.
-Never ask the user for additional access or confirmation.
-My Google calendar email is csells@sellsbrothers.com.
-''',
-    tools: [
-      Tool(
-        name: 'get-current-date-time',
-        description: 'Get the current local date and time in ISO-8601 format',
-        onCall: (_) async => {'datetime': DateTime.now().toIso8601String()},
-      ),
-      ...zapierTools,
-    ],
-  );
-
-  var messages = <Message>[];
-  await agent.runStream("What's on my schedule today?", messages: messages).map(
-    (r) {
-      messages = r.messages;
-      stdout.write(r.output);
-    },
-  ).drain();
-  // print('\nMessages:');
-  // _dumpMessages(messages);
 }
 
 Future<void> singleMcpServer() async {

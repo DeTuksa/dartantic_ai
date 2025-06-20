@@ -110,8 +110,8 @@ class GeminiModel extends Model {
     // won't be updated until after the stream is done
     yield AgentResponse(output: '', messages: _messagesFrom(chat.history));
 
-    // If there are function calls, handle them
-    if (functionCalls.isNotEmpty) {
+    // Process function calls in a loop to handle multi-step tool calling
+    while (functionCalls.isNotEmpty) {
       log.finest(
         '[GeminiModel] Processing ${functionCalls.length} function calls',
       );
@@ -145,10 +145,21 @@ class GeminiModel extends Model {
         gemini.Content.functionResponses(responses),
       );
 
-      if (result.text != null && result.text!.isNotEmpty) {
-        log.finer('[GeminiModel] Final response after tools: ${result.text!}');
+      // Check if there are more function calls to process
+      functionCalls.clear();
+      functionCalls.addAll(result.functionCalls);
+      
+      if (functionCalls.isNotEmpty) {
+        final additionalCalls = functionCalls
+            .map((fc) => '${fc.name}(${fc.args})')
+            .join(', ');
+        log.finest('[GeminiModel] Additional function calls: $additionalCalls');
+      } else {
+        // No more function calls, yield final response
+        final finalText = result.text ?? '';
+        log.finer('[GeminiModel] Final response after tools: $finalText');
         yield AgentResponse(
-          output: result.text!,
+          output: finalText,
           messages: _messagesFrom(chat.history),
         );
       }

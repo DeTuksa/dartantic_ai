@@ -86,6 +86,9 @@ class Message {
     'role': role.name,
     'parts': List<dynamic>.from(parts.map((x) => x.toJson())),
   };
+
+  /// Returns a concatenated string of all text parts in this message.
+  String get text => parts.whereType<TextPart>().map((p) => p.text).join();
 }
 
 /// An abstract base class for a part of a message's content.

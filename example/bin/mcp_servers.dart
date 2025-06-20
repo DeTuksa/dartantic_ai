@@ -7,7 +7,7 @@ import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:logging/logging.dart';
 
 void main() async {
-  Logger.root.level = Level.FINE;
+  Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen(
     (record) => print('\n[${record.level.name}]: ${record.message}\n'),
   );
@@ -26,15 +26,17 @@ Future<void> zapierGoogleCalendar() async {
   );
 
   final zapierTools = await zapierServer.listTools();
-  _dumpTools('zapier google calendar', zapierTools);
+  // _dumpTools('zapier google calendar', zapierTools);
 
   final agent = Agent(
     'openai',
     systemPrompt: '''
 You are a helpful calendar assistant.
+Make sure you use the get-current-date-time tool FIRST to ground yourself.
 You have access to tools to interact with Google Calendar.
 You already have permission to call any Google Calendar tool.
 Never ask the user for additional access or confirmation.
+My Google calendar email is csells@sellsbrothers.com.
 ''',
     tools: [
       Tool(
@@ -46,11 +48,11 @@ Never ask the user for additional access or confirmation.
     ],
   );
 
-  final result = await agent.run("What's on my schedule today?");
+  // final result = await agent.run("What's on my schedule today?");
+  final result = await agent.runWithAutoPoke("What's on my schedule today?");
   print(result.output);
+  print('Messages:');
   _dumpMessages(result.messages);
-  // final result2 = await agent.run('continue', messages: result.messages);
-  // print(result2.output);
 }
 
 void _dumpMessages(List<Message> messages) {
@@ -150,5 +152,27 @@ void _dumpTools(String name, Iterable<Tool> tools) {
     print('- name: ${tool.name}');
     print('- description: ${tool.description}');
     print('- inputSchema: $json');
+  }
+}
+
+extension on Agent {
+  Future<AgentResponse> runWithAutoPoke(String prompt) async {
+    var messages = <Message>[];
+    var userPrompt = prompt;
+
+    while (true) {
+      final response = await run(userPrompt, messages: messages);
+      messages = response.messages;
+      final lastAssistant = messages.last;
+      assert(lastAssistant.role == MessageRole.model);
+      final text = lastAssistant.text;
+
+      final shouldContinue = text.contains('<IN-PROGRESS>');
+      if (shouldContinue) {
+        userPrompt = ''; // blank poke
+      } else {
+        return response;
+      }
+    }
   }
 }

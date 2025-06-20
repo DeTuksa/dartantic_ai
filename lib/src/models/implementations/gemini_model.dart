@@ -75,6 +75,23 @@ class GeminiModel extends Model {
     required Iterable<Message> messages,
     required Iterable<Part> attachments,
   }) async* {
+    // # Implementation Notes:
+    // ## Goal: Multi-Step Tool Calling for Gemini
+    // To enable Gemini models to perform multi-step tool calling isn't
+    // difficult, but it requires a loop.
+    //
+    // ## The Loop
+    // The loop is simple:
+    // - Send history + messages + tools to Gemini
+    // - Process streaming response, collecting tool calls
+    // - If tool calls found → execute them, add results to conversation,
+    //   continue loop
+    // - If no tool calls found -> return the final text message and we're done
+    //
+    // This is much simpler than the OpenAI approach, which requires a probe,
+    // since while we're processing the tool calls result(s) response from the
+    // model, it will return with the very next tool call. It doesn't just sit
+    // there waiting for another prompt to continue what it was doing.
     log.finer(
       '[GeminiModel] Starting stream with ${messages.length} messages, '
       'prompt length: ${prompt.length}',
@@ -147,7 +164,7 @@ class GeminiModel extends Model {
 
       // Clear old function calls and collect new response
       functionCalls.clear();
-      
+
       // Stream the response as it comes in
       await for (final chunk in stream) {
         final text = chunk.text ?? '';

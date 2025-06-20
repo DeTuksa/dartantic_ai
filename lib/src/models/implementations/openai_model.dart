@@ -71,6 +71,65 @@ class OpenAiModel extends Model {
     required Iterable<Message> messages,
     required Iterable<Part> attachments,
   }) async* {
+    // # Implementation Notes:
+    // ## Goal: Multi-Step Tool Calling for OpenAI
+    // To enable OpenAI models to perform multi-step tool calling like Gemini
+    // does requires a little bit of magic.
+    //
+    // For example, assume that the agent is configured with two tools:
+    // - current-date-time
+    // - query-calendar(start_date, end_date)
+    //
+    // When a user asks "What's on my schedule today?", the agent should:
+    // - Call current-date-time tool so it knows what date to query the calendar
+    // - Call query-calendar tool to check the calendar
+    // - Return a final response with the results
+    //
+    // The problem is that, when using the API naively, OpenAI would make the
+    // first tool call, then get conversational ("Let me check your
+    // calendar...") and stop (!) instead of making the second tool call.
+    //
+    // ## The Loop
+    // To nudge it down the right path, we need a loop:
+    // - Send history + messages + tools to OpenAI
+    // - Process streaming response, collecting tool calls
+    // - If tool calls found → execute them, add results to conversation,
+    //   continue loop
+    // - If no tool calls but text response → probe for hidden tool calls (see
+    //   below)
+    // - If probe succeeds → add discovered tool calls to queue, continue loop
+    // - If probe fails or no more tools → return final response
+    //
+    // ## The Probe
+    // The probing mechanism is where things get interesting:
+    // - When OpenAI gives text instead of tool calls → send messages
+    //   + empty user message (this empty message is the probe)
+    // - If OpenAI responds with tool calls → it was "thinking out loud",
+    //   continue processing
+    // - If OpenAI gives another text response → it's truly done
+    //
+    // The downside of this approach is that, when it's all done, we've
+    // generated one more text response than we need, something like: "Is there
+    // anything else you'd like to know?" Not only is this useless, but when
+    // we're expecting typed output, e.g. a JSON object, it screws up the
+    // parsing.
+    //
+    // To fix this (and we haven't yet), we need to:
+    // - When we get a text response *after* the probe, we need to check if it's
+    //   the first text response.
+    // - If it is, we need to remove it.
+    // - If it's not, we need to keep it.
+    //
+    // ## Streaming Considerations
+    // This fix would be easy to implement except for the fact that the we're
+    // streaming the text responses as we get them. This means that we need to
+    // buffer the response *after* the probe:
+    // - If all we get is text => we never stream it, we never put it onto the
+    //   history, and we're done as if that last text response never happened.
+    // - If it's a tool call => we stream it, we put it onto the history, and we
+    //   continue.
+    //
+    // TODO: Implement the post-probe dropping-the-last-text-response feature.
     var isFirstEverTextResponse = true;
     log.finer(
       '[OpenAiModel] Starting stream with ${messages.length} messages, '

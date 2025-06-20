@@ -5,7 +5,6 @@ import 'dart:io';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:logging/logging.dart';
-// import 'package:logging/logging.dart';
 
 void main() async {
   Logger.root.level = Level.FINE;
@@ -30,10 +29,12 @@ Future<void> zapierGoogleCalendar() async {
   _dumpTools('zapier google calendar', zapierTools);
 
   final agent = Agent(
-    'gemini:gemini-2.5-flash',
+    'openai',
     systemPrompt: '''
 You are a helpful calendar assistant.
 You have access to tools to interact with Google Calendar.
+You already have permission to call any Google Calendar tool.
+Never ask the user for additional access or confirmation.
 ''',
     tools: [
       Tool(
@@ -47,21 +48,15 @@ You have access to tools to interact with Google Calendar.
 
   final result = await agent.run("What's on my schedule today?");
   print(result.output);
-  final result2 = await agent.run('continue', messages: result.messages);
-  print(result2.output);
-  exit(0);
+  _dumpMessages(result.messages);
+  // final result2 = await agent.run('continue', messages: result.messages);
+  // print(result2.output);
 }
 
-void _dumpTools(String name, Iterable<Tool> tools) {
-  print('\n# $name');
-  for (final tool in tools) {
-    final json = const JsonEncoder.withIndent(
-      '  ',
-    ).convert(jsonDecode(tool.inputSchema!.toJson()));
-    print('\n## Tool');
-    print('- name: ${tool.name}');
-    print('- description: ${tool.description}');
-    print('- inputSchema: $json');
+void _dumpMessages(List<Message> messages) {
+  print('Messages:');
+  for (final message in messages) {
+    print('  ${message.role}: ${message.parts}');
   }
 }
 
@@ -143,4 +138,17 @@ Future<void> multipleToolsAndMcpServers() async {
   }
 
   print('');
+}
+
+void _dumpTools(String name, Iterable<Tool> tools) {
+  print('\n# $name');
+  for (final tool in tools) {
+    final json = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(jsonDecode(tool.inputSchema!.toJson()));
+    print('\n## Tool');
+    print('- name: ${tool.name}');
+    print('- description: ${tool.description}');
+    print('- inputSchema: $json');
+  }
 }

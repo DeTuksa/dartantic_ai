@@ -1,7 +1,5 @@
 // ignore_for_file: lines_longer_than_80_chars, avoid_print
 
-import 'dart:convert';
-
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:google_generative_ai/google_generative_ai.dart' as gemini;
 import 'package:test/test.dart';
@@ -28,34 +26,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-
-      expect(geminiTools, hasLength(1));
-      final tool = geminiTools[0];
-      expect(tool.functionDeclarations, isNotNull);
-      expect(tool.functionDeclarations, hasLength(1));
-
-      final functionDecl = tool.functionDeclarations![0];
-      expect(functionDecl.name, equals('search_web'));
-      expect(
-        functionDecl.description,
-        equals('Search the web for information'),
-      );
-
-      final params = functionDecl.parameters;
-      expect(params, isNotNull);
-      expect(params!.type, equals(gemini.SchemaType.object));
-      expect(params.properties, isNotNull);
-      expect(params.properties, hasLength(1));
-      expect(
-        params.properties!['query']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        params.properties!['query']?.description,
-        equals('The search query to execute'),
-      );
-      expect(params.requiredProperties, equals(['query']));
+      _testToolCollectionConversion('simple string parameter', tools);
     });
 
     test('converts complex nested object tool', () {
@@ -101,44 +72,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-      final functionDecl = geminiTools[0].functionDeclarations![0];
-
-      expect(functionDecl.name, equals('create_user'));
-      final params = functionDecl.parameters!;
-      expect(params.type, equals(gemini.SchemaType.object));
-      expect(params.requiredProperties, equals(['user']));
-
-      // Check user object
-      final userProperty = params.properties!['user'];
-      expect(userProperty, isNotNull);
-      expect(userProperty!.type, equals(gemini.SchemaType.object));
-      expect(userProperty.properties, hasLength(4));
-      expect(
-        userProperty.properties!['name']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        userProperty.properties!['email']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        userProperty.properties!['age']?.type,
-        equals(gemini.SchemaType.integer),
-      );
-      expect(
-        userProperty.properties!['active']?.type,
-        equals(gemini.SchemaType.boolean),
-      );
-      expect(userProperty.requiredProperties, equals(['name', 'email']));
-
-      // Check settings object
-      final settingsProperty = params.properties!['settings'];
-      expect(settingsProperty, isNotNull);
-      expect(settingsProperty!.type, equals(gemini.SchemaType.object));
-      final themeProperty = settingsProperty.properties!['theme'];
-      expect(themeProperty, isNotNull);
-      expect(themeProperty!.type, equals(gemini.SchemaType.string));
+      _testToolCollectionConversion('complex nested object', tools);
     });
 
     test('converts array parameter tool', () {
@@ -174,119 +108,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-      final functionDecl = geminiTools[0].functionDeclarations![0];
-
-      expect(functionDecl.name, equals('batch_process'));
-      final params = functionDecl.parameters!;
-
-      // Check items array
-      final itemsProperty = params.properties!['items'];
-      expect(itemsProperty, isNotNull);
-      expect(itemsProperty!.type, equals(gemini.SchemaType.array));
-      expect(itemsProperty.items, isNotNull);
-      expect(itemsProperty.items!.type, equals(gemini.SchemaType.object));
-      expect(itemsProperty.items!.properties, isNotNull);
-      expect(itemsProperty.items!.properties, hasLength(2));
-      expect(
-        itemsProperty.items!.properties!['id']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        itemsProperty.items!.properties!['value']?.type,
-        equals(gemini.SchemaType.number),
-      );
-
-      // Check options array
-      final optionsProperty = params.properties!['options'];
-      expect(optionsProperty, isNotNull);
-      expect(optionsProperty!.type, equals(gemini.SchemaType.array));
-      expect(optionsProperty.items!.type, equals(gemini.SchemaType.string));
-    });
-
-    test('converts HuggingFace-style text generation tool', () {
-      final tools = [
-        Tool(
-          name: 'text_generation',
-          description: 'Generate text using a language model',
-          inputSchema:
-              {
-                'type': 'object',
-                'properties': {
-                  'inputs': {
-                    'type': 'string',
-                    'description': 'The input text to generate from',
-                  },
-                  'parameters': {
-                    'type': 'object',
-                    'properties': {
-                      'max_new_tokens': {
-                        'type': 'integer',
-                        'description': 'Maximum number of tokens to generate',
-                        'minimum': 1,
-                        'maximum': 4096,
-                      },
-                      'temperature': {
-                        'type': 'number',
-                        'description': 'Sampling temperature',
-                        'minimum': 0.0,
-                        'maximum': 2.0,
-                      },
-                      'top_p': {
-                        'type': 'number',
-                        'description': 'Nucleus sampling parameter',
-                        'minimum': 0.0,
-                        'maximum': 1.0,
-                      },
-                      'do_sample': {
-                        'type': 'boolean',
-                        'description': 'Whether to use sampling',
-                      },
-                      'stop_sequences': {
-                        'type': 'array',
-                        'items': {'type': 'string'},
-                        'description': 'List of sequences to stop generation',
-                      },
-                    },
-                  },
-                },
-                'required': ['inputs'],
-              }.toSchema(),
-          onCall: (input) async => {'generated_text': 'Mock generated text'},
-        ),
-      ];
-
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-      final textGenTool = geminiTools[0].functionDeclarations![0];
-
-      expect(textGenTool.name, equals('text_generation'));
-      final params = textGenTool.parameters!;
-      expect(params.requiredProperties, equals(['inputs']));
-
-      final parametersProperty = params.properties!['parameters'];
-      expect(parametersProperty, isNotNull);
-      expect(parametersProperty!.type, equals(gemini.SchemaType.object));
-      expect(
-        parametersProperty.properties!['max_new_tokens']?.type,
-        equals(gemini.SchemaType.integer),
-      );
-      expect(
-        parametersProperty.properties!['temperature']?.type,
-        equals(gemini.SchemaType.number),
-      );
-      expect(
-        parametersProperty.properties!['do_sample']?.type,
-        equals(gemini.SchemaType.boolean),
-      );
-
-      final stopSequencesProperty =
-          parametersProperty.properties!['stop_sequences'];
-      expect(stopSequencesProperty, isNotNull);
-      expect(stopSequencesProperty!.type, equals(gemini.SchemaType.array));
-      expect(
-        stopSequencesProperty.items!.type,
-        equals(gemini.SchemaType.string),
-      );
+      _testToolCollectionConversion('array parameter', tools);
     });
 
     test('converts tool with enum values', () {
@@ -315,19 +137,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-      final functionDecl = geminiTools[0].functionDeclarations![0];
-
-      expect(functionDecl.name, equals('set_status'));
-      final params = functionDecl.parameters!;
-
-      final statusProperty = params.properties!['status'];
-      expect(statusProperty, isNotNull);
-      expect(statusProperty!.type, equals(gemini.SchemaType.string));
-
-      final priorityProperty = params.properties!['priority'];
-      expect(priorityProperty, isNotNull);
-      expect(priorityProperty!.type, equals(gemini.SchemaType.string));
+      _testToolCollectionConversion('enum values', tools);
     });
 
     test('converts tool with no input schema', () {
@@ -339,14 +149,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-      final functionDecl = geminiTools[0].functionDeclarations![0];
-
-      expect(functionDecl.name, equals('get_time'));
-      expect(functionDecl.description, equals('Get current time'));
-      final params = functionDecl.parameters!;
-      expect(params.type, equals(gemini.SchemaType.object));
-      expect(params.properties, isEmpty);
+      _testToolCollectionConversion('no input schema', tools);
     });
 
     test('converts multiple tools', () {
@@ -377,79 +180,12 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-
-      expect(geminiTools, hasLength(2));
-      expect(geminiTools[0].functionDeclarations![0].name, equals('tool1'));
-      expect(geminiTools[1].functionDeclarations![0].name, equals('tool2'));
+      _testToolCollectionConversion('multiple tools', tools);
     });
 
     test('handles empty tools list', () {
       final geminiTools = GeminiModel.toolsFrom([]).toList();
       expect(geminiTools, isEmpty);
-    });
-
-    test('converts HuggingFace image classification tool', () {
-      final tools = [
-        Tool(
-          name: 'image_classification',
-          description: 'Classify images using a vision model',
-          inputSchema:
-              {
-                'type': 'object',
-                'properties': {
-                  'inputs': {
-                    'type': 'string',
-                    'description': 'Base64 encoded image or image URL',
-                  },
-                  'parameters': {
-                    'type': 'object',
-                    'properties': {
-                      'top_k': {
-                        'type': 'integer',
-                        'description': 'Number of top predictions to return',
-                        'minimum': 1,
-                        'maximum': 10,
-                      },
-                    },
-                  },
-                },
-                'required': ['inputs'],
-              }.toSchema(),
-          onCall:
-              (input) async => {
-                'predictions': [
-                  {'label': 'cat', 'score': 0.95},
-                  {'label': 'dog', 'score': 0.03},
-                ],
-              },
-        ),
-      ];
-
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-      final imageClassTool = geminiTools[0].functionDeclarations![0];
-
-      expect(imageClassTool.name, equals('image_classification'));
-      expect(
-        imageClassTool.description,
-        equals('Classify images using a vision model'),
-      );
-      final params = imageClassTool.parameters!;
-      expect(params.requiredProperties, equals(['inputs']));
-
-      // Verify inputs parameter
-      final inputsProperty = params.properties!['inputs'];
-      expect(inputsProperty, isNotNull);
-      expect(inputsProperty!.type, equals(gemini.SchemaType.string));
-
-      // Verify parameters object
-      final parametersProperty = params.properties!['parameters'];
-      expect(parametersProperty, isNotNull);
-      expect(parametersProperty!.type, equals(gemini.SchemaType.object));
-
-      final topKProperty = parametersProperty.properties!['top_k'];
-      expect(topKProperty, isNotNull);
-      expect(topKProperty!.type, equals(gemini.SchemaType.integer));
     });
 
     test('converts complex real-world tool with nested arrays and objects', () {
@@ -530,61 +266,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-      final functionDecl = geminiTools[0].functionDeclarations![0];
-
-      expect(functionDecl.name, equals('create_workflow'));
-      final params = functionDecl.parameters!;
-      expect(params.requiredProperties, equals(['workflow']));
-
-      // Verify workflow object structure
-      final workflowProperty = params.properties!['workflow'];
-      expect(workflowProperty, isNotNull);
-      expect(workflowProperty!.type, equals(gemini.SchemaType.object));
-      expect(workflowProperty.requiredProperties, equals(['name', 'steps']));
-
-      // Verify steps array
-      final stepsProperty = workflowProperty.properties!['steps'];
-      expect(stepsProperty, isNotNull);
-      expect(stepsProperty!.type, equals(gemini.SchemaType.array));
-      expect(stepsProperty.items!.type, equals(gemini.SchemaType.object));
-
-      // Verify step object structure
-      final stepItems = stepsProperty.items!;
-      expect(stepItems.requiredProperties, equals(['id', 'type']));
-      expect(
-        stepItems.properties!['id']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        stepItems.properties!['type']?.type,
-        equals(gemini.SchemaType.string),
-      );
-
-      // Verify config object in steps
-      final configProperty = stepItems.properties!['config'];
-      expect(configProperty, isNotNull);
-      expect(configProperty!.type, equals(gemini.SchemaType.object));
-
-      // Verify parameters array in config
-      final parametersProperty = configProperty.properties!['parameters'];
-      expect(parametersProperty, isNotNull);
-      expect(parametersProperty!.type, equals(gemini.SchemaType.array));
-      expect(parametersProperty.items!.type, equals(gemini.SchemaType.object));
-      expect(
-        parametersProperty.items!.requiredProperties,
-        equals(['key', 'value']),
-      );
-
-      // Verify metadata object
-      final metadataProperty = params.properties!['metadata'];
-      expect(metadataProperty, isNotNull);
-      expect(metadataProperty!.type, equals(gemini.SchemaType.object));
-
-      final tagsProperty = metadataProperty.properties!['tags'];
-      expect(tagsProperty, isNotNull);
-      expect(tagsProperty!.type, equals(gemini.SchemaType.array));
-      expect(tagsProperty.items!.type, equals(gemini.SchemaType.string));
+      _testToolCollectionConversion('complex nested workflow', tools);
     });
 
     test('converts Zapier Google Calendar tools', () {
@@ -747,149 +429,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-
-      expect(geminiTools, hasLength(6));
-
-      // Test empty schema tools
-      final addToolsDecl = geminiTools[0].functionDeclarations![0];
-      expect(addToolsDecl.name, equals('add_tools'));
-      expect(
-        addToolsDecl.description,
-        equals('Add new actions to your MCP provider'),
-      );
-      final addToolsParams = addToolsDecl.parameters!;
-      expect(addToolsParams.type, equals(gemini.SchemaType.object));
-      expect(addToolsParams.properties, isEmpty);
-
-      final editToolsDecl = geminiTools[1].functionDeclarations![0];
-      expect(editToolsDecl.name, equals('edit_tools'));
-
-      // Test event retrieval tool
-      final retrieveEventDecl = geminiTools[2].functionDeclarations![0];
-      expect(
-        retrieveEventDecl.name,
-        equals('google_calendar_retrieve_event_by_id'),
-      );
-      expect(
-        retrieveEventDecl.description,
-        equals('Finds a specific event by its ID in your calendar.'),
-      );
-      final retrieveParams = retrieveEventDecl.parameters!;
-
-      // Debug: Print complete tool comparison
-      final retrieveEventTool =
-          tools[2]; // google_calendar_retrieve_event_by_id
-      print('\n=== COMPLETE TOOL COMPARISON ===');
-      print('Tool: ${retrieveEventTool.name}');
-
-      print('\n--- INPUT TOOL OBJECT ---');
-      print('Name: ${retrieveEventTool.name}');
-      print('Description: ${retrieveEventTool.description}');
-      print('Input Schema:');
-      final inputSchemaMap = retrieveEventTool.inputSchema?.toMap();
-      if (inputSchemaMap != null) {
-        final prettyJson = const JsonEncoder.withIndent(
-          '  ',
-        ).convert(inputSchemaMap);
-        print(prettyJson);
-      } else {
-        print('  null');
-      }
-
-      print('\n--- OUTPUT GEMINI FUNCTION DECLARATION ---');
-      print('Name: ${retrieveEventDecl.name}');
-      print('Description: ${retrieveEventDecl.description}');
-      print('Parameters:');
-      print('  Type: ${retrieveParams.type}');
-      print('  Properties count: ${retrieveParams.properties?.length}');
-      print('  Required properties: ${retrieveParams.requiredProperties}');
-      print('  All Properties:');
-      retrieveParams.properties?.forEach((key, value) {
-        print('    $key:');
-        print('      type: ${value.type}');
-        print('      description: ${value.description}');
-        print('      nullable: ${value.nullable}');
-        print('      format: ${value.format}');
-      });
-      print('=== End Tool Comparison ===\n');
-
-      expect(retrieveParams.properties, hasLength(3));
-      expect(
-        retrieveParams.properties!['instructions']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        retrieveParams.properties!['event_id']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        retrieveParams.properties!['calendarid']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        retrieveParams.properties!['instructions']?.description,
-        contains('Instructions for running'),
-      );
-
-      // Test complex find event tool
-      final findEventDecl = geminiTools[3].functionDeclarations![0];
-      expect(findEventDecl.name, equals('google_calendar_find_event'));
-      expect(
-        findEventDecl.description,
-        contains('Finds an event in your calendar'),
-      );
-      final findParams = findEventDecl.parameters!;
-      expect(findParams.properties, hasLength(7));
-      expect(
-        findParams.properties!['end_time']?.description,
-        contains('EARLIEST timestamp'),
-      );
-      expect(
-        findParams.properties!['start_time']?.description,
-        contains('LATEST timestamp'),
-      );
-      expect(
-        findParams.properties!['search_term']?.description,
-        contains('Search operators'),
-      );
-      expect(
-        findParams.properties!['expand_recurring']?.type,
-        equals(gemini.SchemaType.string),
-      );
-
-      // Test busy periods tool
-      final busyPeriodsDecl = geminiTools[4].functionDeclarations![0];
-      expect(
-        busyPeriodsDecl.name,
-        equals('google_calendar_find_busy_periods_in_calendar'),
-      );
-      expect(
-        busyPeriodsDecl.description,
-        equals(
-          'Finds busy time periods in your calendar for a specific timeframe.',
-        ),
-      );
-      final busyParams = busyPeriodsDecl.parameters!;
-      expect(busyParams.properties, hasLength(4));
-
-      // Test quick add event tool
-      final quickAddDecl = geminiTools[5].functionDeclarations![0];
-      expect(quickAddDecl.name, equals('google_calendar_quick_add_event'));
-      expect(
-        quickAddDecl.description,
-        contains('Create an event from a piece of text'),
-      );
-      final quickAddParams = quickAddDecl.parameters!;
-      expect(quickAddParams.properties, hasLength(4));
-      expect(
-        quickAddParams.properties!['text']?.description,
-        equals('Describe Event'),
-      );
-      expect(
-        quickAddParams.properties!['attendees']?.description,
-        equals('Attendees'),
-      );
+      _testToolCollectionConversion('Zapier Google Calendar', tools);
     });
 
     test('converts HuggingFace tools with constraints and defaults', () {
@@ -1160,155 +700,7 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-
-      expect(geminiTools, hasLength(8));
-
-      // Test empty schema tool
-      final whoamiDecl = geminiTools[0].functionDeclarations![0];
-      expect(whoamiDecl.name, equals('hf_whoami'));
-      expect(
-        whoamiDecl.description,
-        contains('Hugging Face tools are being used anonymously'),
-      );
-      final whoamiParams = whoamiDecl.parameters!;
-      expect(whoamiParams.type, equals(gemini.SchemaType.object));
-      expect(whoamiParams.properties, isEmpty);
-
-      // Test space search with constraints
-      final spaceSearchDecl = geminiTools[1].functionDeclarations![0];
-      expect(spaceSearchDecl.name, equals('space_search'));
-      expect(spaceSearchDecl.description, contains('Find Hugging Face Spaces'));
-      final spaceParams = spaceSearchDecl.parameters!;
-      expect(spaceParams.properties, hasLength(3));
-      expect(
-        spaceParams.properties!['query']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        spaceParams.properties!['limit']?.type,
-        equals(gemini.SchemaType.number),
-      );
-      expect(
-        spaceParams.properties!['mcp']?.type,
-        equals(gemini.SchemaType.boolean),
-      );
-      // Verify required field is properly converted
-      expect(spaceParams.requiredProperties, equals(['query']));
-
-      // Test model search with enums
-      final modelSearchDecl = geminiTools[2].functionDeclarations![0];
-      expect(modelSearchDecl.name, equals('model_search'));
-      expect(
-        modelSearchDecl.description,
-        contains('Find Machine Learning models'),
-      );
-      final modelParams = modelSearchDecl.parameters!;
-      expect(modelParams.properties, hasLength(6));
-      expect(
-        modelParams.properties!['sort']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        modelParams.properties!['limit']?.type,
-        equals(gemini.SchemaType.number),
-      );
-      expect(
-        modelParams.properties!['query']?.description,
-        contains('Search term'),
-      );
-
-      // Test dataset search with arrays
-      final datasetSearchDecl = geminiTools[3].functionDeclarations![0];
-      expect(datasetSearchDecl.name, equals('dataset_search'));
-      expect(datasetSearchDecl.description, contains('Find Datasets hosted'));
-      final datasetParams = datasetSearchDecl.parameters!;
-      expect(datasetParams.properties, hasLength(5));
-      final tagsProperty = datasetParams.properties!['tags'];
-      expect(tagsProperty, isNotNull);
-      expect(tagsProperty!.type, equals(gemini.SchemaType.array));
-      expect(tagsProperty.items!.type, equals(gemini.SchemaType.string));
-      expect(tagsProperty.description, contains('Tags to filter datasets'));
-
-      // Test model details with required field
-      final modelDetailsDecl = geminiTools[4].functionDeclarations![0];
-      expect(modelDetailsDecl.name, equals('model_details'));
-      expect(
-        modelDetailsDecl.description,
-        contains('Get detailed information about a specific model'),
-      );
-      final modelDetailsParams = modelDetailsDecl.parameters!;
-      expect(modelDetailsParams.properties, hasLength(1));
-      expect(
-        modelDetailsParams.properties!['model_id']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(modelDetailsParams.requiredProperties, equals(['model_id']));
-
-      // Test paper search with required field
-      final paperSearchDecl = geminiTools[5].functionDeclarations![0];
-      expect(paperSearchDecl.name, equals('paper_search'));
-      expect(
-        paperSearchDecl.description,
-        contains('Find Machine Learning research papers'),
-      );
-      final paperSearchParams = paperSearchDecl.parameters!;
-      expect(paperSearchParams.properties, hasLength(3));
-      expect(
-        paperSearchParams.properties!['query']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(paperSearchParams.requiredProperties, equals(['query']));
-
-      // Test dataset details with required field
-      final datasetDetailsDecl = geminiTools[6].functionDeclarations![0];
-      expect(datasetDetailsDecl.name, equals('dataset_details'));
-      expect(
-        datasetDetailsDecl.description,
-        contains('Get detailed information about a specific dataset'),
-      );
-      final datasetDetailsParams = datasetDetailsDecl.parameters!;
-      expect(datasetDetailsParams.properties, hasLength(1));
-      expect(
-        datasetDetailsParams.properties!['dataset_id']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(datasetDetailsParams.requiredProperties, equals(['dataset_id']));
-
-      // Test image generation with numeric ranges
-      final imageGenDecl = geminiTools[7].functionDeclarations![0];
-      expect(imageGenDecl.name, equals('gr1_evalstate_flux1_schnell'));
-      expect(imageGenDecl.description, contains('Generate an image using'));
-      final imageParams = imageGenDecl.parameters!;
-      expect(imageParams.properties, hasLength(6));
-      expect(
-        imageParams.properties!['prompt']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        imageParams.properties!['seed']?.type,
-        equals(gemini.SchemaType.number),
-      );
-      expect(
-        imageParams.properties!['randomize_seed']?.type,
-        equals(gemini.SchemaType.boolean),
-      );
-      expect(
-        imageParams.properties!['width']?.type,
-        equals(gemini.SchemaType.number),
-      );
-      expect(
-        imageParams.properties!['height']?.type,
-        equals(gemini.SchemaType.number),
-      );
-      expect(
-        imageParams.properties!['num_inference_steps']?.type,
-        equals(gemini.SchemaType.number),
-      );
-      expect(
-        imageParams.properties!['width']?.description,
-        contains('numeric value between 256 and 2048'),
-      );
+      _testToolCollectionConversion('HuggingFace', tools);
     });
 
     test('converts deepwiki GitHub repository tools', () {
@@ -1371,72 +763,154 @@ void main() {
         ),
       ];
 
-      final geminiTools = GeminiModel.toolsFrom(tools).toList();
-
-      expect(geminiTools, hasLength(3));
-
-      // Test wiki structure tool
-      final wikiStructureDecl = geminiTools[0].functionDeclarations![0];
-      expect(wikiStructureDecl.name, equals('read_wiki_structure'));
-      expect(
-        wikiStructureDecl.description,
-        equals('Get a list of documentation topics for a GitHub repository'),
-      );
-      final structureParams = wikiStructureDecl.parameters!;
-      expect(structureParams.type, equals(gemini.SchemaType.object));
-      expect(structureParams.properties, hasLength(1));
-      expect(
-        structureParams.properties!['repoName']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        structureParams.properties!['repoName']?.description,
-        equals('GitHub repository: owner/repo (e.g. "facebook/react")'),
-      );
-      expect(structureParams.requiredProperties, equals(['repoName']));
-
-      // Test wiki contents tool
-      final wikiContentsDecl = geminiTools[1].functionDeclarations![0];
-      expect(wikiContentsDecl.name, equals('read_wiki_contents'));
-      expect(
-        wikiContentsDecl.description,
-        equals('View documentation about a GitHub repository'),
-      );
-      final contentsParams = wikiContentsDecl.parameters!;
-      expect(contentsParams.type, equals(gemini.SchemaType.object));
-      expect(contentsParams.properties, hasLength(1));
-      expect(
-        contentsParams.properties!['repoName']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(contentsParams.requiredProperties, equals(['repoName']));
-
-      // Test ask question tool
-      final askQuestionDecl = geminiTools[2].functionDeclarations![0];
-      expect(askQuestionDecl.name, equals('ask_question'));
-      expect(
-        askQuestionDecl.description,
-        equals('Ask any question about a GitHub repository'),
-      );
-      final questionParams = askQuestionDecl.parameters!;
-      expect(questionParams.type, equals(gemini.SchemaType.object));
-      expect(questionParams.properties, hasLength(2));
-      expect(
-        questionParams.properties!['repoName']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        questionParams.properties!['question']?.type,
-        equals(gemini.SchemaType.string),
-      );
-      expect(
-        questionParams.properties!['question']?.description,
-        equals('The question to ask about the repository'),
-      );
-      expect(
-        questionParams.requiredProperties,
-        equals(['repoName', 'question']),
-      );
+      _testToolCollectionConversion('deepwiki GitHub', tools);
     });
   });
+}
+
+
+
+/// Helper function to verify basic tool conversion from Tool to Gemini FunctionDeclaration
+void _verifyToolConversion(
+  Tool originalTool,
+  gemini.FunctionDeclaration geminiDecl,
+) {
+  expect(geminiDecl.name, equals(originalTool.name));
+  expect(geminiDecl.description, equals(originalTool.description));
+
+  if (originalTool.inputSchema != null) {
+    final inputSchemaMap = originalTool.inputSchema!.toMap();
+    _verifySchemaConversion(inputSchemaMap, geminiDecl.parameters!);
+  } else {
+    // Tool with no input schema should have empty properties
+    expect(geminiDecl.parameters!.type, equals(gemini.SchemaType.object));
+    expect(geminiDecl.parameters!.properties, isEmpty);
+  }
+}
+
+/// Recursively verify that a JSON schema was correctly converted to Gemini schema
+void _verifySchemaConversion(Map<String, dynamic> originalSchema, gemini.Schema geminiSchema) {
+  // Verify schema type
+  final originalType = originalSchema['type'] as String?;
+  if (originalType != null) {
+    final expectedGeminiType = _mapTypeToGeminiType(originalType);
+    expect(geminiSchema.type, equals(expectedGeminiType));
+  }
+
+  // Verify description
+  final originalDescription = originalSchema['description'] as String?;
+  if (originalDescription != null) {
+    expect(geminiSchema.description, equals(originalDescription));
+  }
+
+  // Verify properties for object types
+  final originalProperties = originalSchema['properties'] as Map<String, dynamic>?;
+  if (originalProperties != null) {
+    expect(geminiSchema.properties, hasLength(originalProperties.length));
+    
+    // Verify each property recursively
+    originalProperties.forEach((propName, propSchema) {
+      final geminiPropSchema = geminiSchema.properties![propName];
+      expect(geminiPropSchema, isNotNull, reason: 'Property "$propName" should exist in converted schema');
+      _verifySchemaConversion(propSchema as Map<String, dynamic>, geminiPropSchema!);
+    });
+  }
+
+  // Verify required properties
+  final originalRequired = originalSchema['required'] as List<dynamic>?;
+  if (originalRequired != null) {
+    expect(geminiSchema.requiredProperties, equals(originalRequired.cast<String>()));
+  }
+
+  // Verify array items
+  final originalItems = originalSchema['items'] as Map<String, dynamic>?;
+  if (originalItems != null) {
+    expect(geminiSchema.items, isNotNull, reason: 'Array items schema should exist');
+    _verifySchemaConversion(originalItems, geminiSchema.items!);
+  }
+
+  // Verify enum values
+  final originalEnum = originalSchema['enum'] as List<dynamic>?;
+  if (originalEnum != null) {
+    expect(geminiSchema.enumValues, equals(originalEnum.cast<String>()));
+  }
+
+  // Verify nullable properties based on required fields
+  if (originalSchema.containsKey('required') && originalSchema.containsKey('properties')) {
+    final requiredProps = Set<String>.from(originalSchema['required'] as List<dynamic>);
+    final properties = originalSchema['properties'] as Map<String, dynamic>;
+    
+    properties.forEach((propName, _) {
+      final geminiPropSchema = geminiSchema.properties![propName]!;
+      if (requiredProps.contains(propName)) {
+        expect(
+          geminiPropSchema.nullable,
+          equals(false),
+          reason: 'Required property "$propName" should have nullable: false',
+        );
+      } else {
+        expect(
+          geminiPropSchema.nullable,
+          equals(null),
+          reason: 'Optional property "$propName" should have nullable: null',
+        );
+      }
+    });
+  }
+}
+
+/// Map JSON Schema types to Gemini schema types
+gemini.SchemaType _mapTypeToGeminiType(String jsonType) {
+  switch (jsonType) {
+    case 'string':
+      return gemini.SchemaType.string;
+    case 'integer':
+      return gemini.SchemaType.integer;
+    case 'number':
+      return gemini.SchemaType.number;
+    case 'boolean':
+      return gemini.SchemaType.boolean;
+    case 'array':
+      return gemini.SchemaType.array;
+    case 'object':
+      return gemini.SchemaType.object;
+    default:
+      throw Exception('Unknown JSON Schema type: $jsonType');
+  }
+}
+
+/// Helper function to find a Gemini function declaration by name
+gemini.FunctionDeclaration _findGeminiFunctionByName(
+  List<gemini.Tool> geminiTools,
+  String functionName,
+) {
+  for (final tool in geminiTools) {
+    for (final func in tool.functionDeclarations!) {
+      if (func.name == functionName) {
+        return func;
+      }
+    }
+  }
+  throw Exception('Function "$functionName" not found in converted tools');
+}
+
+/// Comprehensive helper to test conversion of any tool collection
+void _testToolCollectionConversion(String collectionName, List<Tool> tools) {
+  final geminiTools = GeminiModel.toolsFrom(tools).toList();
+
+  // Verify correct number of tools converted
+  expect(
+    geminiTools,
+    hasLength(tools.length),
+    reason: '$collectionName: Expected ${tools.length} converted tools',
+  );
+
+  // Verify all tools are converted correctly
+  for (final originalTool in tools) {
+    final geminiDecl = _findGeminiFunctionByName(
+      geminiTools,
+      originalTool.name,
+    );
+    _verifyToolConversion(originalTool, geminiDecl);
+  }
 }

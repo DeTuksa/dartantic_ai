@@ -1,3 +1,10 @@
+## 0.8.4
+
+- Schema Nullable Properties Fix: Required properties in JSON schemas now
+  correctly set `nullable: false` in converted Gemini schemas, since required
+  properties cannot be null by definition. Optional properties remain `nullable:
+  null` (using Gemini's default behavior).
+
 ## 0.8.3
 
 - Breaking Change: `McpServer` → `McpClient`: Renamed MCP integration class cuz

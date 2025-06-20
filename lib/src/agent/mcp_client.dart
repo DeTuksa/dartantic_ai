@@ -141,7 +141,7 @@ class McpClient {
       tools.add(
         Tool(
           name: tool.name,
-          description: '[$name] ${tool.description ?? ''}',
+          description: tool.description,
           inputSchema: tool.inputSchema.toJson().toSchema(),
           onCall: (args) => call(tool.name, args),
         ),

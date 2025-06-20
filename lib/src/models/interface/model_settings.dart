@@ -15,9 +15,9 @@ class ModelSettings {
   ModelSettings({
     required this.systemPrompt,
     required this.outputSchema,
-    required this.tools,
+    required Iterable<Tool>? tools,
     required this.caps,
-  });
+  }) : tools = tools?.toList();
 
   /// The system prompt to use for the model.
   ///

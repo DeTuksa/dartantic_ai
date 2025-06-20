@@ -87,7 +87,7 @@ class Agent {
          ModelSettings(
            systemPrompt: systemPrompt,
            outputSchema: outputSchema,
-           tools: tools?.toList(),
+           tools: tools,
            caps: provider.caps,
          ),
        ) {

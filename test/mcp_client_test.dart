@@ -155,7 +155,6 @@ void main() {
           expect(tool.inputSchema, isNotNull);
           expect(tool.name, isNotEmpty);
           expect(tool.description, isNotEmpty);
-          expect(tool.description, startsWith('[huggingface]'));
         }
       });
 
@@ -457,8 +456,8 @@ void main() {
         expect(hfTools.isNotEmpty, isTrue);
 
         // Verify proper prefixing was applied (shows parsing worked)
-        expect(deepWikiTools.first.description, startsWith('[deepwiki]'));
-        expect(hfTools.first.description, startsWith('[huggingface]'));
+        expect(deepWikiTools.first.description, contains('GitHub'));
+        expect(hfTools.first.description, contains('Hugging Face'));
 
         await Future.wait([
           deepWikiServer.disconnect(),
@@ -483,7 +482,7 @@ void main() {
           // descriptions DeepWiki tools should have [deepwiki] prefix added by
           // our system
           for (final tool in tools) {
-            expect(tool.description, startsWith('[deepwiki]'));
+            expect(tool.description, contains('GitHub'));
           }
 
           final toolMap = {for (final tool in tools) tool.name: tool};
@@ -534,7 +533,7 @@ void main() {
 
           // Verify all tools have proper descriptions with server name
           for (final tool in tools) {
-            expect(tool.description, startsWith('[deepwiki]'));
+            expect(tool.description, contains('GitHub'));
             expect(tool.inputSchema, isNotNull);
           }
 

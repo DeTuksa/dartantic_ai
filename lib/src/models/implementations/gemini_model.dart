@@ -50,7 +50,7 @@ class GeminiModel extends Model {
                  ),
          systemInstruction:
              systemPrompt != null ? gemini.Content.text(systemPrompt) : null,
-         tools: tools != null ? _toolsFrom(tools).toList() : null,
+         tools: tools != null ? toolsFrom(tools).toList() : null,
        );
 
   /// The default model name to use if none is provided.
@@ -212,13 +212,15 @@ class GeminiModel extends Model {
 
   static gemini.Schema _geminiSchemaFrom(JsonSchema jsonSchema) {
     final map = jsonSchema.toMap();
-    return _schemaObjectFrom(map, map);
+    final schema = _schemaObjectFrom(map, map);
+    return schema;
   }
 
   static gemini.Schema _schemaObjectFrom(
     Map<String, dynamic> jsonSchema,
-    Map<String, dynamic> rootSchema,
-  ) {
+    Map<String, dynamic> rootSchema, {
+    bool isRequired = false,
+  }) {
     // Handle $ref references
     if (jsonSchema.containsKey(r'$ref')) {
       final ref = jsonSchema[r'$ref'] as String;
@@ -226,7 +228,11 @@ class GeminiModel extends Model {
         final defName = ref.substring(8); // Remove '#/$defs/'
         final defs = rootSchema[r'$defs'] as Map<String, dynamic>?;
         if (defs != null && defs.containsKey(defName)) {
-          return _schemaObjectFrom(defs[defName], rootSchema);
+          return _schemaObjectFrom(
+            defs[defName],
+            rootSchema,
+            isRequired: isRequired,
+          );
         }
       }
     }
@@ -238,51 +244,59 @@ class GeminiModel extends Model {
         properties: _extractProperties(
           jsonSchema['properties'] ?? {},
           rootSchema,
+          requiredProperties:
+              _extractRequiredProperties(jsonSchema['required'])?.toSet(),
         ),
         requiredProperties:
             _extractRequiredProperties(jsonSchema['required'])?.toList(),
         description: jsonSchema['description'],
-        nullable: jsonSchema['nullable'],
+        nullable: _getNullable(jsonSchema, isRequired),
       ),
       gemini.SchemaType.array => gemini.Schema.array(
         items: _schemaObjectFrom(jsonSchema['items'] ?? {}, rootSchema),
         description: jsonSchema['description'],
-        nullable: jsonSchema['nullable'],
+        nullable: _getNullable(jsonSchema, isRequired),
       ),
       gemini.SchemaType.string when jsonSchema['enum'] != null => gemini
           .Schema.enumString(
         enumValues: List<String>.from(jsonSchema['enum']),
         description: jsonSchema['description'],
-        nullable: jsonSchema['nullable'],
+        nullable: _getNullable(jsonSchema, isRequired),
       ),
       gemini.SchemaType.string => gemini.Schema.string(
         description: jsonSchema['description'],
-        nullable: jsonSchema['nullable'],
+        nullable: _getNullable(jsonSchema, isRequired),
       ),
       gemini.SchemaType.number => gemini.Schema.number(
         description: jsonSchema['description'],
-        nullable: jsonSchema['nullable'],
+        nullable: _getNullable(jsonSchema, isRequired),
         format: jsonSchema['format'],
       ),
       gemini.SchemaType.integer => gemini.Schema.integer(
         description: jsonSchema['description'],
-        nullable: jsonSchema['nullable'],
+        nullable: _getNullable(jsonSchema, isRequired),
         format: jsonSchema['format'],
       ),
       gemini.SchemaType.boolean => gemini.Schema.boolean(
         description: jsonSchema['description'],
-        nullable: jsonSchema['nullable'],
+        nullable: _getNullable(jsonSchema, isRequired),
       ),
     };
   }
 
   static Map<String, gemini.Schema> _extractProperties(
     Map<String, dynamic> properties,
-    Map<String, dynamic> rootSchema,
-  ) {
+    Map<String, dynamic> rootSchema, {
+    Set<String>? requiredProperties,
+  }) {
     final result = <String, gemini.Schema>{};
     for (final entry in properties.entries) {
-      result[entry.key] = _schemaObjectFrom(entry.value, rootSchema);
+      final isRequired = requiredProperties?.contains(entry.key) ?? false;
+      result[entry.key] = _schemaObjectFrom(
+        entry.value,
+        rootSchema,
+        isRequired: isRequired,
+      );
     }
     return result;
   }
@@ -290,6 +304,19 @@ class GeminiModel extends Model {
   static Iterable<String>? _extractRequiredProperties(dynamic required) {
     if (required == null) return null;
     return List<String>.from(required);
+  }
+
+  static bool? _getNullable(Map<String, dynamic> jsonSchema, bool isRequired) {
+    // If explicitly set in schema, use that value
+    if (jsonSchema.containsKey('nullable')) {
+      return jsonSchema['nullable'] as bool?;
+    }
+    // If property is required, it cannot be null
+    if (isRequired) {
+      return false;
+    }
+    // Otherwise, let Gemini use its default
+    return null;
   }
 
   static gemini.SchemaType _getSchemaType(
@@ -304,7 +331,8 @@ class GeminiModel extends Model {
     _ => gemini.SchemaType.object, // Default to object if type is not specified
   };
 
-  static Iterable<gemini.Tool> _toolsFrom(Iterable<Tool> tools) {
+  /// for use by tests only
+  static Iterable<gemini.Tool> toolsFrom(Iterable<Tool> tools) {
     final result = <gemini.Tool>[];
 
     for (final tool in tools) {

@@ -1,9 +1,14 @@
 ## 0.8.4
 
+- OpenAI Multi-Step Tool Calling by including probing for additional tool calls
+  when the model responds with text instead of a tool call.
+
+- Gemini multi-step tool calling by handling new tool calls while processing the
+  response from previous tool calling.
+
 - Schema Nullable Properties Fix: Required properties in JSON schemas now
   correctly set `nullable: false` in converted Gemini schemas, since required
-  properties cannot be null by definition. Optional properties remain `nullable:
-  null` (using Gemini's default behavior).
+  properties cannot be null by definition.
 
 ## 0.8.3
 

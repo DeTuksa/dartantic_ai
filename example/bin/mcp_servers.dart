@@ -48,18 +48,15 @@ My Google calendar email is csells@sellsbrothers.com.
     ],
   );
 
-  // final result = await agent.run("What's on my schedule today?");
-  final result = await agent.runWithAutoPoke("What's on my schedule today?");
-  print(result.output);
-  print('Messages:');
-  _dumpMessages(result.messages);
-}
-
-void _dumpMessages(List<Message> messages) {
-  print('Messages:');
-  for (final message in messages) {
-    print('  ${message.role}: ${message.parts}');
-  }
+  var messages = <Message>[];
+  await agent.runStream("What's on my schedule today?", messages: messages).map(
+    (r) {
+      messages = r.messages;
+      stdout.write(r.output);
+    },
+  ).drain();
+  // print('\nMessages:');
+  // _dumpMessages(messages);
 }
 
 Future<void> singleMcpServer() async {
@@ -155,24 +152,9 @@ void _dumpTools(String name, Iterable<Tool> tools) {
   }
 }
 
-extension on Agent {
-  Future<AgentResponse> runWithAutoPoke(String prompt) async {
-    var messages = <Message>[];
-    var userPrompt = prompt;
-
-    while (true) {
-      final response = await run(userPrompt, messages: messages);
-      messages = response.messages;
-      final lastAssistant = messages.last;
-      assert(lastAssistant.role == MessageRole.model);
-      final text = lastAssistant.text;
-
-      final shouldContinue = text.contains('<IN-PROGRESS>');
-      if (shouldContinue) {
-        userPrompt = ''; // blank poke
-      } else {
-        return response;
-      }
-    }
+void _dumpMessages(List<Message> messages) {
+  print('Messages:');
+  for (final message in messages) {
+    print('  ${message.role}: ${message.parts}');
   }
 }

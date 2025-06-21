@@ -156,8 +156,11 @@ For post-probe responses, we implement special buffering logic:
   - Don't add anything to message history
   - Exit as if the response never happened
 
-### Future Optimizations
-A future optimization would be to skip the probe message entirely when an Agent has no tools configured. Since there would be no possibility of additional tool calls in this scenario, the probe step would be unnecessary overhead.
+### Optimizations
+One optimization that has been applied is to skip the probe message entirely
+when an Agent has no tools configured. Since there would be no possibility of
+additional tool calls in this scenario, the probe step would be unnecessary
+overhead.
 
 This implementation enables complex multi-step reasoning chains like:
 ```dart

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:dotprompt_dart/dotprompt_dart.dart';
 import 'package:test/test.dart';
@@ -24,12 +26,16 @@ void main() {
         );
 
         final output = StringBuffer();
+        var messages = <Message>[];
         await for (final chunk in agent.runStreamWithRetries(
           'Where does "hello world" come from?',
         )) {
           output.write(chunk.output);
+          messages = chunk.messages;
         }
         final resultOutput = output.toString();
+        print('resultOutput: $resultOutput');
+        print('messages: $messages');
         expect(resultOutput, isNotEmpty);
         expect(RegExp(r'\.').allMatches(resultOutput).length, equals(1));
       });

@@ -72,6 +72,25 @@ class OpenAiModel extends Model {
     required Iterable<Message> messages,
     required Iterable<Part> attachments,
   }) async* {
+    // Clear the tool call ID mapping at the start of each run to avoid
+    // conflicts with previous runs
+    _toolCallIdToName.clear();
+
+    // Process the incoming message history to extract and register all tool
+    // call IDs This ensures we can properly handle tool results from previous
+    // runs
+    for (final message in messages) {
+      for (final part in message.parts) {
+        if (part is ToolPart && part.kind == ToolPartKind.call) {
+          _toolCallIdToName[part.id] = part.name;
+          log.fine(
+            '[OpenAiModel] Registered existing tool call: '
+            'id=${part.id}, name=${part.name}',
+          );
+        }
+      }
+    }
+
     // # Implementation Notes:
     // ## Goal: Multi-Step Tool Calling for OpenAI
     // To enable OpenAI models to perform multi-step tool calling like Gemini

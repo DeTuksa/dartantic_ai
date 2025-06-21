@@ -89,6 +89,9 @@ class Message {
 
   /// Returns a concatenated string of all text parts in this message.
   String get text => parts.whereType<TextPart>().map((p) => p.text).join();
+
+  @override
+  String toString() => 'Message(role: $role, parts: $parts)';
 }
 
 /// An abstract base class for a part of a message's content.

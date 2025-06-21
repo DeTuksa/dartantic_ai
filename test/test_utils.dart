@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:dotprompt_dart/dotprompt_dart.dart';
 import 'package:openai_dart/openai_dart.dart' as openai;
 
 final allProviders = [
@@ -115,3 +116,17 @@ extension AgentRetryExtension on Agent {
     retries: retries,
   );
 }
+
+Stream<AgentResponse> runPromptStreamWithRetries(
+  DotPrompt prompt, {
+  Iterable<Message> messages = const [],
+  Iterable<Part> attachments = const [],
+  int retries = 1,
+}) => rateLimitRetryStream<AgentResponse>(
+  () => Agent.runPromptStream(
+    prompt,
+    messages: messages,
+    attachments: attachments,
+  ),
+  retries: retries,
+);

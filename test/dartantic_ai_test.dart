@@ -225,7 +225,7 @@ Summarize this in {{length}} words: {{text}}
 ''');
 
         final output = StringBuffer();
-        await for (final chunk in Agent.runPromptStream(prompt)) {
+        await for (final chunk in runPromptStreamWithRetries(prompt)) {
           output.write(chunk.output);
         }
         final resultOutput = output.toString();

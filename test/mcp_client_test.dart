@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:test/test.dart';
 
+import 'test_utils.dart';
+
 void main() {
   group('McpClient Tests', () {
     group('remote server configuration', () {
@@ -371,7 +373,7 @@ void main() {
         );
 
         // Test that the Agent can use the local MCP server tool via prompt
-        final response = await agent.run('Calculate 15 + 27 for me');
+        final response = await agent.runWithRetries('Calculate 15 + 27 for me');
 
         // Verify the agent used the MCP tool and got the right result
         expect(response.output, contains('42')); // 15 + 27 = 42

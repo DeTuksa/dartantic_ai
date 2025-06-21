@@ -3,6 +3,8 @@
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:test/test.dart';
 
+import 'test_utils.dart';
+
 void main() {
   group('Multi-step tool calling', () {
     late List<Tool> testTools;
@@ -92,7 +94,7 @@ void main() {
           final agent = Agent('openai', tools: testTools);
 
           final responses = <String>[];
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'What events do I have today? Please get the current time first, then find my events for today.',
           )) {
             if (response.output.isNotEmpty) {
@@ -122,7 +124,7 @@ void main() {
           final agent = Agent('openai', tools: testTools);
 
           final responses = <String>[];
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'Get the current time, find my events for today, then get details for the first event.',
           )) {
             if (response.output.isNotEmpty) {
@@ -153,7 +155,7 @@ void main() {
           final agent = Agent('openai', tools: testTools);
 
           final responses = <String>[];
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'First, let me check what time it is. Then I need to find your schedule for today.',
           )) {
             if (response.output.isNotEmpty) {
@@ -179,7 +181,7 @@ void main() {
           final agent = Agent('gemini', tools: testTools);
 
           final responses = <String>[];
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'What events do I have today? Please get the current time first, then find my events for today.',
           )) {
             if (response.output.isNotEmpty) {
@@ -209,7 +211,7 @@ void main() {
           final agent = Agent('gemini', tools: testTools);
 
           final responses = <String>[];
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'Get the current time, find my events for today, then get details for the first event.',
           )) {
             if (response.output.isNotEmpty) {
@@ -240,7 +242,7 @@ void main() {
           final agent = Agent('gemini', tools: testTools);
 
           final responses = <String>[];
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'First, let me check what time it is. Then I need to find your schedule for today.',
           )) {
             if (response.output.isNotEmpty) {
@@ -266,7 +268,7 @@ void main() {
           final agent = Agent('openai', tools: testTools);
 
           AgentResponse? finalResponse;
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'Get current time and find events',
           )) {
             finalResponse = response;
@@ -322,7 +324,7 @@ void main() {
           final agent = Agent('openai', tools: errorTools);
 
           final responses = <String>[];
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'Use the failing tool, then use the working tool.',
           )) {
             if (response.output.isNotEmpty) {
@@ -350,7 +352,7 @@ void main() {
 
           final stopwatch = Stopwatch()..start();
 
-          await for (final response in agent.runStream(
+          await for (final response in agent.runStreamWithRetries(
             'Get current time, find events, and get details for the first event.',
           )) {
             // Allow the agent to complete its multi-step process

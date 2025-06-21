@@ -71,7 +71,9 @@ void main() {
       const prompt = 'What is 2 + 2?';
       final agent = Agent.provider(provider);
       final responses = <AgentResponse>[];
-      await agent.runStream(prompt, messages: []).forEach(responses.add);
+      await agent
+          .runStreamWithRetries(prompt, messages: [])
+          .forEach(responses.add);
       final messages =
           responses.isNotEmpty ? responses.last.messages : <Message>[];
 
@@ -125,7 +127,10 @@ void main() {
                 : null,
       );
 
-      final response = await agent.run('And Italy?', messages: initialMessages);
+      final response = await agent.runWithRetries(
+        'And Italy?',
+        messages: initialMessages,
+      );
       final messages = response.messages;
 
       // dump the messages to the console
@@ -268,7 +273,7 @@ void main() {
       const systemPrompt = 'You are a system prompt for testing.';
       final agent = Agent.provider(provider, systemPrompt: systemPrompt);
       final responses = <AgentResponse>[];
-      await agent.runStream('Say hello!').forEach(responses.add);
+      await agent.runStreamWithRetries('Say hello!').forEach(responses.add);
       final messages =
           responses.isNotEmpty ? responses.last.messages : <Message>[];
       if (systemPrompt.isNotEmpty) {
@@ -326,7 +331,7 @@ void main() {
           parts: [const TextPart('What animal says "quack"?')],
         ),
       ];
-      final result = await agent.runFor<Map<String, dynamic>>(
+      final result = await agent.runForWithRetries<Map<String, dynamic>>(
         'What animal says "neigh"?',
         messages: initialMessages,
       );
@@ -378,7 +383,9 @@ void main() {
             'Use the animal sound lookup tool to repeat the user message.',
       );
       final responses = <AgentResponse>[];
-      await agent.runStream('Repeat: hello world').forEach(responses.add);
+      await agent
+          .runStreamWithRetries('Repeat: hello world')
+          .forEach(responses.add);
       final messages =
           responses.isNotEmpty ? responses.last.messages : <Message>[];
 
@@ -447,7 +454,7 @@ void main() {
       );
       final firstMessages = firstResponse.messages;
       // Second exchange, referencing the first
-      final secondResponse = await agent.run(
+      final secondResponse = await agent.runWithRetries(
         'What color did I say I liked?',
         messages: firstMessages,
       );
@@ -460,10 +467,12 @@ void main() {
         systemPrompt: 'You are a helpful assistant.',
       );
       // First exchange
-      final firstResponse = await agent.run('My favorite color is blue.');
+      final firstResponse = await agent.runWithRetries(
+        'My favorite color is blue.',
+      );
       final firstMessages = firstResponse.messages;
       // Second exchange, referencing the first
-      final secondResponse = await agent.run(
+      final secondResponse = await agent.runWithRetries(
         'What color did I say I liked?',
         messages: firstMessages,
       );
@@ -626,7 +635,9 @@ Do not answer directly; always call the tool with the sound in question and retu
         tools: [tool],
         systemPrompt: systemPrompt,
       );
-      final responses1 = await agent1.run('Echo this: magic-value-123');
+      final responses1 = await agent1.runWithRetries(
+        'Echo this: magic-value-123',
+      );
       final history = responses1.messages;
       // Debug: Print message history after first run
       print(
@@ -646,7 +657,10 @@ Do not answer directly; always call the tool with the sound in question and retu
         systemPrompt: systemPrompt,
       );
       const followup = 'What value did I ask you to echo?';
-      final responses2 = await agent2.run(followup, messages: history);
+      final responses2 = await agent2.runWithRetries(
+        followup,
+        messages: history,
+      );
       final output = responses2.output;
       // Debug: Print follow-up output and message content
       print('--- Debug: Follow-up output (provider: \\${agent2.model}) ---');

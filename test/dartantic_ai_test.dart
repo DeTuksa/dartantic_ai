@@ -24,7 +24,7 @@ void main() {
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.runStream(
+        await for (final chunk in agent.runStreamWithRetries(
           'Where does "hello world" come from?',
         )) {
           output.write(chunk.output);
@@ -47,7 +47,7 @@ void main() {
 
         final agent = Agent('openai', outputSchema: outputSchema.toSchema());
         final output = StringBuffer();
-        await for (final chunk in agent.runStream(
+        await for (final chunk in agent.runStreamWithRetries(
           'The windy city in the US of A.',
         )) {
           output.write(chunk.output);
@@ -78,7 +78,7 @@ void main() {
               },
         );
 
-        final result = await agent.runFor<Map<String, String>>(
+        final result = await agent.runForWithRetries<Map<String, String>>(
           'The windy city in the US of A.',
         );
 
@@ -138,7 +138,7 @@ void main() {
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.runStream(
+        await for (final chunk in agent.runStreamWithRetries(
           'What is the time and temperature in New York City?',
         )) {
           output.write(chunk.output);
@@ -168,7 +168,7 @@ void main() {
               },
         );
 
-        final result = await agent.runFor<Map<String, String>>(
+        final result = await agent.runForWithRetries<Map<String, String>>(
           'The windy city in the US of A.',
         );
 
@@ -200,7 +200,7 @@ void main() {
               },
         );
 
-        final result = await agent.runFor<Map<String, String>>(
+        final result = await agent.runForWithRetries<Map<String, String>>(
           'The windy city in the US of A.',
         );
 
@@ -242,7 +242,7 @@ Summarize this in {{length}} words: {{text}}
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.runStream(
+        await for (final chunk in agent.runStreamWithRetries(
           'Where does "hello world" come from?',
         )) {
           output.write(chunk.output);
@@ -272,7 +272,7 @@ Summarize this in {{length}} words: {{text}}
               },
         );
 
-        final result = await agent.runFor<Map<String, String>>(
+        final result = await agent.runForWithRetries<Map<String, String>>(
           'The windy city in the US of A.',
         );
 
@@ -321,7 +321,7 @@ Summarize this in {{length}} words: {{text}}
               },
         );
 
-        final result = await agent.runFor<Map<String, String>>(
+        final result = await agent.runForWithRetries<Map<String, String>>(
           'The windy city in the US of A.',
         );
 
@@ -437,7 +437,7 @@ Summarize this in {{length}} words: {{text}}
         );
 
         final output = StringBuffer();
-        await for (final chunk in agent.runStream(
+        await for (final chunk in agent.runStreamWithRetries(
           'What is the time and temperature in New York City?',
         )) {
           output.write(chunk.output);
@@ -453,7 +453,9 @@ Summarize this in {{length}} words: {{text}}
           systemPrompt: 'Be concise, reply with one sentence.',
         );
 
-        final response = await agent.run('Where does "hello world" come from?');
+        final response = await agent.runWithRetries(
+          'Where does "hello world" come from?',
+        );
         expect(response.output, isNotEmpty);
         expect(RegExp(r'\.').allMatches(response.output).length, equals(1));
       });

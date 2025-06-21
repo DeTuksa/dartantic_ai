@@ -11,9 +11,9 @@ final allProviders = [
 
 Stream<T> rateLimitRetryStream<T>(
   Stream<T> Function() fn, {
-  int retries = 1,
+  required int retries,
 }) async* {
-  for (var attempts = 0; attempts < retries; ++attempts) {
+  for (var attempts = 1; attempts <= retries; ++attempts) {
     try {
       yield* fn();
     } on openai.OpenAIClientException catch (ex) {
@@ -28,8 +28,11 @@ Stream<T> rateLimitRetryStream<T>(
   }
 }
 
-Future<T> rateLimitRetry<T>(Future<T> Function() fn, {int retries = 1}) async {
-  for (var attempts = 0; attempts < retries; ++attempts) {
+Future<T> rateLimitRetry<T>(
+  Future<T> Function() fn, {
+  required int retries,
+}) async {
+  for (var attempts = 1; attempts <= retries; ++attempts) {
     try {
       return await fn();
     } on openai.OpenAIClientException catch (e) {
@@ -52,6 +55,7 @@ int _retryWait(openai.OpenAIClientException ex, int attempts) {
   if (ex.code != 429) return 0;
 
   // Try to parse the wait time from the error message
+  print('OpenAIClientException.body: ${ex.body}');
   final errorBody = ex.body;
   if (errorBody is Map<String, dynamic> &&
       errorBody['error'] is Map<String, dynamic>) {
@@ -100,7 +104,7 @@ extension AgentRetryExtension on Agent {
     String prompt, {
     Iterable<Message> messages = const [],
     Iterable<Part> attachments = const [],
-    int retries = 1,
+    int retries = 3,
   }) => rateLimitRetry<AgentResponseFor<T>>(
     () => runFor<T>(prompt, messages: messages, attachments: attachments),
     retries: retries,
@@ -110,7 +114,7 @@ extension AgentRetryExtension on Agent {
     String prompt, {
     Iterable<Message> messages = const [],
     Iterable<Part> attachments = const [],
-    int retries = 1,
+    int retries = 3,
   }) => rateLimitRetryStream<AgentResponse>(
     () => runStream(prompt, messages: messages, attachments: attachments),
     retries: retries,
@@ -121,7 +125,7 @@ Stream<AgentResponse> runPromptStreamWithRetries(
   DotPrompt prompt, {
   Iterable<Message> messages = const [],
   Iterable<Part> attachments = const [],
-  int retries = 1,
+  int retries = 3,
 }) => rateLimitRetryStream<AgentResponse>(
   () => Agent.runPromptStream(
     prompt,

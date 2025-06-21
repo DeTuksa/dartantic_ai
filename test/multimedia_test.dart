@@ -29,7 +29,7 @@ development technologies and has written several books about programming.
 ''');
 
           try {
-            final response = await agent.run(
+            final response = await agent.runWithRetries(
               "Can you summarize this person's background in one sentence?",
               attachments: [await DataPart.file(tempFile)],
             );
@@ -53,7 +53,7 @@ development technologies and has written several books about programming.
         });
 
         test('should process image file via DataPart.file()', () async {
-          final response = await agent.run(
+          final response = await agent.runWithRetries(
             'What do you see in this image? Describe it briefly.',
             attachments: [await DataPart.file(imageFile)],
           );
@@ -74,7 +74,7 @@ development technologies and has written several books about programming.
             );
 
             try {
-              final response = await agent.run(
+              final response = await agent.runWithRetries(
                 'Describe what you see in this image.',
                 attachments: [LinkPart(imageUrl)],
               );
@@ -105,7 +105,7 @@ development technologies and has written several books about programming.
           await tempFile.writeAsString('This is a test document.');
 
           try {
-            final response = await agent.run(
+            final response = await agent.runWithRetries(
               'I have attached a text file and an image. '
               'Can you acknowledge both attachments?',
               attachments: [
@@ -137,7 +137,7 @@ every letter in the English alphabet and is commonly used for testing.
             final chunks = <String>[];
             var messageHistory = <Message>[];
 
-            await for (final response in agent.runStream(
+            await for (final response in agent.runStreamWithRetries(
               'Please count the words in this text file.',
               attachments: [await DataPart.file(tempFile)],
             )) {
@@ -174,7 +174,7 @@ every letter in the English alphabet and is commonly used for testing.
 
           try {
             // First message with attachment
-            final response1 = await agent.run(
+            final response1 = await agent.runWithRetries(
               'What is mentioned in this file?',
               attachments: [await DataPart.file(tempFile)],
             );
@@ -183,7 +183,7 @@ every letter in the English alphabet and is commonly used for testing.
             expect(response1.messages, isNotEmpty);
 
             // Second message without attachment, but with history
-            final response2 = await agent.run(
+            final response2 = await agent.runWithRetries(
               'What color was mentioned?',
               messages: response1.messages,
             );

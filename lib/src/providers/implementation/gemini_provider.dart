@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../agent/agent.dart';
 import '../../models/implementations/gemini_model.dart' show GeminiModel;
 import '../../models/interface/model.dart';
 import '../../models/interface/model_settings.dart';
@@ -28,7 +27,7 @@ class GeminiProvider extends Provider {
     this.modelName,
     this.embeddingModelName,
     String? apiKey,
-    this.temperature, AgentMode? agentMode,
+    this.temperature,
   }) : apiKey = apiKey ?? platform.getEnv(apiKeyName);
 
   /// The name of the environment variable that contains the API key.
@@ -60,8 +59,9 @@ class GeminiProvider extends Provider {
     apiKey: apiKey,
     outputSchema: settings.outputSchema,
     systemPrompt: settings.systemPrompt,
-    tools: settings.tools,
     temperature: temperature,
+    tools: settings.tools,
+    toolCallingMode: settings.toolCallingMode,
   );
 
   @override

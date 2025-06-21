@@ -12,6 +12,7 @@ import '../../message.dart';
 import '../../providers/interface/provider_caps.dart';
 import '../../utils.dart';
 import '../interface/model.dart';
+import '../interface/model_settings.dart';
 
 /// Implementation of [Model] that uses Google's Gemini API.
 ///
@@ -33,10 +34,12 @@ class GeminiModel extends Model {
     String? systemPrompt,
     Iterable<Tool>? tools,
     double? temperature,
+    ToolCallingMode? toolCallingMode,
   }) : generativeModelName = modelName ?? defaultModelName,
        embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
        _apiKey = apiKey,
        _tools = tools?.toList(),
+       _toolCallingMode = toolCallingMode ?? ToolCallingMode.multiStep,
        _model = gemini.GenerativeModel(
          apiKey: apiKey,
          model: modelName ?? defaultModelName,
@@ -62,6 +65,7 @@ class GeminiModel extends Model {
   late final gemini.GenerativeModel _model;
   final String _apiKey;
   final List<Tool>? _tools;
+  final ToolCallingMode _toolCallingMode;
 
   @override
   final String generativeModelName;
@@ -95,6 +99,10 @@ class GeminiModel extends Model {
     log.finer(
       '[GeminiModel] Starting stream with ${messages.length} messages, '
       'prompt length: ${prompt.length}',
+    );
+
+    log.fine(
+      '[GeminiModel] Starting stream with toolCallingMode: $_toolCallingMode',
     );
 
     final history = _geminiHistoryFrom(messages).toList();
@@ -188,6 +196,15 @@ class GeminiModel extends Model {
             .map((fc) => '${fc.name}(${fc.args})')
             .join(', ');
         log.finest('[GeminiModel] Additional function calls: $additionalCalls');
+      }
+
+      // If we're in single-step mode, break out of the loop after one iteration
+      if (_toolCallingMode == ToolCallingMode.singleStep) {
+        log.fine(
+          '[GeminiModel] Single-step mode: breaking out of tool calling loop',
+        );
+        functionCalls.clear(); // Clear any pending function calls
+        break;
       }
     }
 

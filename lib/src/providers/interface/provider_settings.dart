@@ -1,5 +1,3 @@
-import '../../agent/agent.dart';
-
 /// Settings used to configure a provider.
 ///
 /// Contains the necessary information to create and configure a provider
@@ -16,8 +14,6 @@ class ProviderSettings {
     required this.embeddingModelName,
     required this.apiKey,
     required this.baseUrl,
-    required this.temperature,
-    required this.agentMode,
   });
 
   /// The specific model name to use within the provider family for text
@@ -32,10 +28,4 @@ class ProviderSettings {
 
   /// The base URL for the provider.
   final Uri? baseUrl;
-
-  /// The temperature for the provider.
-  final double? temperature;
-
-  /// The mode in which the agent will run.
-  final AgentMode? agentMode;
 }

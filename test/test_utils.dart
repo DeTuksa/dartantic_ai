@@ -19,12 +19,14 @@ Stream<T> rateLimitRetryStream<T>(
   while (true) {
     attempts++;
     try {
-      yield* fn();
+      await for (final item in fn()) {
+        yield item;
+      }
       // If we get here without an exception, we're done
       break;
     } on openai.OpenAIClientException catch (ex) {
       final waitTimeMs = _retryWait(ex, attempts);
-      if (waitTimeMs > 0 && attempts < retries) {
+      if (waitTimeMs > 0 && attempts <= retries) {
         print(
           'Retrying stream after rate limit (attempt $attempts of $retries)',
         );
@@ -50,7 +52,7 @@ Future<T> rateLimitRetry<T>(
       // If we get here without an exception, we're done
     } on openai.OpenAIClientException catch (e) {
       final waitTimeMs = _retryWait(e, attempts);
-      if (waitTimeMs > 0 && attempts < retries) {
+      if (waitTimeMs > 0 && attempts <= retries) {
         print('Retrying after rate limit (attempt $attempts of $retries)');
         await Future.delayed(Duration(milliseconds: waitTimeMs));
         // Continue to retry
@@ -86,17 +88,28 @@ int _retryWait(openai.OpenAIClientException ex, int attempts) {
       final errorMessage = errorMap['message'] as String?;
 
       if (errorMessage != null) {
-        // Extract wait time using regex
-        final regex = RegExp(r'Please try again in (\d+)ms');
+        // Extract wait time using regex that handles both 's' and 'ms'
+        final regex = RegExp(r'Please try again in ([\d.]+)(m?s)');
         final match = regex.firstMatch(errorMessage);
 
-        if (match != null && match.groupCount >= 1) {
-          final waitTimeMs = int.tryParse(match.group(1)!) ?? 1000;
-          print(
-            'Rate limit hit. Waiting ${waitTimeMs}ms before retry. '
-            'Attempt: $attempts',
-          );
-          return waitTimeMs;
+        if (match != null && match.groupCount >= 2) {
+          final waitTimeValue = double.tryParse(match.group(1)!) ?? 0;
+          final waitTimeUnit = match.group(2);
+
+          var waitTimeMs = 0;
+          if (waitTimeUnit == 's') {
+            waitTimeMs = (waitTimeValue * 1000).round();
+          } else {
+            waitTimeMs = waitTimeValue.round();
+          }
+
+          if (waitTimeMs > 0) {
+            print(
+              'Rate limit hit. Waiting ${waitTimeMs}ms before retry. '
+              'Attempt: $attempts',
+            );
+            return waitTimeMs;
+          }
         }
       }
     }

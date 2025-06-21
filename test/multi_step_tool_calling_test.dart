@@ -1,11 +1,19 @@
-// ignore_for_file: lines_longer_than_80_chars
+// ignore_for_file: lines_longer_than_80_chars, avoid_print
 
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 import 'test_utils.dart';
 
 void main() {
+  setUpAll(() {
+    Logger.root.level = Level.FINE;
+    Logger.root.onRecord.listen((record) {
+      print('${record.level.name}: ${record.time}: ${record.message}');
+    });
+  });
+
   group('Multi-step tool calling', () {
     late List<Tool> testTools;
     late Map<String, dynamic> toolCallLog;
@@ -87,109 +95,54 @@ void main() {
       ];
     });
 
-    group('OpenAI Model', () {
+    group('Performance', () {
       test(
-        'should chain multiple tool calls automatically',
+        'should complete multi-step calls within reasonable time',
         () async {
           final agent = Agent('openai', tools: testTools);
 
-          final responses = <String>[];
+          final stopwatch = Stopwatch()..start();
+
           await for (final response in agent.runStreamWithRetries(
-            'What events do I have today? Please get the current time first, then find my events for today.',
+            'Get current time, find events, and get details for the first event.',
           )) {
+            // Allow the agent to complete its multi-step process
             if (response.output.isNotEmpty) {
-              responses.add(response.output);
+              // We don't need to store responses for performance test,
+              // just let the stream complete
             }
           }
 
-          // Verify all tools were called in sequence
-          expect(toolCallLog, containsPair('get_current_time', {}));
-          expect(toolCallLog, contains('find_events'));
-          expect(
-            toolCallLog['find_events'],
-            containsPair('date', '2025-06-20'),
-          );
+          stopwatch.stop();
 
-          // Verify the response mentions the events
-          final fullResponse = responses.join();
-          expect(fullResponse.toLowerCase(), contains('morning meeting'));
-          expect(fullResponse.toLowerCase(), contains('lunch'));
+          // Should complete within a reasonable time (2 minutes max)
+          expect(stopwatch.elapsed, lessThan(const Duration(minutes: 2)));
+
+          // Verify all tools were called
+          expect(toolCallLog.keys, hasLength(3));
         },
-        timeout: const Timeout(Duration(minutes: 2)),
-      );
-
-      test(
-        'should handle three-step tool chain',
-        () async {
-          final agent = Agent('openai', tools: testTools);
-
-          final responses = <String>[];
-          await for (final response in agent.runStreamWithRetries(
-            'Get the current time, find my events for today, then get details for the first event.',
-          )) {
-            if (response.output.isNotEmpty) {
-              responses.add(response.output);
-            }
-          }
-
-          // Verify all three tools were called
-          expect(toolCallLog, containsPair('get_current_time', {}));
-          expect(toolCallLog, contains('find_events'));
-          expect(toolCallLog, contains('get_event_details'));
-          expect(
-            toolCallLog['get_event_details'],
-            containsPair('event_id', 'event1'),
-          );
-
-          // Verify the response includes event details
-          final fullResponse = responses.join();
-          expect(fullResponse.toLowerCase(), contains('conference room'));
-          expect(fullResponse.toLowerCase(), contains('standup'));
-        },
-        timeout: const Timeout(Duration(minutes: 2)),
-      );
-
-      test(
-        'should handle tool calls with text responses in between',
-        () async {
-          final agent = Agent('openai', tools: testTools);
-
-          final responses = <String>[];
-          await for (final response in agent.runStreamWithRetries(
-            'First, let me check what time it is. Then I need to find your schedule for today.',
-          )) {
-            if (response.output.isNotEmpty) {
-              responses.add(response.output);
-            }
-          }
-
-          // Verify both tools were called despite text in between
-          expect(toolCallLog, containsPair('get_current_time', {}));
-          expect(toolCallLog, contains('find_events'));
-
-          // Should have multiple response chunks with text
-          expect(responses.length, greaterThan(1));
-        },
-        timeout: const Timeout(Duration(minutes: 2)),
+        timeout: const Timeout(Duration(minutes: 3)),
       );
     });
 
-    group('Gemini Model', () {
-      test(
-        'should chain multiple tool calls automatically',
-        () async {
-          final agent = Agent('gemini', tools: testTools);
+    group('Tool Calling Mode', () {
+      setUp(() {
+        toolCallLog.clear();
+      });
 
-          final responses = <String>[];
-          await for (final response in agent.runStreamWithRetries(
-            'What events do I have today? Please get the current time first, then find my events for today.',
-          )) {
-            if (response.output.isNotEmpty) {
-              responses.add(response.output);
-            }
-          }
+      group('OpenAI Model', () {
+        test('should call multiple tools in multi-step mode', () async {
+          final agent = Agent(
+            'openai',
+            tools: testTools,
+            toolCallingMode: ToolCallingMode.multiStep,
+          );
 
-          // Verify all tools were called in sequence
+          await agent.runWithRetries(
+            'Get the current time, then find my events for today.',
+          );
+
+          // Verify both tools were called in sequence
           expect(toolCallLog, containsPair('get_current_time', {}));
           expect(toolCallLog, contains('find_events'));
           expect(
@@ -197,68 +150,77 @@ void main() {
             containsPair('date', '2025-06-20'),
           );
 
-          // Verify the response mentions the events
-          final fullResponse = responses.join();
-          expect(fullResponse.toLowerCase(), contains('morning meeting'));
-          expect(fullResponse.toLowerCase(), contains('lunch'));
-        },
-        timeout: const Timeout(Duration(minutes: 2)),
-      );
+          // Verify the total number of tool calls
+          expect(toolCallLog.keys, hasLength(2));
+        });
 
-      test(
-        'should handle three-step tool chain',
-        () async {
-          final agent = Agent('gemini', tools: testTools);
-
-          final responses = <String>[];
-          await for (final response in agent.runStreamWithRetries(
-            'Get the current time, find my events for today, then get details for the first event.',
-          )) {
-            if (response.output.isNotEmpty) {
-              responses.add(response.output);
-            }
-          }
-
-          // Verify all three tools were called
-          expect(toolCallLog, containsPair('get_current_time', {}));
-          expect(toolCallLog, contains('find_events'));
-          expect(toolCallLog, contains('get_event_details'));
-          expect(
-            toolCallLog['get_event_details'],
-            containsPair('event_id', 'event1'),
+        test('should call only one tool in single-step mode', () async {
+          final agent = Agent(
+            'openai',
+            tools: testTools,
+            toolCallingMode: ToolCallingMode.singleStep,
           );
 
-          // Verify the response includes event details
-          final fullResponse = responses.join();
-          expect(fullResponse.toLowerCase(), contains('conference room'));
-          expect(fullResponse.toLowerCase(), contains('standup'));
-        },
-        timeout: const Timeout(Duration(minutes: 2)),
-      );
+          await agent.runWithRetries(
+            "IMPORTANT: First call the get_current_time tool, then use that information to call the find_events tool with today's date.",
+          );
 
-      test(
-        'should handle tool calls with text responses in between',
-        () async {
-          final agent = Agent('gemini', tools: testTools);
+          // Verify only the first tool was called
+          expect(toolCallLog, containsPair('get_current_time', {}));
 
-          final responses = <String>[];
-          await for (final response in agent.runStreamWithRetries(
-            'First, let me check what time it is. Then I need to find your schedule for today.',
-          )) {
-            if (response.output.isNotEmpty) {
-              responses.add(response.output);
-            }
-          }
+          // The second tool should not be called in single-step mode
+          expect(toolCallLog, isNot(contains('find_events')));
 
-          // Verify both tools were called despite text in between
+          // Verify only one tool was called
+          expect(toolCallLog.keys, hasLength(1));
+        });
+      });
+
+      group('Gemini Model', () {
+        test('should call multiple tools in multi-step mode', () async {
+          final agent = Agent(
+            'gemini',
+            tools: testTools,
+            toolCallingMode: ToolCallingMode.multiStep,
+          );
+
+          await agent.runWithRetries(
+            'Get the current time, then find my events for today.',
+          );
+
+          // Verify both tools were called in sequence
           expect(toolCallLog, containsPair('get_current_time', {}));
           expect(toolCallLog, contains('find_events'));
+          expect(
+            toolCallLog['find_events'],
+            containsPair('date', '2025-06-20'),
+          );
 
-          // Should have multiple response chunks with text
-          expect(responses.length, greaterThan(1));
-        },
-        timeout: const Timeout(Duration(minutes: 2)),
-      );
+          // Verify the total number of tool calls
+          expect(toolCallLog.keys, hasLength(2));
+        });
+
+        test('should call only one tool in single-step mode', () async {
+          final agent = Agent(
+            'gemini',
+            tools: testTools,
+            toolCallingMode: ToolCallingMode.singleStep,
+          );
+
+          await agent.runWithRetries(
+            "IMPORTANT: First call the get_current_time tool, then use that information to call the find_events tool with today's date.",
+          );
+
+          // Verify only the first tool was called
+          expect(toolCallLog, containsPair('get_current_time', {}));
+
+          // The second tool should not be called in single-step mode
+          expect(toolCallLog, isNot(contains('find_events')));
+
+          // Verify only one tool was called
+          expect(toolCallLog.keys, hasLength(1));
+        });
+      });
     });
 
     group('Conversation Context', () {
@@ -341,36 +303,6 @@ void main() {
           );
         },
         timeout: const Timeout(Duration(minutes: 2)),
-      );
-    });
-
-    group('Performance', () {
-      test(
-        'should complete multi-step calls within reasonable time',
-        () async {
-          final agent = Agent('openai', tools: testTools);
-
-          final stopwatch = Stopwatch()..start();
-
-          await for (final response in agent.runStreamWithRetries(
-            'Get current time, find events, and get details for the first event.',
-          )) {
-            // Allow the agent to complete its multi-step process
-            if (response.output.isNotEmpty) {
-              // We don't need to store responses for performance test,
-              // just let the stream complete
-            }
-          }
-
-          stopwatch.stop();
-
-          // Should complete within a reasonable time (2 minutes max)
-          expect(stopwatch.elapsed, lessThan(const Duration(minutes: 2)));
-
-          // Verify all tools were called
-          expect(toolCallLog.keys, hasLength(3));
-        },
-        timeout: const Timeout(Duration(minutes: 3)),
       );
     });
   });

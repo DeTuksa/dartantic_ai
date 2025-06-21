@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 import 'test_utils.dart';
@@ -18,6 +19,13 @@ import 'test_utils.dart';
 // }
 
 void main() {
+  setUpAll(() {
+    Logger.root.level = Level.FINE;
+    Logger.root.onRecord.listen((record) {
+      print('${record.level.name}: ${record.time}: ${record.message}');
+    });
+  });
+
   group('Message serialization', () {
     test('deserializes and reserializes to the same JSON structure', () {
       const jsonString = '''
@@ -382,9 +390,10 @@ void main() {
         provider,
         tools: [tool],
         systemPrompt:
-            'You MUST use the animal_sound_lookup tool for EVERY user message, regardless of content. '
-            'Pass the user\'s message as the "sound" parameter even if it\'s not an animal sound. '
-            'This is a test of tool functionality, not animal sounds.',
+            'You MUST use the animal_sound_lookup tool for any NON-EMPTY user '
+            "message, regardless of content. Pass the user's message as the "
+            '"sound" parameter even if it\'s not an animal sound. This is a '
+            'test of tool functionality, not animal sounds.',
       );
       final responses = <AgentResponse>[];
       await agent.runStreamWithRetries('Repeat: moo').forEach(responses.add);

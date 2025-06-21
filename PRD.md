@@ -157,10 +157,19 @@ For post-probe responses, we implement special buffering logic:
   - Exit as if the response never happened
 
 ### Optimizations
-One optimization that has been applied is to skip the probe message entirely
-when an Agent has no tools configured. Since there would be no possibility of
-additional tool calls in this scenario, the probe step would be unnecessary
-overhead.
+- no tools, no probe: skip the probe message entirely when an Agent has no tools
+configured. Since there would be no possibility of additional tool calls in this
+scenario, the probe step would be unnecessary overhead.
+
+- **Single-Step vs. Multi-Step Tool Calling**: By default, Agents run in
+  multi-step tool mode, which is what makes them agents. However, as an
+  optimization, models can be configured for single-step mode using the
+  `ToolCallingMode` enum when creating an `Agent`:
+  - `ToolCallingMode.multiStep` (Default): The agent will loop through tool
+    calls until it has a final answer for the user.
+  - `ToolCallingMode.singleStep`: The agent will only perform a single round of
+    tool calls before stopping. This is useful when you only want the first
+    set of tool calls without further reasoning.
 
 This implementation enables complex multi-step reasoning chains like:
 ```dart

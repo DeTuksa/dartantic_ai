@@ -1,5 +1,11 @@
 ## 0.8.4
 
+- Added `ToolCallingMode` to control multi-step tool calling behavior.
+  - `multiStep` (default): The agent will continue to send tool results until
+    all of the tool calls have been exercised.
+  - `singleStep`: The agent will perform only one request-response and then
+    stop.
+
 - OpenAI Multi-Step Tool Calling by including probing for additional tool calls
   when the model responds with text instead of a tool call.
 

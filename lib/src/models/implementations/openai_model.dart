@@ -30,10 +30,12 @@ class OpenAiModel extends Model {
     JsonSchema? outputSchema,
     String? systemPrompt,
     Iterable<Tool>? tools,
+    ToolCallingMode? toolCallingMode,
     double? temperature,
   }) : generativeModelName = modelName ?? defaultModelName,
        embeddingModelName = embeddingModelName ?? defaultEmbeddingModelName,
        _tools = tools?.toList(),
+       _toolCallingMode = toolCallingMode ?? ToolCallingMode.multiStep,
        _systemPrompt = systemPrompt,
        _client = openai.OpenAIClient(
          apiKey: apiKey,
@@ -57,6 +59,7 @@ class OpenAiModel extends Model {
   final openai.ResponseFormat? _responseFormat;
   final String? _systemPrompt;
   final List<Tool>? _tools;
+  final ToolCallingMode _toolCallingMode;
   final double? _temperature;
   final Map<String, String> _toolCallIdToName = {};
 
@@ -75,6 +78,10 @@ class OpenAiModel extends Model {
     // Clear the tool call ID mapping at the start of each run to avoid
     // conflicts with previous runs
     _toolCallIdToName.clear();
+
+    log.fine(
+      '[OpenAiModel] Starting stream with toolCallingMode: $_toolCallingMode',
+    );
 
     // Process the incoming message history to extract and register all tool
     // call IDs This ensures we can properly handle tool results from previous
@@ -156,6 +163,19 @@ class OpenAiModel extends Model {
         responseFormat: _responseFormat,
         messages: oiaMessages,
         temperature: _temperature,
+        tools:
+            _tools
+                ?.map(
+                  (tool) => openai.ChatCompletionTool(
+                    type: openai.ChatCompletionToolType.function,
+                    function: openai.FunctionObject(
+                      name: tool.name,
+                      description: tool.description,
+                      parameters: tool.inputSchema?.toMap(),
+                    ),
+                  ),
+                )
+                .toList(),
       ),
     );
 
@@ -194,9 +214,6 @@ class OpenAiModel extends Model {
     while (true) {
       // If there are tool calls in our queue, execute them.
       if (toolCalls.isNotEmpty) {
-        // Reset the probe flag since we have new activity.
-        hasProbedCurrentText = false;
-
         // Add tool calls to persistent mapping for result lookup
         for (final toolCall in toolCalls) {
           _toolCallIdToName[toolCall.id] = toolCall.function.name;
@@ -241,6 +258,19 @@ class OpenAiModel extends Model {
             responseFormat: _responseFormat,
             messages: oiaMessages,
             temperature: _temperature,
+            tools:
+                _tools
+                    ?.map(
+                      (tool) => openai.ChatCompletionTool(
+                        type: openai.ChatCompletionToolType.function,
+                        function: openai.FunctionObject(
+                          name: tool.name,
+                          description: tool.description,
+                          parameters: tool.inputSchema?.toMap(),
+                        ),
+                      ),
+                    )
+                    .toList(),
           ),
         );
 
@@ -276,8 +306,29 @@ class OpenAiModel extends Model {
         // If the response has new tool calls, add them to the queue and loop.
         if (newToolCalls.isNotEmpty) {
           toolCalls.addAll(newToolCalls);
+
+          // If we're in single-step mode, break out after one iteration
+          if (_toolCallingMode == ToolCallingMode.singleStep) {
+            log.fine(
+              '[OpenAiModel] Single-step mode: breaking out of tool calling '
+              'loop',
+            );
+            toolCalls.clear(); // Clear any pending tool calls
+            break;
+          }
+
           continue;
         }
+      }
+
+      // If we're in single-step mode and we've completed one iteration, break
+      // out
+      if (_toolCallingMode == ToolCallingMode.singleStep) {
+        log.fine(
+          '[OpenAiModel] Single-step mode: breaking out of tool calling loop',
+        );
+        toolCalls.clear(); // Clear any pending tool calls
+        break;
       }
 
       // If there are no tool calls, check if we should probe.
@@ -341,6 +392,10 @@ class OpenAiModel extends Model {
 
           // Check if the post-probe response contains tool calls
           if (newToolCalls.isNotEmpty) {
+            // If it has tool calls, we are out of the probing state and can
+            // probe again after the next text response.
+            hasProbedCurrentText = false;
+
             // If it has tool calls, stream the cached text (if any)
             if (newContent.isNotEmpty) {
               yield AgentResponse(output: newContent, messages: const []);

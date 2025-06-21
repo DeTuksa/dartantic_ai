@@ -13,6 +13,7 @@ and more fun!
 - [Manual Typed Output with Object Mapping](#manual-typed-output-with-object-mapping)
 - [Automatic Typed Output with Object Mapping](#automatic-typed-output-with-object-mapping)
 - [Typed Tool Calling](#typed-tool-calling)
+- [Agentic Behavior: Multi vs. Single Step Tool Calling](#agentic-behavior-multi-vs-single-step-tool-calling)
 - [Streaming Output](#streaming-output)
 - [Multi-media Input](#multi-media-input)
 - [Embeddings](#embeddings)
@@ -50,7 +51,7 @@ The following are the target features for this package:
 - [ ] Firebase AI provider (no API keys!)
 - [ ] Multimedia output
 - [ ] Audio transcription
-- [ ] Agentic workflows (we're not done just cuz the tool call is done)
+- [x] Agentic workflows including multi-step and single-step tool calling
 - [ ] Tools + Typed Output (that's a little sticky right now)
 - [ ] More OpenAI-compat providers (local and remote, e.g. Ollama, Gemma, xAI, Groq, etc.)
 
@@ -61,21 +62,21 @@ dartantic_ai currently supports the following AI model providers:
 
 ### Provider Capabilities
 
-| Provider | Default Model | Default Embedding Model | Capabilities | Notes |
-|----------|---------------|-------------------------|-------------|-------|
-| **OpenAI** | `gpt-4o` | `text-embedding-3-small` | Text Generation, Embeddings, Chat, File Uploads, Tools | Full feature support |
-| **OpenRouter** | `gpt-4o` | N/A | Text Generation, Chat, File Uploads, Tools | No embedding support |
-| **Google Gemini** | `gemini-2.0-flash` | `text-embedding-004` | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses native Gemini API |
-| **Gemini (OpenAI-compat)** | `gemini-2.0-flash` | `text-embedding-004` | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses OpenAI-compatible Gemini endpoint |
+| Provider                   | Default Model      | Default Embedding Model  | Capabilities                                           | Notes                                  |
+| -------------------------- | ------------------ | ------------------------ | ------------------------------------------------------ | -------------------------------------- |
+| **OpenAI**                 | `gpt-4o`           | `text-embedding-3-small` | Text Generation, Embeddings, Chat, File Uploads, Tools | Full feature support                   |
+| **OpenRouter**             | `gpt-4o`           | N/A                      | Text Generation, Chat, File Uploads, Tools             | No embedding support                   |
+| **Google Gemini**          | `gemini-2.0-flash` | `text-embedding-004`     | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses native Gemini API                 |
+| **Gemini (OpenAI-compat)** | `gemini-2.0-flash` | `text-embedding-004`     | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses OpenAI-compatible Gemini endpoint |
 
 ### Provider Configuration
 
-| Provider | Provider Prefix | Aliases | API Key | Provider Type |
-|----------|-------------|---------|---------|---------------|
-| **OpenAI** | `openai` | - | `OPENAI_API_KEY` | `OpenAiProvider` |
-| **OpenRouter** | `openrouter` | - | `OPENROUTER_API_KEY` | `OpenAiProvider` |
-| **Google Gemini** | `google` | `gemini`, `googleai`, `google-gla` | `GEMINI_API_KEY` | `GeminiProvider` |
-| **Gemini (OpenAI-compatible)** | `gemini-compat` | - | `GEMINI_API_KEY` | `OpenAiProvider` |
+| Provider                       | Provider Prefix | Aliases                            | API Key              | Provider Type    |
+| ------------------------------ | --------------- | ---------------------------------- | -------------------- | ---------------- |
+| **OpenAI**                     | `openai`        | -                                  | `OPENAI_API_KEY`     | `OpenAiProvider` |
+| **OpenRouter**                 | `openrouter`    | -                                  | `OPENROUTER_API_KEY` | `OpenAiProvider` |
+| **Google Gemini**              | `google`        | `gemini`, `googleai`, `google-gla` | `GEMINI_API_KEY`     | `GeminiProvider` |
+| **Gemini (OpenAI-compatible)** | `gemini-compat` | -                                  | `GEMINI_API_KEY`     | `OpenAiProvider` |
 
 ### Model Naming Conventions
 The model string used by `Agent` can be specified in several ways:
@@ -231,7 +232,7 @@ void main() async {
     'The windy city in the US of A.',
   );
 
-  print(result.output); // Output: TownAndCountry(town: Chicago, country: United States)
+  print(result.output); // Output: TownAndCountry(town: Chicago, country: US)
 }
 ```
 
@@ -276,7 +277,7 @@ void main() async {
     'The windy city in the US of A.',
   );
 
-  print(result.output); // Output: TownAndCountry(town: Chicago, country: United States)
+  print(result.output); // Output: TownAndCountry(town: Chicago, country: US)
 }
 ```
 
@@ -388,6 +389,133 @@ Future<Map<String, dynamic>?> onTimeCall(Map<String, dynamic> input) async {
 
 Not only is this simpler code, but it frees you from maintaining a separate type
 for output.
+
+### Agentic Behavior: Multi vs. Single Step Tool Calling
+
+A key feature of an "agent" is its ability to perform multi-step reasoning. Instead
+of just calling one tool and stopping, an agent can use the result of one
+tool to inform its next action, chaining multiple tool calls together to solve a
+complex problem without requiring further user intervention. This is the default
+"agentic" behavior in `dartantic_ai`.
+
+You can control this behavior using the `toolCallingMode` parameter when
+creating an `Agent`:
+
+- **`ToolCallingMode.multiStep`** (Default): This is the "agentic" mode. The
+  agent will loop, calling tools as many times as it needs to fully resolve the
+  user's prompt. It can use the output from one tool as the input for another,
+  creating sophisticated chains of execution.
+- **`ToolCallingMode.singleStep`**: The agent will perform only one round of
+  tool calls and then stop. This is useful as an optimization if you only need
+  the first set of tool calls.
+
+#### Example: Multi-Step vs. Single-Step
+
+Let's see the difference in action. First, we'll set up some tools and a common
+prompt.
+
+```dart
+// Two simple tools for our agent
+final tools = [
+  Tool(
+    name: 'get_current_time',
+    description: 'Get the current date and time.',
+    onCall: (_) async => {'time': '2025-06-21T10:00:00Z'},
+  ),
+  Tool(
+    name: 'find_events',
+    description: 'Find events for a specific date.',
+    inputSchema: {
+      'type': 'object',
+      'properties': {'date': {'type': 'string'}},
+      'required': ['date'],
+    }.toSchema(),
+    onCall: (args) async => {'events': ['Team Meeting at 11am']},
+  ),
+];
+
+// A prompt that requires a two-step tool chain
+const prompt = 'What events do I have today? Please find the current date first.';
+
+// A helper to print the message history nicely
+void printMessages(List<Message> messages) {
+  for (var i = 0; i < messages.length; i++) {
+    final m = messages[i];
+    print('Message #${i + 1}: role=${m.role}');
+    for (final part in m.parts) {
+      print('  - $part');
+    }
+  }
+  print('---');
+}
+```
+
+**Multi-Step Execution (Default)**
+
+When run in the default `multiStep` mode, the agent calls the first tool, gets
+the date, and then immediately uses that date to call the second tool.
+
+```dart
+// Create an agent in the default multi-step mode
+final multiStepAgent = Agent('openai', tools: tools);
+final multiStepResponse = await multiStepAgent.run(prompt);
+print('--- Multi-Step Mode ---');
+printMessages(multiStepResponse.messages);
+```
+
+The resulting message history shows the full, two-step reasoning chain:
+
+```
+--- Multi-Step Mode ---
+Message #1: role=user
+  - TextPart(text: "What events do I have today? Please find the current date first.")
+Message #2: role=model
+  - ToolPart(kind: call, id: ..., name: get_current_time, arguments: {})
+Message #3: role=model
+  - ToolPart(kind: result, id: ..., name: get_current_time, result: {time: 2025-06-21T10:00:00Z})
+Message #4: role=model
+  - ToolPart(kind: call, id: ..., name: find_events, arguments: {date: 2025-06-21})
+Message #5: role=model
+  - ToolPart(kind: result, id: ..., name: find_events, result: {events: [Team Meeting at 11am]})
+Message #6: role=model
+  - TextPart(text: "You have one event today: a Team Meeting at 11am.")
+---
+```
+
+**Single-Step Execution**
+
+Now, let's run the exact same scenario in `singleStep` mode.
+
+```dart
+// Create an agent explicitly in single-step mode
+final singleStepAgent = Agent(
+  'openai',
+  tools: tools,
+  toolCallingMode: ToolCallingMode.singleStep,
+);
+final singleStepResponse = await singleStepAgent.run(prompt);
+print('--- Single-Step Mode ---');
+printMessages(singleStepResponse.messages);
+```
+
+The agent stops after the first round of tool calls. It finds the time but
+doesn't proceed to the next logical step of finding the events.
+
+```
+--- Single-Step Mode ---
+Message #1: role=user
+  - TextPart(text: "What events do I have today? Please find the current date first.")
+Message #2: role=model
+  - ToolPart(kind: call, id: ..., name: get_current_time, arguments: {})
+Message #3: role=model
+  - ToolPart(kind: result, id: ..., name: get_current_time, result: {time: 2025-06-21T10:00:00Z})
+Message #4: role=model
+  - TextPart(text: "Okay, the current date is June 21, 2025. Now I will find your events.")
+---
+```
+
+This clearly illustrates how `multiStep` mode enables autonomous, chained tool
+use, which is fundamental to creating an actual "agent."
 
 ### Multi-turn Chat (Message History)
 

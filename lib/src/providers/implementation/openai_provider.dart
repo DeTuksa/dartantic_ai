@@ -1,6 +1,5 @@
 import 'package:openai_dart/openai_dart.dart' as oai;
 
-import '../../agent/agent.dart';
 import '../../models/implementations/openai_model.dart';
 import '../../models/interface/model.dart';
 import '../../models/interface/model_settings.dart';
@@ -27,9 +26,7 @@ class OpenAiProvider extends Provider {
     this.embeddingModelName,
     String? apiKey,
     this.baseUrl,
-    this.temperature,
     this.caps = ProviderCaps.all,
-    AgentMode? agentMode,
   }) : apiKey = apiKey ?? platform.getEnv(apiKeyName);
 
   /// The name of the environment variable that contains the API key.
@@ -50,9 +47,6 @@ class OpenAiProvider extends Provider {
   /// The base URL for the OpenAI API.
   final Uri? baseUrl;
 
-  /// The temperature to use for the OpenAI API.
-  final double? temperature;
-
   /// Creates a [Model] instance using this provider's configuration.
   ///
   /// The [settings] parameter contains additional configuration options
@@ -65,8 +59,9 @@ class OpenAiProvider extends Provider {
     outputSchema: settings.outputSchema,
     systemPrompt: settings.systemPrompt,
     tools: settings.tools,
+    toolCallingMode: settings.toolCallingMode,
     baseUrl: baseUrl,
-    temperature: temperature,
+    temperature: settings.temperature,
     caps: caps,
   );
 

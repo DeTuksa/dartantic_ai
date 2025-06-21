@@ -21,17 +21,6 @@ export 'agent_response.dart';
 export 'embedding_type.dart';
 export 'tool.dart';
 
-/// The mode in which the agent will run.
-enum AgentMode {
-  /// The agent will use the model's single-step mode. This is the intuitive
-  /// request=>response mode.
-  singleStep,
-
-  /// The agent will use the model's multi-step mode. This is the mode that
-  /// allows the model to call tools multiple times in a single request.
-  multiStep,
-}
-
 /// An agent that can run prompts through an AI model and return responses.
 ///
 /// This class provides a unified interface for interacting with different
@@ -54,6 +43,8 @@ class Agent {
   /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
   /// - [embeddingModel]: (Optional) The model name to use for embeddings. If
   ///   not provided, uses the provider's default embedding model.
+  /// - [toolCallingMode]: (Optional) The mode in which the model will call
+  ///   tools.
   factory Agent(
     String model, {
     String? embeddingModel,
@@ -63,8 +54,8 @@ class Agent {
     JsonSchema? outputSchema,
     dynamic Function(Map<String, dynamic> json)? outputFromJson,
     Iterable<Tool>? tools,
+    ToolCallingMode? toolCallingMode,
     double? temperature,
-    AgentMode mode = AgentMode.singleStep,
   }) => Agent.provider(
     providerFor(
       model,
@@ -72,12 +63,12 @@ class Agent {
       apiKey: apiKey,
       baseUrl: baseUrl,
       temperature: temperature,
-      agentMode: mode,
     ),
     systemPrompt: systemPrompt,
     outputSchema: outputSchema,
     outputFromJson: outputFromJson,
     tools: tools,
+    toolCallingMode: toolCallingMode,
   );
 
   /// Creates a new [Agent] with the given [provider].
@@ -89,12 +80,16 @@ class Agent {
   /// - [outputFromJson]: (Optional) A function to convert JSON output to a
   ///   typed object.
   /// - [tools]: (Optional) A collection of [Tool]s the agent can use.
+  /// - [toolCallingMode]: (Optional) The mode in which the model will call
+  ///   tools.
   Agent.provider(
     Provider provider, {
     String? systemPrompt,
     JsonSchema? outputSchema,
     this.outputFromJson,
     Iterable<Tool>? tools,
+    ToolCallingMode? toolCallingMode,
+    double? temperature,
   }) : _systemPrompt = systemPrompt,
        _model = provider.createModel(
          ModelSettings(
@@ -102,6 +97,8 @@ class Agent {
            outputSchema: outputSchema,
            tools: tools,
            caps: provider.caps,
+           toolCallingMode: toolCallingMode,
+           temperature: temperature,
          ),
        ) {
     model = '${provider.name}:${_model.generativeModelName}';
@@ -360,7 +357,6 @@ class Agent {
   /// Throws [ArgumentError] if [model] is empty.
   static Provider providerFor(
     String model, {
-    AgentMode? agentMode,
     String? embeddingModel,
     String? apiKey,
     Uri? baseUrl,
@@ -379,8 +375,6 @@ class Agent {
         embeddingModelName: embeddingModel,
         apiKey: apiKey,
         baseUrl: baseUrl,
-        temperature: temperature,
-        agentMode: agentMode,
       ),
     );
   }

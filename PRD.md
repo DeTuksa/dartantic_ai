@@ -364,17 +364,20 @@ final response = await agent.run("What's on my schedule today?");
   - Examples showing how to check capabilities and handle unsupported operations
     gracefully
 
-### Milestone 8: Dartantic provider for Flutter AI Toolkit
+### Milestone 8: Flutter Web Support
+- [ ] **Flutter Web Compatibility**: Ensure that the `dartantic_ai` package is fully functional on the Flutter Web platform. This involves addressing platform-specific dependencies, particularly in the `mcp_dart` package which currently blocks web support. A pull request to `mcp_dart` will be required to make it platform-agnostic.
+
+### Milestone 9: Dartantic provider for Flutter AI Toolkit
 - [ ] Implement the `LlmProvider` interface in terms of `Agent`
 
-### Milestone 9: Multi-media input and output
+### Milestone 10: Multi-media input and output
 - [x] **Multi-media input support**: Added `attachments` parameter to Agent and
   Model interfaces for including files, images, and other media:
   - `Agent.runStream()`, `Agent.run()`, and related methods accept `attachments:
     Content` parameter
   - `Model.runStream()` interface includes `required Content attachments`
   - Support for text files via `DataPart.file(File('path.txt'))`
-  - Support for image files via `DataPart.file(File('image.jpg'))`  
+  - Support for image files via `DataPart.file(File('image.jpg'))`
   - Support for web images via `LinkPart(Uri.parse('https://...'))`
   - Both OpenAI and Gemini providers handle multimedia content appropriately
   - Comprehensive examples in `example/bin/multimedia.dart` demonstrate file
@@ -388,7 +391,7 @@ final response = await agent.run("What's on my schedule today?");
   - Handle multimedia content in message history for multi-turn conversations
   - Examples demonstrating image generation, audio synthesis, etc.
 
-### Milestone 10: Typed Response + Tools + Simple Agent Loop
+### Milestone 11: Typed Response + Tools + Simple Agent Loop
 - [ ] e.g. two tools, typed response and we keep looping till the LLM is done
 - Just like pydantic-ai can do!
 

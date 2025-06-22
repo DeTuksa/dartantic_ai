@@ -1,3 +1,8 @@
+## 0.9.1
+
+- Added optional `name` parameter to `DataPart` and `LinkPart` for better
+  multi-media message creation ergonomics.
+
 ## 0.9.0
 
 - Added `ToolCallingMode` to control multi-step tool calling behavior.

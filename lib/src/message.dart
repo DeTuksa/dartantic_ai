@@ -141,13 +141,30 @@ class TextPart extends Part {
 
 const _defaultMimeType = 'application/octet-stream';
 String _mimeType(String path) => lookupMimeType(path) ?? _defaultMimeType;
+String _nameFromMimeType(String mimeType) =>
+    mimeType.startsWith('image/')
+        ? 'image.${mimeType.split('/').last}'
+        : 'file.${mimeType.split('/').last}';
+
+/// Extracts the name from a URL.
+/// for example:
+/// - https://example.com/image -> image
+/// - https://example.com/image.png -> image.png
+/// - https://example.com/image.jpg?name=test -> image.jpg
+/// - https://example.com/image.jpg?name=test.png -> image.jpg
+/// - https://example.com/ -> example.com
+String _nameFromUrl(String url) {
+  final uri = Uri.parse(url);
+  return uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+}
 
 /// A data part of a message's content, such as an image or video.
 class DataPart extends Part {
   /// Creates a [DataPart] with the given [mimeType] and [url].
-  DataPart(this.bytes, {required this.mimeType})
+  DataPart(this.bytes, {required this.mimeType, String? name})
     : assert(mimeType.isNotEmpty, 'DataPart mimeType must not be empty'),
-      assert(bytes.isNotEmpty, 'DataPart bytes must not be empty');
+      assert(bytes.isNotEmpty, 'DataPart bytes must not be empty'),
+      name = name ?? _nameFromMimeType(mimeType);
 
   /// Creates a [DataPart] from a JSON map.
   factory DataPart.fromJson(Map<String, dynamic> json) {
@@ -171,6 +188,9 @@ class DataPart extends Part {
   /// The data of the media.
   final Uint8List bytes;
 
+  /// The name of the data part.
+  final String name;
+
   @override
   Map<String, dynamic> toJson() => {
     'data': {'mimeType': mimeType, 'data': base64Encode(bytes)},
@@ -190,15 +210,19 @@ class DataPart extends Part {
 /// A link part of a message's content, representing a URL.
 class LinkPart extends Part {
   /// Creates a [LinkPart] with the given [url].
-  LinkPart(this.url, {String? mimeType})
+  LinkPart(this.url, {String? mimeType, String? name})
     : assert(url.isAbsolute, 'LinkPart url must be absolute'),
-      mimeType = mimeType ?? _mimeType(url.toString());
+      mimeType = mimeType ?? _mimeType(url.toString()),
+      name = name ?? _nameFromUrl(url.toString());
 
   /// The URL of the link.
   final Uri url;
 
   /// The MIME type of the content at the URL.
   final String mimeType;
+
+  /// The name of the link part.
+  final String name;
 
   @override
   Map<String, dynamic> toJson() => {

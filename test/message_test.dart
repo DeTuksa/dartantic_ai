@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dartantic_ai/dartantic_ai.dart';
 import 'package:logging/logging.dart';
@@ -69,6 +70,63 @@ void main() {
 
       // Deep equality check
       expect(outputJson, equals(inputJson));
+    });
+  });
+
+  group('Part naming', () {
+    test('DataPart: explicit name', () {
+      final part = DataPart(
+        Uint8List.fromList([1, 2, 3]),
+        mimeType: 'image/png',
+        name: 'my-image.png',
+      );
+      expect(part.name, 'my-image.png');
+    });
+
+    test('DataPart: automatic name from image mime type', () {
+      final part = DataPart(
+        Uint8List.fromList([1, 2, 3]),
+        mimeType: 'image/jpeg',
+      );
+      expect(part.name, 'image.jpeg');
+    });
+
+    test('DataPart: automatic name from non-image mime type', () {
+      final part = DataPart(
+        Uint8List.fromList([1, 2, 3]),
+        mimeType: 'application/pdf',
+      );
+      expect(part.name, 'file.pdf');
+    });
+
+    test('LinkPart: explicit name', () {
+      final part = LinkPart(
+        Uri.parse('https://example.com/foo.bar'),
+        name: 'my-file.bar',
+      );
+      expect(part.name, 'my-file.bar');
+    });
+
+    test('LinkPart: automatic name from url with file', () {
+      final part = LinkPart(Uri.parse('https://example.com/foo.bar'));
+      expect(part.name, 'foo.bar');
+    });
+
+    test('LinkPart: automatic name from url with path', () {
+      final part = LinkPart(Uri.parse('https://example.com/foo/bar'));
+      expect(part.name, 'bar');
+    });
+
+    test('LinkPart: automatic name from root url', () {
+      final part = LinkPart(Uri.parse('https://example.com'));
+      expect(part.name, '');
+    });
+
+    test('LinkPart: automatic name from url with query', () {
+      final part = LinkPart(
+        Uri.parse('https://example.com/image.jpg?name=test'),
+      );
+      expect(part.name, 'image.jpg');
     });
   });
 

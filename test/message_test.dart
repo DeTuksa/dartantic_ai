@@ -54,6 +54,7 @@ void main() {
           "parts": [
             {"text": "Can you analyze this image and tell me what you see?"},
             {
+              "name": "image.jpeg",
               "data": {
                 "mimeType": "image/jpeg",
                 "data": "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgab"
@@ -71,6 +72,23 @@ void main() {
       // Deep equality check
       expect(outputJson, equals(inputJson));
     });
+
+    test(
+      'deserializes and reserializes link part to the same JSON structure',
+      () {
+        const jsonString = '''
+      {
+        "name": "google-logo.png",
+        "url": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png",
+        "mimeType": "image/png"
+      }
+      ''';
+        final inputJson = jsonDecode(jsonString);
+        final part = Part.fromJson(inputJson as Map<String, dynamic>);
+        final outputJson = part.toJson();
+        expect(outputJson, equals(inputJson));
+      },
+    );
   });
 
   group('Part naming', () {

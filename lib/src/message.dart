@@ -109,6 +109,8 @@ sealed class Part {
       return TextPart.fromJson(json);
     } else if (json.containsKey('data')) {
       return DataPart.fromJson(json);
+    } else if (json.containsKey('url')) {
+      return LinkPart.fromJson(json);
     } else if (json.containsKey('tool')) {
       return ToolPart.fromJson(json);
     } else {
@@ -152,10 +154,11 @@ String _nameFromMimeType(String mimeType) =>
 /// - https://example.com/image.png -> image.png
 /// - https://example.com/image.jpg?name=test -> image.jpg
 /// - https://example.com/image.jpg?name=test.png -> image.jpg
-/// - https://example.com/ -> example.com
+/// - https://example.com/ -> ''
 String _nameFromUrl(String url) {
   final uri = Uri.parse(url);
-  return uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+  final pathSegments = uri.pathSegments;
+  return pathSegments.isNotEmpty ? pathSegments.last : '';
 }
 
 /// A data part of a message's content, such as an image or video.
@@ -168,10 +171,12 @@ class DataPart extends Part {
 
   /// Creates a [DataPart] from a JSON map.
   factory DataPart.fromJson(Map<String, dynamic> json) {
-    final data = json['data'] as Map<String, dynamic>?;
-    final mimeType = data?['mimeType'] as String? ?? _defaultMimeType;
-    final bytes = base64Decode((data?['data'] as String?) ?? '');
-    return DataPart(bytes, mimeType: mimeType);
+    final data = json['data'] as Map<String, dynamic>;
+    return DataPart(
+      base64Decode(data['data'] as String),
+      mimeType: data['mimeType'] as String,
+      name: json['name'] as String?,
+    );
   }
 
   /// Creates a [DataPart] from a URL.
@@ -193,6 +198,7 @@ class DataPart extends Part {
 
   @override
   Map<String, dynamic> toJson() => {
+    'name': name,
     'data': {'mimeType': mimeType, 'data': base64Encode(bytes)},
   };
 
@@ -215,6 +221,13 @@ class LinkPart extends Part {
       mimeType = mimeType ?? _mimeType(url.toString()),
       name = name ?? _nameFromUrl(url.toString());
 
+  /// Creates a [LinkPart] from a JSON map.
+  factory LinkPart.fromJson(Map<String, dynamic> json) => LinkPart(
+    Uri.parse(json['url'] as String),
+    mimeType: json['mimeType'] as String?,
+    name: json['name'] as String?,
+  );
+
   /// The URL of the link.
   final Uri url;
 
@@ -226,6 +239,7 @@ class LinkPart extends Part {
 
   @override
   Map<String, dynamic> toJson() => {
+    'name': name,
     'url': url.toString(),
     'mimeType': mimeType,
   };

@@ -11,6 +11,7 @@ import '../models/interface/model_settings.dart';
 import '../providers/implementation/provider_table.dart';
 import '../providers/interface/provider.dart';
 import '../providers/interface/provider_caps.dart';
+import '../providers/interface/provider_factory.dart';
 import '../providers/interface/provider_settings.dart';
 import 'agent_response.dart';
 import 'embedding_type.dart';
@@ -90,7 +91,8 @@ class Agent {
     Iterable<Tool>? tools,
     ToolCallingMode? toolCallingMode,
     double? temperature,
-  }) : _systemPrompt = systemPrompt,
+  }) : _provider = provider,
+       _systemPrompt = systemPrompt,
        _model = provider.createModel(
          ModelSettings(
            systemPrompt: systemPrompt,
@@ -104,6 +106,7 @@ class Agent {
     model = '${provider.name}:${_model.generativeModelName}';
   }
 
+  final Provider _provider;
   final Model _model;
   final String? _systemPrompt;
 
@@ -345,6 +348,14 @@ class Agent {
     EmbeddingType type = EmbeddingType.document,
   }) => _model.createEmbedding(text, type: type);
 
+  /// Returns a map of all available providers.
+  ///
+  /// The keys are the provider names, and the values are the provider
+  /// factories.
+  ///
+  /// The provider factories are used to create instances of the providers.
+  static Map<String, ProviderFactory> get providers => ProviderTable.providers;
+
   /// Resolves the [Provider] for the given [model] string.
   ///
   /// [model] should be in the format "providerName", "providerName:modelName",
@@ -510,4 +521,7 @@ class Agent {
 
   /// The capabilities of this agent's model.
   Set<ProviderCaps> get caps => _model.caps;
+
+  /// Lists all available models from this provider.
+  Future<Iterable<ModelInfo>> listModels() => _provider.listModels();
 }

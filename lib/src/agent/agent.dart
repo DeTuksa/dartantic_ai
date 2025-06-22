@@ -91,7 +91,8 @@ class Agent {
     Iterable<Tool>? tools,
     ToolCallingMode? toolCallingMode,
     double? temperature,
-  }) : _systemPrompt = systemPrompt,
+  }) : _provider = provider,
+       _systemPrompt = systemPrompt,
        _model = provider.createModel(
          ModelSettings(
            systemPrompt: systemPrompt,
@@ -105,6 +106,7 @@ class Agent {
     model = '${provider.name}:${_model.generativeModelName}';
   }
 
+  final Provider _provider;
   final Model _model;
   final String? _systemPrompt;
 
@@ -519,4 +521,7 @@ class Agent {
 
   /// The capabilities of this agent's model.
   Set<ProviderCaps> get caps => _model.caps;
+
+  /// Lists all available models from this provider.
+  Future<Iterable<ModelInfo>> listModels() => _provider.listModels();
 }

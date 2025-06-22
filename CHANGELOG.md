@@ -1,5 +1,7 @@
-## 0.9.1
+## 0.9.2
 
+- Added support for extending the provider table at runtime, allowing custom
+  providers to be registered dynamically.
 - Added optional `name` parameter to `DataPart` and `LinkPart` for better
   multi-media message creation ergonomics.
 

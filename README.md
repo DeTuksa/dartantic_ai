@@ -20,8 +20,9 @@ and more fun!
 - [Logging](#logging)
 - [Model Discovery](#model-discovery)
 - [MCP (Model Context Protocol) Server Support](#mcp-model-context-protocol-server-support)
-- [Provider Capabilities](#provider-capabilities)
+- [Provider Capabilities](#provider-capabilities-1)
 - [Provider Switching](#provider-switching)
+- [Custom Providers](#custom-providers)
 
 ## Features
 The following are the target features for this package:
@@ -390,7 +391,7 @@ Future<Map<String, dynamic>?> onTimeCall(Map<String, dynamic> input) async {
 Not only is this simpler code, but it frees you from maintaining a separate type
 for output.
 
-### Agentic Behavior: Multi vs. Single Step Tool Calling
+## Agentic Behavior: Multi vs. Single Step Tool Calling
 
 A key feature of an "agent" is its ability to perform multi-step reasoning. Instead
 of just calling one tool and stopping, an agent can use the result of one
@@ -1048,5 +1049,101 @@ void main() async {
   // Retrieve info with Gemini
   response = await geminiAgent.run('What animal did I say I liked?', messages: history);
   print('Gemini: ${response.output}'); // Output: You said your favorite animal is the platypus.
+}
+```
+
+## Custom Providers
+
+dartantic_ai allows you to extend its functionality by creating your own custom
+providers. This is useful for integrating with LLM services that are not yet
+natively supported, or for creating mock providers for testing purposes.
+
+The process involves two main steps:
+1.  Implement the `Provider` and `Model` interfaces.
+2.  Register your custom provider in the `Agent.providers` table.
+
+Once registered, your custom provider can be used just like any of the built-in
+providers.
+
+### Example: Creating and Using a Custom Echo Provider
+
+Here's a complete example of how to create a simple `EchoProvider` that just
+echos back the prompt it receives.
+
+First, define your `Model` and `Provider` implementations:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+/// A simple model that echos back the prompt.
+class EchoModel implements Model {
+  @override
+  Set<ProviderCaps> get caps => {ProviderCaps.textGeneration};
+
+  @override
+  String get generativeModelName => 'echo';
+
+  @override
+  String get embeddingModelName => '';
+
+  @override
+  Stream<AgentResponse> runStream({
+    required String prompt,
+    Iterable<Message> messages = const [],
+    Iterable<Part> attachments = const [],
+  }) async* {
+    yield AgentResponse(
+      output: prompt,
+      messages: [
+        ...messages,
+        Message.user([TextPart(prompt)]),
+        Message.model([TextPart(prompt)]),
+      ],
+    );
+  }
+
+  @override
+  Future<Float64List> createEmbedding(String text, {EmbeddingType? type}) {
+    throw UnsupportedError('EchoModel does not support embeddings.');
+  }
+}
+
+/// A custom provider that serves the [EchoModel].
+class EchoProvider implements Provider {
+  @override
+  String get name => 'echo';
+
+  @override
+  Set<ProviderCaps> get caps => {ProviderCaps.textGeneration};
+
+  @override
+  Model createModel(ModelSettings settings) => EchoModel();
+
+  @override
+  Future<Iterable<ModelInfo>> listModels() async => [
+        ModelInfo(
+          providerName: name,
+          name: 'echo',
+          kinds: const {ModelKind.chat},
+          stable: true,
+        ),
+      ];
+}
+```
+
+Next, register your provider and use it to create an `Agent`:
+
+```dart
+void main() async {
+  // 1. Register your custom provider in the static table.
+  Agent.providers['echo'] = (_) => EchoProvider();
+
+  // 2. Create an agent using your provider's name.
+  final agent = Agent('echo');
+  final response = await agent.run('Hello, custom provider!');
+
+  // 3. Verify that it works.
+  print(response.output); // Output: Hello, custom provider!
+  print(agent.model);    // Output: echo:echo
 }
 ```

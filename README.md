@@ -4,16 +4,19 @@ The [dartantic_ai](https://pub.dev/packages/dartantic_ai) package provides an
 agent framework inspired by pydantic-ai and designed to make building client and
 server-side apps in Dart with generative AI easier and more fun!
 
-## 🎯 Goals
+## Goals
 
-- **🤖 Agentic behavior with multi-step tool calling:** Let your AI agents autonomously chain tool calls together to solve complex problems without human intervention.
-- **Multi-Provider Support**: Work seamlessly with OpenAI, Google Gemini, OpenRouter, and more
-- **Type Safety**: Leverage Dart's strong typing with automatic JSON schema generation
-- **Developer Experience**: Simple, intuitive APIs that feel natural in Dart
-- **Production Ready**: Built-in logging, error handling, and provider capabilities detection
+- **Agentic behavior with multi-step tool calling:** Let your AI agents
+  autonomously chain tool calls together to solve multi-step problems without
+  human intervention.
+- **Multi-Provider Support**: Works with OpenAI, Google Gemini and more
+- **Type Safety**: Leverage Dart's strong typing with automatic JSON schema
+  generation
+- **Production Ready**: Built-in logging, error handling, and provider
+  capabilities detection
 - **Extensible**: Easy to add custom providers and tools
 
-## 🚀 Quick Start
+## Quick Start
 
 ```dart
 import 'package:dartantic_ai/dartantic_ai.dart';
@@ -39,26 +42,28 @@ void main() async {
 }
 ```
 
-## ✨ Key Features
+## Key Features
 
-- **🔄 Streaming Output** - Real-time response generation
-- **🛠️ Typed Tool Calling** - Type-safe function definitions and execution
-- **📎 Multi-media Input** - Process text, images, and files
-- **🧠 Embeddings** - Vector generation and semantic search
-- **🔌 MCP Support** - Model Context Protocol server integration
-- **🎛️ Provider Switching** - Seamlessly switch between AI providers mid-conversation
+- **Streaming Output** - Real-time response generation
+- **Typed Tool Calling** - Type-safe function definitions and execution
+- **Multi-media Input** - Process text, images, and files
+- **Embeddings** - Vector generation and semantic search
+- **MCP Support** - Model Context Protocol server integration
+- **Provider Switching** - Switch between AI providers mid-conversation with the
+  full stack of messages, including messages, media and tool calls
 
-## 📖 Documentation
+## Documentation
 
-**👉 [Read the full documentation](https://docs.page/csells/dartantic_ai)**
+**[Read the full documentation](https://docs.page/csells/dartantic_ai)**
 
 The documentation includes:
 - **Getting Started Guide** - Installation and basic usage
 - **Core Features** - JSON output, typed responses, and DotPrompt support
-- **Advanced Features** - Tool calling, agentic behavior, streaming, and embeddings
+- **Advanced Features** - Tool calling, agentic behavior, streaming, and
+  embeddings
 - **Integration** - Logging, model discovery, MCP servers, and custom providers
 
-## 📦 Installation
+## Installation
 
 Add to your `pubspec.yaml`:
 
@@ -67,22 +72,18 @@ dependencies:
   dartantic_ai: ^latest_version
 ```
 
-Then run:
-```bash
-dart pub get
-```
+## Contributing & Community
 
-## 🤝 Contributing & Community
-
-We welcome contributions! Feature requests, bug reports and PRs are welcome on
-[the dartantic_ai github site](https://github.com/csells/dartantic_ai).
+Welcome contributions! Feature requests, bug reports and PRs are welcome on [the
+dartantic_ai github site](https://github.com/csells/dartantic_ai).
 
 Want to chat about Dartantic? Then drop by [the Discussions
 forum](https://github.com/csells/dartantic_ai/discussions/).
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+for details.
 
 ---
 

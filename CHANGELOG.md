@@ -1,3 +1,8 @@
+## 0.9.4
+
+- README & docs tweaks
+
+
 ## 0.9.3
 
 - Completely revamped docs! https://docs.page/csells/dartantic_ai

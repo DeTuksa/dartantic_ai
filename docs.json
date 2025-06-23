@@ -5,8 +5,11 @@
     "primary": "#0175C2"
   },
   "logo": {
-    "light": "docs/images/dartantic-logo-light.png",
-    "dark": "docs/images/dartantic-logo-dark.png"
+    "light": "/images/dartantic-logo-light.png",
+    "dark": "/images/dartantic-logo-dark.png"
+  },
+  "header": {
+    "showName": false
   },
   "sidebar": [
     {

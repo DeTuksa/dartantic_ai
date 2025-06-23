@@ -2,15 +2,13 @@
 title: Logging
 ---
 
-# Logging
-
-dartantic_ai provides logging support using the standard Dart `logging` package.
-This allows you to see detailed information about internal operations, including
-LLM requests/responses, tool execution, and provider operations.
+Dartantic provides logging support using the Dart `logging` package. This allows
+you to see detailed information about internal operations, including LLM
+requests/responses, tool execution, and provider operations.
 
 ## Enabling Logging
 
-To enable logging for dartantic_ai operations, configure the logging package:
+To enable logging for Dartantic operations, configure the logging package:
 
 ```dart
 import 'package:dartantic_ai/dartantic_ai.dart';
@@ -29,9 +27,9 @@ void main() async {
 }
 ```
 
-## Filtering dartantic_ai Logs Only
+## Filtering Dartantic Logs Only
 
-To filter dartantic_ai logs specifically:
+To filter Dartantic logs specifically:
 
 ```dart
 import 'package:logging/logging.dart';
@@ -52,4 +50,5 @@ void main() async {
 This is particularly useful for debugging tool execution, understanding provider
 behavior, or troubleshooting unexpected responses.
 
-If you want to see more details, check out [logging.dart](../example/bin/logging.dart). 
+If you want to see more details, check out
+[logging.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/logging.dart). 

@@ -2,8 +2,6 @@
 title: Basic Agent Usage
 ---
 
-# Basic Agent Usage
-
 The following shows simple agent usage using the `Agent()` constructor, which
 takes a model string.
 
@@ -37,3 +35,29 @@ void main() async {
   print(result.output); // Output: one sentence on the origin of "hello world"
 }
 ``` 
+
+## Model Strings
+
+The model string used by `Agent` can be specified in several ways:
+- Just the `provider`, e.g. `openai` → specifies whatever the default model for
+  that provider
+- `provider:model`, e.g. `google:2.0-flash` → specifies a provider and model,
+  seperated by a **colon**
+- `provider/model`, e.g. `googleai/gemini-2.5-pro` → specifies a provider and
+  model, seperated by a **slash**
+
+## Providers
+A provider is a Dart type like `GeminiProvider` that knows how to expose model
+objects (like `GeminiModel`). When you pass in a model string, you're really
+looking up a provider object and a model object for the agent to do its work.
+
+You can see the list of [Supported Providers](/supported-providers) that
+Dartantic exposes. And you can see build your own [Custom
+Providers](/custom-providers) if you like.
+
+## Provider Aliases
+
+Some providers support multiple provider prefixes. The alias can be used where
+the provider name is specified, e.g. `gemini:gemini-2.0-flash` →
+`google:gemini-2.0-flash`. Here's where you can see the list of aliases for each
+of the  [Supported Providers](/supported-providers).

@@ -4,7 +4,12 @@ title: Supported Providers
 
 # Supported Providers
 
-dartantic_ai currently supports the following AI model providers:
+Dartantic currently supports the following AI model providers, but more are
+coming!
+
+[Drop me a line](https://github.com/csells/dartantic_ai/issues) if you'd like to
+see a provider added or even better, if you'd like to [contribute
+one](https://github.com/csells/dartantic_ai/pulls)!
 
 ## Provider Capabilities
 
@@ -24,21 +29,6 @@ dartantic_ai currently supports the following AI model providers:
 | **Google Gemini**              | `google`        | `gemini`, `googleai`, `google-gla` | `GEMINI_API_KEY`     | `GeminiProvider` |
 | **Gemini (OpenAI-compatible)** | `gemini-compat` | -                                  | `GEMINI_API_KEY`     | `OpenAiProvider` |
 
-## Model Naming Conventions
-
-The model string used by `Agent` can be specified in several ways:
-- Just the provider, e.g. `openai` → specifies whatever the default model for
-  that provider
-- provider:model, e.g. `google:2.0-flash` → specifies a provider and model,
-  seperated by a **colon**
-- provider/model, e.g. `googleai/gemini-2.5-pro` → specifies a provider and
-  model, seperated by a **slash**
-
-## Provider Aliases
-
-Some providers support multiple provider prefixes. The alias can be used where the provider name is specified, e.g.
-`gemini:gemini-2.0-flash` → `google:gemini-2.0-flash`.
-
 ## API Key Environment Variables
 
 If you don't provide an API key when creating an agent, dartantic_ai will look
@@ -46,7 +36,9 @@ for API keys in the appropriate environment.
 
 ### Example using Agent.environment
 
-The Agent class provides an environment property that you can use to pass API keys along to the provider. This method is particularly suitable for setting API keys for multiple providers at once and for platforms that don't
+The `Agent` class provides an `environment` property that you can use to pass
+API keys along to the provider. This method is particularly suitable for setting
+API keys for multiple providers at once and for platforms that don't
 have their own environments, like Flutter Web.
 
 ```dart
@@ -71,4 +63,5 @@ void main() async {
 }
 ```
 
-For a runnable example, take a look at [agent_env.dart](../example/bin/agent_env.dart). 
+For a runnable example, take a look at
+[agent_env.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/agent_env.dart). 

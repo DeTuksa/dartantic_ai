@@ -2,13 +2,11 @@
 title: Multi-media Input
 ---
 
-# Multi-media Input
+Dartantic supports the inclusion of files, images, and other media as
+attachments to your prompts. Both OpenAI and Gemini providers can process
+multimedia content alongside text.
 
-dartantic_ai supports including files, images, and other media as attachments to
-your prompts. Both OpenAI and Gemini providers can process multimedia content
-alongside text.
-
-## DataPart - Local Files
+## DataPart - Local Files, URL Downloads and Raw Bytes
 
 Use `DataPart.file()` to include local files (text, images, etc.):
 
@@ -35,6 +33,13 @@ void main() async {
 }
 ```
 
+In addition, you can use `DataPart.url()` to download a file from a URL and the
+standard `DataPart` constructor to pass in raw bytes and a mime type.
+
+Different providers have different limits on the size of data that you can
+upload, depending on the model, your billing plan and, of course, royal station
+(Dukes? large files. Earls? Not so much...)
+
 ## LinkPart - Web URLs
 
 Use `LinkPart()` to reference web images:
@@ -59,8 +64,9 @@ void main() async {
 }
 ```
 
-**Note**: Different providers may have varying support for specific file types
-and web URLs. At the time of this writing, Gemini requires files uploaded to
-Google AI File Service for LinkPart URLs.
+Different providers may have varying support for specific file types and web
+URLs. At the time of this writing, Gemini requires files uploaded to Google AI
+File Service for LinkPart URLs.
 
-You can find a working example in [multimedia.dart](../example/bin/multimedia.dart). 
+You can find a working example in
+[multimedia.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/multimedia.dart). 

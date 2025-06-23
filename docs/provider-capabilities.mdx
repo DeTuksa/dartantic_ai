@@ -2,9 +2,10 @@
 title: Provider Capabilities
 ---
 
-# Provider Capabilities
-
-dartantic_ai includes a capabilities system that allows you to check what features each provider supports. Different providers have different capabilities - for example, OpenRouter doesn't support embedding generation while OpenAI and Gemini do.
+Dartantic includes a capabilities system that allows you to check what features
+each provider supports. Different providers have different capabilities - for
+example, OpenRouter doesn't support embedding generation while OpenAI and Gemini
+do.
 
 ## Checking Provider Capabilities
 
@@ -45,7 +46,8 @@ The `ProviderCaps` enum defines the following capability types:
 
 ## Graceful Capability Handling
 
-Check capabilities before attempting operations to handle unsupported features gracefully:
+Check capabilities before attempting operations to handle unsupported features
+gracefully:
 
 ```dart
 import 'package:dartantic_ai/dartantic_ai.dart';
@@ -62,4 +64,4 @@ void main() async {
     // Use alternative approach or different provider
   }
 }
-``` 
+```

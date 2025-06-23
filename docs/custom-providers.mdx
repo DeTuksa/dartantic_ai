@@ -1,19 +1,18 @@
 ---
 title: Custom Providers
 ---
-
-# Custom Providers
-
-dartantic_ai allows you to extend its functionality by creating your own custom
+Dartantic allows you to extend its functionality by creating your own custom
 providers. This is useful for integrating with LLM services that are not yet
-natively supported, or for creating mock providers for testing purposes.
+natively supported, for creating mock providers for testing purposes or for
+amazing your friends at parties.
 
 The process involves two main steps:
-1.  Implement the `Provider` and `Model` interfaces.
-2.  Register your custom provider in the `Agent.providers` table.
+1.  Implementing the `Provider` and `Model` interfaces.
+2.  Registering your custom provider in the `Agent.providers` table (optional).
 
 Once registered, your custom provider can be used just like any of the built-in
-providers.
+providers. If you don't register your provider, you can still use it by passing
+the provider name to the `Agent.provider()` constructor.
 
 ## Example: Creating and Using a Custom Echo Provider
 
@@ -98,4 +97,5 @@ void main() async {
 }
 ```
 
-For a complete implementation, see [custom_provider.dart](../example/bin/custom_provider.dart). 
+For a complete implementation, see
+[custom_provider.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/custom_provider.dart). 

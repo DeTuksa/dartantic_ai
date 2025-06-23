@@ -2,10 +2,17 @@
 title: Using DotPrompt
 ---
 
-# Using DotPrompt
+DotPrompt is [a specification for the .prompt file
+format](https://google.github.io/dotprompt) that treats them as executable LLM
+interactions, providing schema validation, template rendering, and model
+configuration management.
 
-You can also use the `Agent.runPrompt()` method with a `DotPrompt` object for
-more structured prompts:
+The [dotprompt_dart](https://pub.dev/packages/dotprompt_dart) package is an
+implementation of the DotPrompt specification for Dart. That package does the
+parsing and validation of the .prompt files, and Dartantic executes them.
+
+To execute a .prompt file, you can use the `Agent.runPrompt()` method with a
+`DotPrompt` object:
 
 ```dart
 void main() async {
@@ -25,4 +32,5 @@ Summarize this in {{length}} words: {{text}}
 }
 ```
 
-You can find a working example in [dotprompt.dart](../example/bin/dotprompt.dart). 
+You can find a working example in
+[dotprompt.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/dotprompt.dart). 

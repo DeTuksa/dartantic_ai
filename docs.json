@@ -27,6 +27,10 @@
         {
           "title": "Supported Providers",
           "href": "/supported-providers"
+        },
+        {
+          "title": "Notes On AI Codegen",
+          "href": "/notes-on-ai-codegen"
         }
       ]
     },
@@ -34,20 +38,16 @@
       "group": "Core Features",
       "pages": [
         {
-          "title": "Using DotPrompt",
-          "href": "/using-dotprompt"
+          "title": "Multi-turn Chat",
+          "href": "/multi-turn-chat"
         },
         {
-          "title": "JSON Output with JSON Schema",
-          "href": "/json-output-with-json-schema"
+          "title": "Typed Output",
+          "href": "/typed-output"
         },
         {
-          "title": "Manual Typed Output",
-          "href": "/manual-typed-output-with-object-mapping"
-        },
-        {
-          "title": "Automatic Typed Output",
-          "href": "/automatic-typed-output-with-object-mapping"
+          "title": "Tool Calling",
+          "href": "/tool-calling"
         }
       ]
     },
@@ -55,12 +55,8 @@
       "group": "Advanced Features",
       "pages": [
         {
-          "title": "Typed Tool Calling",
-          "href": "/typed-tool-calling"
-        },
-        {
           "title": "Agentic Behavior",
-          "href": "/agentic-behavior-multi-vs-single-step-tool-calling"
+          "href": "/agentic-behavior"
         },
         {
           "title": "Streaming Output",
@@ -73,6 +69,10 @@
         {
           "title": "Embeddings",
           "href": "/embeddings"
+        },
+        {
+          "title": "Using DotPrompt",
+          "href": "/using-dotprompt"
         }
       ]
     },
@@ -89,15 +89,11 @@
         },
         {
           "title": "MCP Server Support",
-          "href": "/mcp-model-context-protocol-server-support"
+          "href": "/mcp-support"
         },
         {
           "title": "Provider Capabilities",
           "href": "/provider-capabilities"
-        },
-        {
-          "title": "Provider Switching",
-          "href": "/provider-switching"
         },
         {
           "title": "Custom Providers",

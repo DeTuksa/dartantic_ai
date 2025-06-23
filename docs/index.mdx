@@ -1,45 +1,48 @@
 ---
-title: Welcome to dartantic_ai
+title: Welcome to Dartantic!
 ---
 
-# dartantic_ai
+# Dartantic
 
 Hello and welcome to Dartantic!
 
 The [dartantic_ai package](https://pub.dev/packages/dartantic_ai) is an agent
-framework inspired by [the pydantic-ai](https://ai.pydantic.dev/) and designed
-to make building client and server-side apps in Dart with generative AI easier
-and more fun!
+framework inspired by pydantic-ai and designed to make building client and
+server-side apps in Dart with generative AI easier and more fun!
 
-## What You'll Learn
+## Why Dartantic?
 
-This documentation covers everything you need to know about dartantic_ai, from basic usage to advanced features:
+Dartantic was born out of frustration with not being able to easily use
+generative AI in my Dart and Flutter apps without doing things in a very
+different way based on the model I chose and the type of app I was building,
+i.e. GUI, CLI or server-side. It's all Dart -- why can't I use all the models
+with a single API across all the apps?
 
-### Getting Started
-- **[Basic Agent Usage](/basic-agent-usage)** - Simple agent creation and usage
-- **[Features](/features)** - Complete feature overview
-- **[Supported Providers](/supported-providers)** - Available AI model providers
+As an example of the kinds of apps that I wanted to build, consider
+[CalPal](https://github.com/csells/calpal), a Flutter app that uses Dartantic to
+build an agentic workflow for managing a user's calendar. Check out this
+screenshot:
 
-### Core Features
-- **[Using DotPrompt](/using-dotprompt)** - Structured prompt management
-- **[JSON Output with JSON Schema](/json-output-with-json-schema)** - Structured JSON responses
-- **[Manual Typed Output](/manual-typed-output-with-object-mapping)** - Hand-written object mapping
-- **[Automatic Typed Output](/automatic-typed-output-with-object-mapping)** - Generated object mapping
+<Image src="/images/calpal.png" alt="CalPal screenshot" caption="CalPal in action" />
 
-### Advanced Features
-- **[Typed Tool Calling](/typed-tool-calling)** - Type-safe tool integration
-- **[Agentic Behavior](/agentic-behavior-multi-vs-single-step-tool-calling)** - Multi vs. single step tool calling
-- **[Streaming Output](/streaming-output)** - Real-time response streaming
-- **[Multi-media Input](/multi-media-input)** - File and image processing
-- **[Embeddings](/embeddings)** - Vector embeddings and similarity
+In about ~300 LOC, CalPal is able to figure out the events in my schedule based
+on an English phrase. To do this, it first has to figure out the local date and
+time to understand what "today" means anyway and then uses the result of that
+against the Zapier MCP server connected to my Google Calendar.
 
-### Integration & Configuration
-- **[Logging](/logging)** - Debug and monitor your agents
-- **[Model Discovery](/model-discovery)** - Enumerate available models
-- **[MCP Server Support](/mcp-model-context-protocol-server-support)** - External tool integration
-- **[Provider Capabilities](/provider-capabilities)** - Check what providers support
-- **[Provider Switching](/provider-switching)** - Use multiple providers together
-- **[Custom Providers](/custom-providers)** - Build your own integrations
+That multi-step tool usage is all built into Dartantic and it's what makes it
+an "agentic" framework.
+
+Oh, and then just for fun, I asked CalPal to add a calendar event to my calendar
+based on a picture of the events at my local pool. I can't image the
+person-years of effort that would've been required to build this without
+generative AI, but I couldn't rest until I had that kind of power for all my
+Dart and Flutter apps.
+
+Combine that with [pydantic-ai](https://ai.pydantic.dev/) for inspiration and
+Dartantic was born.
+
+Enjoy!
 
 ## Quick Start
 
@@ -59,4 +62,31 @@ void main() async {
 }
 ```
 
-Ready to dive deeper? Start with [Basic Agent Usage](/basic-agent-usage) to learn the fundamentals. 
+## Getting Started
+- **[Basic Agent Usage](/basic-agent-usage)** - Simple agent creation and usage
+- **[Features](/features)** - Complete feature overview
+- **[Supported Providers](/supported-providers)** - Available AI model providers
+- **[Notes On AI Codegen](/notes-on-ai-codegen)** - Notes on how Dartantic was
+  built and why
+
+## Core Features
+- **[Multi-turn Chat](/multi-turn-chat)** - Multi-message chat with history for
+  context
+- **[Typed Output](/typed-output)** - Typed Dart objects from your `run` results
+- **[Tool Calling](/tool-calling)** - Type-safe tool integration
+- **[Streaming Output](/streaming-output)** - Real-time response streaming
+
+## Advanced Features
+- **[Agentic Behavior](/agentic-behavior)** - Multi vs. single step tool calling
+- **[Multi-media Input](/multi-media-input)** - File and image processing
+- **[Embeddings](/embeddings)** - Vector embeddings and similarity
+- **[Using DotPrompt](/using-dotprompt)** - Structured prompt management
+
+## Integration & Configuration
+- **[Logging](/logging)** - Debug and monitor your agents
+- **[Model Discovery](/model-discovery)** - Enumerate available models
+- **[MCP Server Support](/mcp-support)** -
+  External tool integration
+- **[Provider Capabilities](/provider-capabilities)** - Check what providers
+  support
+- **[Custom Providers](/custom-providers)** - Build your own integrations

@@ -2,23 +2,10 @@
 title: MCP (Model Context Protocol) Server Support
 ---
 
-# MCP (Model Context Protocol) Server Support
-
-dartantic_ai supports connecting to MCP servers to extend Agent capabilities
+Dartantic supports connecting to MCP servers to extend Agent capabilities
 with external tools. MCP servers can run locally (via stdio) or remotely (via
 HTTP), providing access to file systems, databases, web APIs, and other external
 resources.
-
-## MCP Server Features
-
-- **Dual Transport Support**: Connect to local servers via stdio or remote
-  servers via HTTP
-- **Lazy Connection**: Servers connect automatically when first accessed
-- **Tool Discovery**: Automatically discover and convert MCP tools to Agent
-  Tools
-- **Type Safety**: MCP tools integrate with local tools, returning
-  `Map<String, dynamic>`
-- **Resource Management**: Proper cleanup with `disconnect()` method
 
 ## Remote MCP Server Usage
 
@@ -81,4 +68,5 @@ void main() async {
 }
 ```
 
-For a runnable example, take a look at [mcp_servers.dart](../example/bin/mcp_servers.dart). 
+For a runnable example, take a look at
+[mcp_servers.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/mcp_servers.dart). 

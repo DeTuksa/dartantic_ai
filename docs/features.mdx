@@ -1,0 +1,37 @@
+---
+title: Features
+---
+
+# Features
+
+The following are the target features for this package:
+
+- [x] Multi-Model Support
+- [x] Create agents from model strings (e.g. `openai:gpt-4o`) or typed providers
+  (e.g. `GeminiProvider()`)
+- [x] Automatically check environment for API key if none is provided (not web
+  compatible)
+- [x] Streaming string output via `Agent.runStream`
+- [x] Multi-turn chat/message history support via the `messages` parameter and
+  the `Message` class (with roles and content types)
+- [x] Typed output via `Agent.runFor`
+- [x] Define tools and their inputs/outputs easily
+- [x] Automatically generate LLM-specific tool/output schemas
+- [x] Bring your own provider
+- [x] Execute tools with validated inputs
+- [x] Multi-media input support via the `attachments` parameter for files,
+  images, and web content
+- [x] Embedding generation with `Agent.createEmbedding` and cosine similarity
+  utilities
+- [x] MCP (Model Context Protocol) server support for integrating external tools
+  from local and remote servers
+- [x] Logging support using the standard Dart `logging` package
+- [x] Capabilities capture and reporting
+- [x] Model discovery via `Provider.listModels()` to enumerate available models
+  and their capabilities
+- [x] Agentic workflows including multi-step and single-step tool calling
+- [ ] Firebase AI provider (no API keys!)
+- [ ] Multimedia output
+- [ ] Audio transcription
+- [ ] Tools + Typed Output (that's a little sticky right now)
+- [ ] More OpenAI-compat providers (local and remote, e.g. Ollama, Gemma, xAI, Groq, etc.) 

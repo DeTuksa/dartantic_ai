@@ -1,0 +1,33 @@
+---
+title: JSON Output with JSON Schema
+---
+
+# JSON Output with JSON Schema
+
+The following example provides JSON output using a hand-written `schemaMap`
+property, which configures the underlying LLM to response in JSON.
+
+```dart
+void main() async {
+  // Define a JSON schema for structured output
+  final townCountrySchema = {
+    'type': 'object',
+    'properties': {
+      'town': {'type': 'string'},
+      'country': {'type': 'string'},
+    },
+    'required': ['town', 'country'],
+    'additionalProperties': false,
+  };
+
+  // Create an agent with the schema
+  final agent = Agent(
+    'openai',
+    outputSchema: townCountrySchema.toSchema(),
+  );
+
+  // Get structured output as a JSON object
+  final result = await agent.run('The windy city in the US of A.');
+  print(result.output); // Output: {"town":"Chicago","country":"United States"}
+}
+``` 

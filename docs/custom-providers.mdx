@@ -1,0 +1,101 @@
+---
+title: Custom Providers
+---
+
+# Custom Providers
+
+dartantic_ai allows you to extend its functionality by creating your own custom
+providers. This is useful for integrating with LLM services that are not yet
+natively supported, or for creating mock providers for testing purposes.
+
+The process involves two main steps:
+1.  Implement the `Provider` and `Model` interfaces.
+2.  Register your custom provider in the `Agent.providers` table.
+
+Once registered, your custom provider can be used just like any of the built-in
+providers.
+
+## Example: Creating and Using a Custom Echo Provider
+
+Here's a complete example of how to create a simple `EchoProvider` that just
+echos back the prompt it receives.
+
+First, define your `Model` and `Provider` implementations:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+/// A simple model that echos back the prompt.
+class EchoModel implements Model {
+  @override
+  Set<ProviderCaps> get caps => {ProviderCaps.textGeneration};
+
+  @override
+  String get generativeModelName => 'echo';
+
+  @override
+  String get embeddingModelName => '';
+
+  @override
+  Stream<AgentResponse> runStream({
+    required String prompt,
+    Iterable<Message> messages = const [],
+    Iterable<Part> attachments = const [],
+  }) async* {
+    yield AgentResponse(
+      output: prompt,
+      messages: [
+        ...messages,
+        Message.user([TextPart(prompt)]),
+        Message.model([TextPart(prompt)]),
+      ],
+    );
+  }
+
+  @override
+  Future<Float64List> createEmbedding(String text, {EmbeddingType? type}) {
+    throw UnsupportedError('EchoModel does not support embeddings.');
+  }
+}
+
+/// A custom provider that serves the [EchoModel].
+class EchoProvider implements Provider {
+  @override
+  String get name => 'echo';
+
+  @override
+  Set<ProviderCaps> get caps => {ProviderCaps.textGeneration};
+
+  @override
+  Model createModel(ModelSettings settings) => EchoModel();
+
+  @override
+  Future<Iterable<ModelInfo>> listModels() async => [
+        ModelInfo(
+          providerName: name,
+          name: 'echo',
+          kinds: const {ModelKind.chat},
+          stable: true,
+        ),
+      ];
+}
+```
+
+Next, register your provider and use it to create an `Agent`:
+
+```dart
+void main() async {
+  // 1. Register your custom provider in the static table.
+  Agent.providers['echo'] = (_) => EchoProvider();
+
+  // 2. Create an agent using your provider's name.
+  final agent = Agent('echo');
+  final response = await agent.run('Hello, custom provider!');
+
+  // 3. Verify that it works.
+  print(response.output); // Output: Hello, custom provider!
+  print(agent.model);    // Output: echo:echo
+}
+```
+
+For a complete implementation, see [custom_provider.dart](../example/bin/custom_provider.dart). 

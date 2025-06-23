@@ -1,0 +1,28 @@
+---
+title: Using DotPrompt
+---
+
+# Using DotPrompt
+
+You can also use the `Agent.runPrompt()` method with a `DotPrompt` object for
+more structured prompts:
+
+```dart
+void main() async {
+  final prompt = DotPrompt('''
+---
+model: openai
+input:
+  default:
+    length: 3
+    text: "The quick brown fox jumps over the lazy dog."
+---
+Summarize this in {{length}} words: {{text}}
+''');
+
+  final result = await Agent.runPrompt(prompt);
+  print(result.output); // Output: Fox jumps dog.
+}
+```
+
+You can find a working example in [dotprompt.dart](../example/bin/dotprompt.dart). 

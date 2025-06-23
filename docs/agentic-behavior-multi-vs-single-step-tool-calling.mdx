@@ -1,0 +1,219 @@
+---
+title: Agentic Behavior - Multi vs. Single Step Tool Calling
+---
+
+# Agentic Behavior: Multi vs. Single Step Tool Calling
+
+A key feature of an "agent" is its ability to perform multi-step reasoning. Instead
+of just calling one tool and stopping, an agent can use the result of one
+tool to inform its next action, chaining multiple tool calls together to solve a
+complex problem without requiring further user intervention. This is the default
+"agentic" behavior in `dartantic_ai`.
+
+You can control this behavior using the `toolCallingMode` parameter when
+creating an `Agent`:
+
+- **`ToolCallingMode.multiStep`** (Default): This is the "agentic" mode. The
+  agent will loop, calling tools as many times as it needs to fully resolve the
+  user's prompt. It can use the output from one tool as the input for another,
+  creating sophisticated chains of execution.
+- **`ToolCallingMode.singleStep`**: The agent will perform only one round of
+  tool calls and then stop. This is useful as an optimization if you only need
+  the first set of tool calls.
+
+## Example: Multi-Step vs. Single-Step
+
+Let's see the difference in action. First, we'll set up some tools and a common
+prompt.
+
+```dart
+// Two simple tools for our agent
+final tools = [
+  Tool(
+    name: 'get_current_time',
+    description: 'Get the current date and time.',
+    onCall: (_) async => {'time': '2025-06-21T10:00:00Z'},
+  ),
+  Tool(
+    name: 'find_events',
+    description: 'Find events for a specific date.',
+    inputSchema: {
+      'type': 'object',
+      'properties': {'date': {'type': 'string'}},
+      'required': ['date'],
+    }.toSchema(),
+    onCall: (args) async => {'events': ['Team Meeting at 11am']},
+  ),
+];
+
+// A prompt that requires a two-step tool chain
+const prompt = 'What events do I have today? Please find the current date first.';
+
+// A helper to print the message history nicely
+void printMessages(List<Message> messages) {
+  for (var i = 0; i < messages.length; i++) {
+    final m = messages[i];
+    print('Message #${i + 1}: role=${m.role}');
+    for (final part in m.parts) {
+      print('  - $part');
+    }
+  }
+  print('---');
+}
+```
+
+### Multi-Step Execution (Default)
+
+When run in the default `multiStep` mode, the agent calls the first tool, gets
+the date, and then immediately uses that date to call the second tool.
+
+```dart
+// Create an agent in the default multi-step mode
+final multiStepAgent = Agent('openai', tools: tools);
+final multiStepResponse = await multiStepAgent.run(prompt);
+print('--- Multi-Step Mode ---');
+printMessages(multiStepResponse.messages);
+```
+
+The resulting message history shows the full, two-step reasoning chain:
+
+```
+--- Multi-Step Mode ---
+Message #1: role=user
+  - TextPart(text: "What events do I have today? Please find the current date first.")
+Message #2: role=model
+  - ToolPart(kind: call, id: ..., name: get_current_time, arguments: {})
+Message #3: role=model
+  - ToolPart(kind: result, id: ..., name: get_current_time, result: {time: 2025-06-21T10:00:00Z})
+Message #4: role=model
+  - ToolPart(kind: call, id: ..., name: find_events, arguments: {date: 2025-06-21})
+Message #5: role=model
+  - ToolPart(kind: result, id: ..., name: find_events, result: {events: [Team Meeting at 11am]})
+Message #6: role=model
+  - TextPart(text: "You have one event today: a Team Meeting at 11am.")
+---
+```
+
+### Single-Step Execution
+
+Now, let's run the exact same scenario in `singleStep` mode.
+
+```dart
+// Create an agent explicitly in single-step mode
+final singleStepAgent = Agent(
+  'openai',
+  tools: tools,
+  toolCallingMode: ToolCallingMode.singleStep,
+);
+final singleStepResponse = await singleStepAgent.run(prompt);
+print('--- Single-Step Mode ---');
+printMessages(singleStepResponse.messages);
+```
+
+The agent stops after the first round of tool calls. It finds the time but
+doesn't proceed to the next logical step of finding the events.
+
+```
+--- Single-Step Mode ---
+Message #1: role=user
+  - TextPart(text: "What events do I have today? Please find the current date first.")
+Message #2: role=model
+  - ToolPart(kind: call, id: ..., name: get_current_time, arguments: {})
+Message #3: role=model
+  - ToolPart(kind: result, id: ..., name: get_current_time, result: {time: 2025-06-21T10:00:00Z})
+Message #4: role=model
+  - TextPart(text: "Okay, the current date is June 21, 2025. Now I will find your events.")
+---
+```
+
+This clearly illustrates how `multiStep` mode enables autonomous, chained tool
+use, which is fundamental to creating an actual "agent."
+
+## Multi-turn Chat (Message History)
+
+You can pass a list of `Message` objects to the agent for context-aware,
+multi-turn conversations. Each message has a role (`system`, `user`, `model`)
+and a list of content parts (text, media, etc.). All providers (just OpenAI and
+Gemini for now) support this interface.
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:dartantic_ai/src/models/message.dart';
+
+void main() async {
+  final agent = Agent(
+    'openai:gpt-4o',
+    systemPrompt: 'You are a helpful assistant. Keep responses concise.',
+  );
+
+  // Start with empty message history
+  var messages = <Message>[];
+
+  // First turn
+  final response1 = await agent.run(
+    'What is the capital of France?',
+    messages: messages,
+  );
+  print('User: What is the capital of France?');
+  print('Assistant: ${response1.output}'); // Output: The capital of France is Paris.
+
+  // Update message history with the response
+  messages = response1.messages;
+
+  // Second turn - the agent should remember the context
+  final response2 = await agent.run(
+    'What is the population of that city?',
+    messages: messages,
+  );
+  print('User: What is the population of that city?');
+  print('Assistant: ${response2.output}'); // Output: Paris has approximately 2.1 million people in the city proper.
+
+  print('Message history contains ${response2.messages.length} messages'); // Output: Message history contains 4 messages
+}
+```
+
+You can find a working example in [multi_turn.dart](../example/bin/multi_turn.dart).
+
+## Message Construction Convenience Methods
+
+dartantic_ai provides several convenience methods to simplify creating messages
+and content:
+
+### Content Type Alias and Text Creation
+
+The `Content` type alias makes working with message content more readable:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  // Create text content easily
+  final textContent = Content.text('Hello, how can I help you?');
+
+  // Equivalent to: [TextPart('Hello, how can I help you?')]
+  print(textContent); // Output: [TextPart(text: "Hello, how can I help you?")]
+}
+```
+
+### Message Role Constructors
+
+Create messages for specific roles without specifying the role explicitly:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  // Create messages using convenience constructors
+  final userMessage = Message.user(Content.text('What is 2 + 2?'));
+  final modelMessage = Message.model(Content.text('2 + 2 equals 4.'));
+
+  // Use them in a conversation
+  final messages = [userMessage, modelMessage];
+
+  final agent = Agent('openai');
+  final response = await agent.run('What about 3 + 3?', messages: messages);
+  print(response.output); // Output: 3 + 3 equals 6.
+}
+```
+
+These convenience methods reduce boilerplate when working with messages. 

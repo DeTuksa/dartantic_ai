@@ -1,0 +1,39 @@
+---
+title: Basic Agent Usage
+---
+
+# Basic Agent Usage
+
+The following shows simple agent usage using the `Agent()` constructor, which
+takes a model string.
+
+```dart
+void main() async {
+  // Create an agent with a model string and a system prompt
+  final agent = Agent(
+    'openai',  // Can also use 'openai:gpt-4o' or 'openai/gpt-4o'
+    systemPrompt: 'Be concise, reply with one sentence.',
+  );
+
+  // Run the agent with a prompt (non-streaming)
+  final result = await agent.run('Where does "hello world" come from?');
+  print(result.output); // Output: one sentence on the origin of "hello world"
+}
+```
+
+Alternatively, you can use the `Agent()` constructor which takes a provider
+directly:
+
+```dart
+void main() async {
+  // Create an agent with a provider
+  final agent = Agent.provider(
+    OpenAiProvider(),
+    systemPrompt: 'Be concise, reply with one sentence.',
+  );
+
+  // Run the agent with a prompt (non-streaming)
+  final result = await agent.run('Where does "hello world" come from?');
+  print(result.output); // Output: one sentence on the origin of "hello world"
+}
+``` 

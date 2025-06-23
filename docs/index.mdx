@@ -1,0 +1,62 @@
+---
+title: Welcome to dartantic_ai
+---
+
+# dartantic_ai
+
+Hello and welcome to Dartantic!
+
+The [dartantic_ai package](https://pub.dev/packages/dartantic_ai) is an agent
+framework inspired by [the pydantic-ai](https://ai.pydantic.dev/) and designed
+to make building client and server-side apps in Dart with generative AI easier
+and more fun!
+
+## What You'll Learn
+
+This documentation covers everything you need to know about dartantic_ai, from basic usage to advanced features:
+
+### Getting Started
+- **[Basic Agent Usage](/basic-agent-usage)** - Simple agent creation and usage
+- **[Features](/features)** - Complete feature overview
+- **[Supported Providers](/supported-providers)** - Available AI model providers
+
+### Core Features
+- **[Using DotPrompt](/using-dotprompt)** - Structured prompt management
+- **[JSON Output with JSON Schema](/json-output-with-json-schema)** - Structured JSON responses
+- **[Manual Typed Output](/manual-typed-output-with-object-mapping)** - Hand-written object mapping
+- **[Automatic Typed Output](/automatic-typed-output-with-object-mapping)** - Generated object mapping
+
+### Advanced Features
+- **[Typed Tool Calling](/typed-tool-calling)** - Type-safe tool integration
+- **[Agentic Behavior](/agentic-behavior-multi-vs-single-step-tool-calling)** - Multi vs. single step tool calling
+- **[Streaming Output](/streaming-output)** - Real-time response streaming
+- **[Multi-media Input](/multi-media-input)** - File and image processing
+- **[Embeddings](/embeddings)** - Vector embeddings and similarity
+
+### Integration & Configuration
+- **[Logging](/logging)** - Debug and monitor your agents
+- **[Model Discovery](/model-discovery)** - Enumerate available models
+- **[MCP Server Support](/mcp-model-context-protocol-server-support)** - External tool integration
+- **[Provider Capabilities](/provider-capabilities)** - Check what providers support
+- **[Provider Switching](/provider-switching)** - Use multiple providers seamlessly
+- **[Custom Providers](/custom-providers)** - Build your own integrations
+
+## Quick Start
+
+Get started with dartantic_ai in just a few lines of code:
+
+```dart
+void main() async {
+  // Create an agent with a model string and a system prompt
+  final agent = Agent(
+    'openai',  // Can also use 'openai:gpt-4o' or 'openai/gpt-4o'
+    systemPrompt: 'Be concise, reply with one sentence.',
+  );
+
+  // Run the agent with a prompt (non-streaming)
+  final result = await agent.run('Where does "hello world" come from?');
+  print(result.output); // Output: one sentence on the origin of "hello world"
+}
+```
+
+Ready to dive deeper? Start with [Basic Agent Usage](/basic-agent-usage) to learn the fundamentals. 

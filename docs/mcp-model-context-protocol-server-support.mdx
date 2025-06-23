@@ -1,0 +1,84 @@
+---
+title: MCP (Model Context Protocol) Server Support
+---
+
+# MCP (Model Context Protocol) Server Support
+
+dartantic_ai supports connecting to MCP servers to extend Agent capabilities
+with external tools. MCP servers can run locally (via stdio) or remotely (via
+HTTP), providing access to file systems, databases, web APIs, and other external
+resources.
+
+## MCP Server Features
+
+- **Dual Transport Support**: Connect to local servers via stdio or remote
+  servers via HTTP
+- **Lazy Connection**: Servers connect automatically when first accessed
+- **Tool Discovery**: Automatically discover and convert MCP tools to Agent
+  Tools
+- **Type Safety**: MCP tools integrate seamlessly with local tools, returning
+  `Map<String, dynamic>`
+- **Resource Management**: Proper cleanup with `disconnect()` method
+
+## Remote MCP Server Usage
+
+Connect to remote MCP servers and use their tools with your Agent:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final huggingFace = McpClient.remote(
+    'huggingface',
+    url: Uri.parse('https://huggingface.co/mcp'),
+  );
+
+  final agent = Agent(
+    'google',
+    systemPrompt:
+        'You are a helpful assistant with access to various tools; '
+        'use the right one for the right job!',
+    tools: [...await huggingFace.getTools()],
+  );
+
+  try {
+    const query = 'Who is hugging face?';
+    await agent.runStream(query).map((r) => stdout.write(r.output)).drain();
+  } finally {
+    await huggingFace.disconnect();
+  }
+}
+```
+
+## Local MCP Server Usage
+
+Connect to local MCP servers running as separate processes:
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  // Connect to a local MCP server (e.g., a calculator server)
+  final calculatorServer = McpClient.local(
+    'calculator',
+    command: 'dart',
+    args: ['run', 'calculator_mcp_server.dart'],
+  );
+
+  final agent = Agent(
+    'openai',
+    systemPrompt: 'You are a helpful calculator assistant. '
+        'Use the available tools to perform calculations.',
+    tools: [...await calculatorServer.getTools()],
+  );
+
+  try {
+    final result = await agent.run('What is 15 multiplied by 27?');
+    print(result.output); // The agent will use the calculator tool and provide the answer
+  } finally {
+    await calculatorServer.disconnect();
+  }
+}
+```
+
+For a runnable example, take a look at [mcp_servers.dart](../example/bin/mcp_servers.dart). 

@@ -1,0 +1,74 @@
+---
+title: Supported Providers
+---
+
+# Supported Providers
+
+dartantic_ai currently supports the following AI model providers:
+
+## Provider Capabilities
+
+| Provider                   | Default Model      | Default Embedding Model  | Capabilities                                           | Notes                                  |
+| -------------------------- | ------------------ | ------------------------ | ------------------------------------------------------ | -------------------------------------- |
+| **OpenAI**                 | `gpt-4o`           | `text-embedding-3-small` | Text Generation, Embeddings, Chat, File Uploads, Tools | Full feature support                   |
+| **OpenRouter**             | `gpt-4o`           | N/A                      | Text Generation, Chat, File Uploads, Tools             | No embedding support                   |
+| **Google Gemini**          | `gemini-2.0-flash` | `text-embedding-004`     | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses native Gemini API                 |
+| **Gemini (OpenAI-compat)** | `gemini-2.0-flash` | `text-embedding-004`     | Text Generation, Embeddings, Chat, File Uploads, Tools | Uses OpenAI-compatible Gemini endpoint |
+
+## Provider Configuration
+
+| Provider                       | Provider Prefix | Aliases                            | API Key              | Provider Type    |
+| ------------------------------ | --------------- | ---------------------------------- | -------------------- | ---------------- |
+| **OpenAI**                     | `openai`        | -                                  | `OPENAI_API_KEY`     | `OpenAiProvider` |
+| **OpenRouter**                 | `openrouter`    | -                                  | `OPENROUTER_API_KEY` | `OpenAiProvider` |
+| **Google Gemini**              | `google`        | `gemini`, `googleai`, `google-gla` | `GEMINI_API_KEY`     | `GeminiProvider` |
+| **Gemini (OpenAI-compatible)** | `gemini-compat` | -                                  | `GEMINI_API_KEY`     | `OpenAiProvider` |
+
+## Model Naming Conventions
+
+The model string used by `Agent` can be specified in several ways:
+- Just the provider, e.g. `openai` → specifies whatever the default model for
+  that provider
+- provider:model, e.g. `google:2.0-flash` → specifies a provider and model,
+  seperated by a **colon**
+- provider/model, e.g. `googleai/gemini-2.5-pro` → specifies a provider and
+  model, seperated by a **slash**
+
+## Provider Aliases
+
+Some providers support multiple provider prefixes. The alias can be used where the provider name is specified, e.g.
+`gemini:gemini-2.0-flash` → `google:gemini-2.0-flash`.
+
+## API Key Environment Variables
+
+If you don't provide an API key when creating an agent, dartantic_ai will look
+for API keys in the appropriate environment.
+
+### Example using Agent.environment
+
+The Agent class provides an environment property that you can use to pass API keys along to the provider. This method is particularly suitable for setting API keys for multiple providers at once and for platforms that don't
+have their own environments, like Flutter Web.
+
+```dart
+void main() async {
+  // Set API keys for both OpenAI and Gemini using environment variables
+  Agent.environment.addAll({
+    'OPENAI_API_KEY': 'your-openai-api-key-here',
+    'GEMINI_API_KEY': 'your-gemini-api-key-here',
+  });
+
+  // Create and test OpenAI agent without explicitly passing an apiKey
+  final openAiAgent = Agent('openai', systemPrompt: 'Be concise.');
+  final openAiResult = await openAiAgent.run('Why is the sky blue?');
+  print('# OpenAI Agent');
+  print(openAiResult.output);
+
+  // Create and test Gemini agent without explicitly passing an apiKey
+  final geminiAgent = Agent('gemini', systemPrompt: 'Be concise.');
+  final geminiResult = await geminiAgent.run('Why is the sea salty?');
+  print('# Gemini Agent');
+  print(geminiResult.output);
+}
+```
+
+For a runnable example, take a look at [agent_env.dart](../example/bin/agent_env.dart). 

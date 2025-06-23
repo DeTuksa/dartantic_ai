@@ -1,0 +1,50 @@
+---
+title: Automatic Typed Output with Object Mapping
+---
+
+# Automatic Typed Output with Object Mapping
+
+The following example provides typed output using
+[json_serializable](https://pub.dev/packages/json_serializable) for automatic
+json decoding and [soti_schema](https://pub.dev/packages/soti_schema) for
+automatic Json Schema definition.
+
+```dart
+// Create a data class in your code
+@SotiSchema()
+@JsonSerializable()
+class TownAndCountry {
+  TownAndCountry({required this.town, required this.country});
+
+  factory TownAndCountry.fromJson(Map<String, dynamic> json) =>
+      _$TownAndCountryFromJson(json);
+
+  final String town;
+  final String country;
+
+  Map<String, dynamic> toJson() => _$TownAndCountryToJson(this);
+
+  @jsonSchema
+  static Map<String, dynamic> get schemaMap => _$TownAndCountrySchemaMap;
+
+  @override
+  String toString() => 'TownAndCountry(town: $town, country: $country)';
+}
+
+void main() async {
+  // Use runFor with a type parameter for automatic conversion
+  final agent = Agent(
+    'openai',
+    outputSchema: TownAndCountry.schemaMap.toSchema(),
+    outputFromJson: TownAndCountry.fromJson,
+  );
+
+  final result = await agent.runFor<TownAndCountry>(
+    'The windy city in the US of A.',
+  );
+
+  print(result.output); // Output: TownAndCountry(town: Chicago, country: US)
+}
+```
+
+If you want to see more details, check out [output_types.dart](../example/bin/output_types.dart). 

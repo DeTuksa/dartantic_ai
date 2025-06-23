@@ -5,8 +5,8 @@
     "primary": "#0175C2"
   },
   "logo": {
-    "light": "https://dart.dev/assets/img/shared/dart/logo+text/horizontal/white.svg",
-    "dark": "https://dart.dev/assets/img/shared/dart/logo+text/horizontal/blue.svg"
+    "light": "docs/images/dartantic-logo-light.png",
+    "dark": "docs/images/dartantic-logo-dark.png"
   },
   "sidebar": [
     {

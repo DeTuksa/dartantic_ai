@@ -3,16 +3,16 @@
 // ignore_for_file: public_member_api_docs, constant_identifier_names, avoid_classes_with_only_static_members
 
 mixin Pubspec {
-  static final buildDate = DateTime.utc(2025, 6, 21, 4, 16, 48);
+  static final buildDate = DateTime.utc(2025, 6, 24, 22, 46, 34);
 
   static const name = 'dartantic_ai';
 
   static const description =
       'A Dart library for easily interacting with LLMs in a typed manner.';
 
-  static const versionFull = '0.9.0';
+  static const versionFull = '0.9.6';
 
-  static const version = '0.9.0';
+  static const version = '0.9.6';
 
   static const versionSmall = '0.9';
 
@@ -20,7 +20,7 @@ mixin Pubspec {
 
   static const versionMinor = 9;
 
-  static const versionPatch = 0;
+  static const versionPatch = 6;
 
   static const versionBuild = 0;
 

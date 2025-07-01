@@ -3,6 +3,11 @@
 - Added the ability to set embedding dimensionality
 - Removed ToolCallingMode and singleStep mode. Multi-step tool calling is now
   always enabled.
+- Enabled support for web and wasm.
+- Breaking Change: Replaced `DataPart.file` with `DataPart.stream` for file and
+  image attachments. This improves web and WASM compatibility. Use
+  `DataPart.stream(file.openRead(), name: file.path)` instead of
+  `DataPart.file(File(...))`.
 
 ## 0.9.6
 

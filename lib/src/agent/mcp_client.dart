@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:mcp_dart/mcp_dart.dart' as mcp;
 
-import '../../pubspec.dart';
 import '../json_schema_extension.dart';
+import '../platform/platform.dart' as platform;
 import 'tool.dart';
 
 /// Represents the type of MCP server connection.
@@ -153,34 +152,20 @@ class McpClient {
   Future<void> _connect() async {
     if (isConnected) return;
 
-    switch (kind) {
-      case McpServerKind.local:
-        _transport = mcp.StdioClientTransport(
-          mcp.StdioServerParameters(
-            command: command!,
-            args: args ?? [],
-            environment: environment,
-            workingDirectory: workingDirectory,
-            // Fix mcp_dart bug: must use normal mode to access stdout/stdin pipes
-            stderrMode: ProcessStartMode.normal,
-          ),
-        );
-
-      case McpServerKind.remote:
-        _transport = mcp.StreamableHttpClientTransport(
-          url!,
-          opts:
-              headers == null
-                  ? null
-                  : mcp.StreamableHttpClientTransportOptions(
-                    requestInit: {'headers': headers},
-                  ),
-        );
-    }
+    _transport = platform.getTransport(
+      kind: kind,
+      url: url,
+      command: command,
+      args: args ?? [],
+      environment: environment ?? {},
+      workingDirectory: workingDirectory,
+      headers: headers,
+    );
 
     _client = mcp.Client(
-      const mcp.Implementation(name: 'dartantic_ai', version: Pubspec.version),
+      const mcp.Implementation(name: 'dartantic_ai', version: 'any'),
     );
+
     await _client!.connect(_transport!);
   }
 

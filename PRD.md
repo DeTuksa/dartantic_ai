@@ -338,8 +338,8 @@ final response = await agent.run("What's on my schedule today?");
   - `Agent.runStream()`, `Agent.run()`, and related methods accept `attachments:
     Content` parameter
   - `Model.runStream()` interface includes `required Content attachments`
-  - Support for text files via `DataPart.file(File('path.txt'))`
-  - Support for image files via `DataPart.file(File('image.jpg'))`
+  - Support for text files via `DataPart.stream(File('path.txt').openRead(), name: 'path.txt')`
+  - Support for image files via `DataPart.stream(File('image.jpg').openRead(), name: 'image.jpg')`
   - Support for web images via `LinkPart(Uri.parse('https://...'))`
   - Both OpenAI and Gemini providers handle multimedia content appropriately
   - Comprehensive examples in `example/bin/multimedia.dart` demonstrate file

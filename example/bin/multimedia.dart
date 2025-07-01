@@ -29,10 +29,11 @@ void main() async {
 Future<void> textFile() async {
   print('\n# Text File');
 
+  final file = File('bin/files/bio.txt');
   await _writeStream(
     agent.runStream(
       'Can you summarized the attached file?',
-      attachments: [await DataPart.file(File('bin/files/bio.txt'))],
+      attachments: [await DataPart.stream(file.openRead(), name: file.path)],
     ),
   );
 }
@@ -55,10 +56,11 @@ Future<void> imageFileLink() async {
 Future<void> imageFileData() async {
   print('\n# Image File Data');
 
+  final file = File('bin/files/cupboard.jpg');
   await _writeStream(
     agent.runStream(
       'What food do I have on hand?',
-      attachments: [await DataPart.file(File('bin/files/cupboard.jpg'))],
+      attachments: [await DataPart.stream(file.openRead(), name: file.path)],
     ),
   );
 }

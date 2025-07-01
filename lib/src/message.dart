@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_dynamic_calls
 
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -142,7 +141,8 @@ class TextPart extends Part {
 }
 
 const _defaultMimeType = 'application/octet-stream';
-String _mimeType(String path) => lookupMimeType(path) ?? _defaultMimeType;
+String _mimeType(String path, {Uint8List? headerBytes}) =>
+    lookupMimeType(path, headerBytes: headerBytes) ?? _defaultMimeType;
 String _nameFromMimeType(String mimeType) =>
     mimeType.startsWith('image/')
         ? 'image.${mimeType.split('/').last}'
@@ -206,10 +206,18 @@ class DataPart extends Part {
   String toString() => 'DataPart($mimeType, ${bytes.take(32)}...)';
 
   /// Creates a [DataPart] from a file.
-  static Future<DataPart> file(File file) async {
-    final mimeType = _mimeType(file.path);
-    final bytes = await file.readAsBytes();
-    return DataPart(bytes, mimeType: mimeType);
+  static Future<DataPart> stream(
+    Stream<List<int>> stream, {
+    String? name,
+  }) async {
+    final bytes = await stream.reduce((a, b) => a + b);
+    return DataPart(
+      Uint8List.fromList(bytes),
+      mimeType: _mimeType(
+        name ?? '',
+        headerBytes: Uint8List.fromList(bytes.take(128).toList()),
+      ),
+    );
   }
 }
 

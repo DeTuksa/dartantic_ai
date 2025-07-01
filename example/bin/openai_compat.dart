@@ -88,9 +88,10 @@ Future<void> fileUploads() async {
   final agent = Agent.provider(provider);
   print('## Agent: ${agent.model}');
 
+  final file = File('bin/files/bio.txt');
   final response = await agent.run(
     'Can you summarize this file for me?',
-    attachments: [await DataPart.file(File('bin/files/bio.txt'))],
+    attachments: [await DataPart.stream(file.openRead(), name: file.path)],
   );
   print(response.output);
 }

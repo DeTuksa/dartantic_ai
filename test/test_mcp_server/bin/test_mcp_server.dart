@@ -1,6 +1,7 @@
 import 'package:mcp_dart/mcp_dart.dart';
 
 void main() async {
+  print('Starting test_mcp_server...');
   McpServer server = McpServer(
     Implementation(name: "mcp-example-server", version: "1.0.0"),
     options: ServerOptions(
@@ -42,5 +43,7 @@ void main() async {
     },
   );
 
+  print('Connecting test_mcp_server...');
   await server.connect(StdioServerTransport());
+  print('test_mcp_server connected and running.');
 }

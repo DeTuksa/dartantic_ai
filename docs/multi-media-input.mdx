@@ -8,7 +8,7 @@ multimedia content alongside text.
 
 ## DataPart - Local Files, URL Downloads and Raw Bytes
 
-Use `DataPart.file()` to include local files (text, images, etc.):
+Use `DataPart.stream()` to include local files (text, images, etc.):
 
 ```dart
 import 'dart:io';
@@ -18,20 +18,24 @@ void main() async {
   final agent = Agent('google');
 
   // Text file
+  final file = File('bio.txt');
   final response1 = await agent.run(
     'Can you summarize the attached file?',
-    attachments: [await DataPart.file(File('bio.txt'))],
+    attachments: [await DataPart.stream(file.openRead(), name: file.path)],
   );
   print(response1.output);
 
   // Image file
+  final image = File('cupboard.jpg');
   final response2 = await agent.run(
     'What food do I have on hand?',
-    attachments: [await DataPart.file(File('cupboard.jpg'))],
+    attachments: [await DataPart.stream(image.openRead(), name: image.path)],
   );
   print(response2.output);
 }
 ```
+
+> **Note:** `DataPart.stream` replaces the previous `DataPart.file` constructor. This change improves compatibility with web and WASM platforms, where direct file access is not available. Use a stream and provide a name for best results.
 
 In addition, you can use `DataPart.url()` to download a file from a URL and the
 standard `DataPart` constructor to pass in raw bytes and a mime type.

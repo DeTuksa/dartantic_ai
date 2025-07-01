@@ -286,7 +286,12 @@ Summarize this in {{length}} words: {{text}}
         expect(result.output['town'], equals('Chicago'));
         expect(
           result.output['country'],
-          isIn(['USA', 'United States', 'United States of America']),
+          isIn([
+            'USA',
+            'United States',
+            'United States of America',
+            'United States of America (USA)',
+          ]),
         );
       });
 

@@ -31,7 +31,9 @@ development technologies and has written several books about programming.
           try {
             final response = await agent.runWithRetries(
               "Can you summarize this person's background in one sentence?",
-              attachments: [await DataPart.file(tempFile)],
+              attachments: [
+                await DataPart.stream(tempFile.openRead(), name: tempFile.path),
+              ],
             );
 
             expect(response.output, isNotEmpty);
@@ -55,7 +57,9 @@ development technologies and has written several books about programming.
         test('should process image file via DataPart.file()', () async {
           final response = await agent.runWithRetries(
             'What do you see in this image? Describe it briefly.',
-            attachments: [await DataPart.file(imageFile)],
+            attachments: [
+              await DataPart.stream(imageFile.openRead(), name: imageFile.path),
+            ],
           );
 
           expect(response.output, isNotEmpty);
@@ -109,8 +113,11 @@ development technologies and has written several books about programming.
               'I have attached a text file and an image. '
               'Can you acknowledge both attachments?',
               attachments: [
-                await DataPart.file(tempFile),
-                await DataPart.file(imageFile),
+                await DataPart.stream(tempFile.openRead(), name: tempFile.path),
+                await DataPart.stream(
+                  imageFile.openRead(),
+                  name: imageFile.path,
+                ),
               ],
             );
 
@@ -139,7 +146,9 @@ every letter in the English alphabet and is commonly used for testing.
 
             await for (final response in agent.runStreamWithRetries(
               'Please count the words in this text file.',
-              attachments: [await DataPart.file(tempFile)],
+              attachments: [
+                await DataPart.stream(tempFile.openRead(), name: tempFile.path),
+              ],
             )) {
               chunks.add(response.output);
               messageHistory = response.messages;
@@ -176,7 +185,9 @@ every letter in the English alphabet and is commonly used for testing.
             // First message with attachment
             final response1 = await agent.runWithRetries(
               'What is mentioned in this file?',
-              attachments: [await DataPart.file(tempFile)],
+              attachments: [
+                await DataPart.stream(tempFile.openRead(), name: tempFile.path),
+              ],
             );
 
             expect(response1.output, isNotEmpty);
@@ -210,7 +221,10 @@ every letter in the English alphabet and is commonly used for testing.
       final nonExistentFile = File('definitely_does_not_exist.txt');
 
       await expectLater(
-        () async => DataPart.file(nonExistentFile),
+        () async => DataPart.stream(
+          nonExistentFile.openRead(),
+          name: nonExistentFile.path,
+        ),
         throwsA(isA<FileSystemException>()),
       );
     });

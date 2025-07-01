@@ -1,0 +1,37 @@
+# Migration Guide
+
+## Migrating from 0.9.6 to 0.9.7
+
+### Breaking Change: DataPart.file → DataPart.stream
+
+The `DataPart.file` constructor has been **removed** and replaced with
+`DataPart.stream` for file and image attachments. This change was made to enable
+compatibility with web and WASM platforms, where direct file access is not
+available.
+
+#### What you need to do
+- **Replace** all usages of `DataPart.file(File(...))` with `await
+  DataPart.stream(file.openRead(), name: file.path)`.
+- Always provide a `name` argument for best results (especially for web/WASM).
+
+#### Before (0.9.6 and earlier)
+```dart
+final file = File('bio.txt');
+final part = await DataPart.file(file);
+```
+
+#### After (0.9.7 and later)
+```dart
+final file = File('bio.txt');
+final part = await DataPart.stream(file.openRead(), name: file.path);
+```
+
+#### Why?
+- This approach works on all Dart platforms, including web and WASM, by using
+  streams instead of direct file APIs.
+- It also makes it easier to support file uploads from sources other than the
+  local filesystem.
+
+---
+
+// Add future migration sections below 

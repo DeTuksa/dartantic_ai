@@ -189,13 +189,16 @@ void main() {
         final localServer = McpClient.local(
           'test-local-server',
           command: Platform.resolvedExecutable,
-          args: ['test/test_mcp_server.dart'],
+          args: ['test/test_mcp_server/bin/test_mcp_server.dart'],
         );
 
         expect(localServer.name, equals('test-local-server'));
         expect(localServer.kind, equals(McpServerKind.local));
         expect(localServer.command, equals(Platform.resolvedExecutable));
-        expect(localServer.args, equals(['test/test_mcp_server.dart']));
+        expect(
+          localServer.args,
+          equals(['test/test_mcp_server/bin/test_mcp_server.dart']),
+        );
         expect(localServer.isConnected, isFalse);
       });
 
@@ -227,10 +230,12 @@ void main() {
       });
 
       test('can connect to local MCP server directly', () async {
+        const command = 'dart';
+        final args = ['test/test_mcp_server/bin/test_mcp_server.dart'];
         final localServer = McpClient.local(
           'test-mcp-server',
-          command: 'dart',
-          args: ['test/test_mcp_server/bin/test_mcp_server.dart'],
+          command: command,
+          args: args,
         );
 
         // Test that we can get tools from the local server
@@ -254,10 +259,12 @@ void main() {
       });
 
       test('preserves required fields for raw MCP server schemas', () async {
+        const command = 'dart';
+        final args = ['test/raw_mcp_server/bin/raw_mcp_server.dart'];
         final rawServer = McpClient.local(
           'raw-mcp-server',
-          command: 'dart',
-          args: ['test/raw_mcp_server/bin/raw_mcp_server.dart'],
+          command: command,
+          args: args,
         );
 
         final tools = await rawServer.listTools();
@@ -293,10 +300,12 @@ void main() {
       });
 
       test('mcp_dart server limitation - drops required fields', () async {
+        const command = 'dart';
+        final args = ['test/test_mcp_server/bin/test_mcp_server.dart'];
         final mcpDartServer = McpClient.local(
           'mcp-dart-server',
-          command: 'dart',
-          args: ['test/test_mcp_server/bin/test_mcp_server.dart'],
+          command: command,
+          args: args,
         );
 
         final tools = await mcpDartServer.listTools();
@@ -317,10 +326,12 @@ void main() {
       test(
         'can call tools on raw MCP server with required field validation',
         () async {
+          const command = 'dart';
+          final args = ['test/raw_mcp_server/bin/raw_mcp_server.dart'];
           final rawServer = McpClient.local(
             'raw-mcp-server',
-            command: 'dart',
-            args: ['test/raw_mcp_server/bin/raw_mcp_server.dart'],
+            command: command,
+            args: args,
           );
 
           final tools = await rawServer.listTools();
@@ -353,10 +364,12 @@ void main() {
       );
 
       test('can use local MCP server via Agent with prompt', () async {
+        const command = 'dart';
+        final args = ['test/test_mcp_server/bin/test_mcp_server.dart'];
         final localServer = McpClient.local(
           'test-mcp-server',
-          command: 'dart',
-          args: ['test/test_mcp_server/bin/test_mcp_server.dart'],
+          command: command,
+          args: args,
         );
 
         // Get tools from the local server
@@ -581,7 +594,7 @@ void main() {
         final client = McpClient.local(
           'config-test-server',
           command: 'dart',
-          args: ['mcp_server.dart'],
+          args: ['test/mcp_server.dart'],
         );
 
         // Demonstrate how tools would be combined

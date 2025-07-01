@@ -20,6 +20,10 @@
           "href": "/"
         },
         {
+          "title": "Migration Guide",
+          "href": "/migration-guide"
+        },
+        {
           "title": "Basic Agent Usage",
           "href": "/basic-agent-usage"
         },

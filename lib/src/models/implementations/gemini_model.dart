@@ -216,6 +216,7 @@ class GeminiModel extends Model {
   Future<Float64List> createEmbedding(
     String text, {
     EmbeddingType type = EmbeddingType.document,
+    int? dimensions,
   }) async {
     log.fine(
       '[GeminiModel] Creating embedding for text (length: ${text.length}, '
@@ -236,6 +237,7 @@ class GeminiModel extends Model {
     final response = await embeddingModel.embedContent(
       gemini.Content.text(text),
       taskType: taskType,
+      outputDimensionality: dimensions,
     );
 
     final embedding = Float64List.fromList(response.embedding.values);

@@ -350,6 +350,7 @@ class Agent {
   /// - [text]: The text to generate embeddings for.
   /// - [type]: The type of embedding to generate (document or query).
   ///   Defaults to [EmbeddingType.document].
+  /// - [dimensions]: (Optional) The number of dimensions for the embedding.
   ///
   /// Returns a [Future] containing a Float64List representing the
   /// embedding vector.
@@ -359,7 +360,8 @@ class Agent {
   Future<Float64List> createEmbedding(
     String text, {
     EmbeddingType type = EmbeddingType.document,
-  }) => _model.createEmbedding(text, type: type);
+    int? dimensions,
+  }) => _model.createEmbedding(text, type: type, dimensions: dimensions);
 
   /// Returns a map of all available providers.
   ///

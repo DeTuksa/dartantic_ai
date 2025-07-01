@@ -113,7 +113,7 @@ void main() {
         final modelDetailsTool = toolMap['model_details']!;
         expect(
           modelDetailsTool.description,
-          contains('Get detailed information about a specific model'),
+          contains('Get detailed information about a model'),
         );
         expect(
           modelDetailsTool.inputSchema!.requiredProperties,

@@ -331,6 +331,7 @@ class OpenAiModel extends Model {
   Future<Float64List> createEmbedding(
     String text, {
     EmbeddingType type = EmbeddingType.document,
+    int? dimensions,
   }) async {
     if (!caps.contains(ProviderCaps.embeddings)) {
       throw Exception('Embeddings are not supported by this provider.');
@@ -339,6 +340,7 @@ class OpenAiModel extends Model {
     final request = openai.CreateEmbeddingRequest(
       model: openai.EmbeddingModel.modelId(embeddingModelName),
       input: openai.EmbeddingInput.string(text),
+      dimensions: dimensions,
     );
 
     final response = await _client.createEmbedding(request: request);

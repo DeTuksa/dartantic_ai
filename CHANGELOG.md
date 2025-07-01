@@ -1,3 +1,7 @@
+## 0.9.7
+
+- Added the ability to set embedding dimensionality
+
 ## 0.9.6
 
 - fixed an issue where the OpenAI model only processed the last tool result when

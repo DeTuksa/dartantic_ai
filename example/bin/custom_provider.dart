@@ -61,6 +61,7 @@ class EchoModel implements Model {
   Future<Float64List> createEmbedding(
     String text, {
     EmbeddingType type = EmbeddingType.document,
+    int? dimensions,
   }) {
     throw UnsupportedError('EchoModel does not support embeddings.');
   }

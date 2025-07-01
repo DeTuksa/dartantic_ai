@@ -37,6 +37,7 @@ class MockModel implements Model {
   Future<Float64List> createEmbedding(
     String text, {
     EmbeddingType type = EmbeddingType.document,
+    int? dimensions,
   }) {
     throw UnsupportedError('MockModel does not support embeddings.');
   }

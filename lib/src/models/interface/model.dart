@@ -31,9 +31,13 @@ abstract class Model {
   /// Returns a Float64List of floating-point values representing the text's
   /// position in high-dimensional semantic space, suitable for similarity
   /// calculations.
+  ///
+  /// The [dimensions] parameter specifies the number of dimensions to
+  /// return. If not provided, the model will use its default dimensionality.
   Future<Float64List> createEmbedding(
     String text, {
     EmbeddingType type = EmbeddingType.document,
+    int? dimensions,
   });
 
   /// The capabilities of this model.

@@ -107,6 +107,49 @@ void main() {
       await testCreateEmbedding(GeminiProvider());
     });
 
+    test('createEmbedding: OpenAI with dimensions', () async {
+      final agent = Agent.provider(OpenAiProvider());
+      final text = 'This is a sample document for embedding generation.';
+      for (final dims in [768, 1536]) {
+        final embedding = await agent.createEmbedding(
+          text,
+          type: EmbeddingType.document,
+          dimensions: dims,
+        );
+        expect(
+          embedding.length,
+          equals(dims),
+          reason: 'OpenAI: embedding length should match dimensions ($dims)',
+        );
+        print(
+          'OpenAI embedding length for dimensions=$dims: ${embedding.length}',
+        );
+      }
+    });
+
+    test('createEmbedding: Gemini embedding-exp with dimensions', () async {
+      final agent = Agent.provider(
+        GeminiProvider(embeddingModelName: 'gemini-embedding-exp-03-07'),
+      );
+      final text = 'This is a sample document for embedding generation.';
+      for (final dims in [768, 1536, 3072]) {
+        final embedding = await agent.createEmbedding(
+          text,
+          type: EmbeddingType.document,
+          dimensions: dims,
+        );
+        expect(
+          embedding.length,
+          equals(dims),
+          reason:
+              'Gemini embedding-exp: embedding length should match dimensions ($dims)',
+        );
+        print(
+          'Gemini embedding-exp embedding length for dimensions=$dims: ${embedding.length}',
+        );
+      }
+    });
+
     Future<void> testEmbeddingSimilarity(Provider provider) async {
       final agent = Agent.provider(provider);
 

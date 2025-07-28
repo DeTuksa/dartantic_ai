@@ -1,5 +1,5 @@
 name: dartantic_interface
-description: Interface definitions for dartantic_ai.
+description: Interface definitions for dartantic_ai for use in building custom providers.
 version: 1.0.0
 repository: https://github.com/csells/dartantic_ai
 

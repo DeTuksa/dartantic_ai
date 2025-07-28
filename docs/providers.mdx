@@ -1,0 +1,138 @@
+---
+title: Providers
+---
+
+# Providers
+
+One API to rule them all—access 15+ AI providers without the headache.
+
+## Provider Capabilities
+
+| Provider | Default Model | Default Embedding Model | Capabilities | Notes |
+|----------|---------------|------------------------|--------------|-------|
+| **OpenAI** | `gpt-4o` | `text-embedding-3-small` | Chat, Embeddings, Vision, Tools, Streaming | Full feature support |
+| **Anthropic** | `claude-3-5-sonnet-20241022` | - | Chat, Vision, Tools, Streaming | No embeddings |
+| **Google** | `gemini-2.0-flash-exp` | `text-embedding-004` | Chat, Embeddings, Vision, Tools, Streaming | Native Gemini API |
+| **Mistral** | `mistral-large-latest` | `mistral-embed` | Chat, Embeddings, Tools, Streaming | European servers |
+| **Cohere** | `command-r-plus` | `embed-english-v3.0` | Chat, Embeddings, Tools, Streaming | RAG-optimized |
+| **Ollama** | `llama3.2:latest` | - | Chat, Tools, Streaming | Local models only |
+| **OpenRouter** | `openai/gpt-4o` | - | Chat, Vision, Tools, Streaming | Multi-model gateway |
+| **Together AI** | `meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo` | - | Chat, Tools, Streaming | Open source models |
+| **Lambda** | `hermes-3-llama-3.1-405b-fp8` | - | Chat, Tools, Streaming | Research models |
+| **Google-OpenAI** | `gemini-2.0-flash-exp` | - | Chat, Vision, Tools, Streaming | Gemini via OpenAI API |
+| **Ollama-OpenAI** | `llama3.2:latest` | - | Chat, Tools, Streaming | Ollama via OpenAI API |
+
+## Provider Configuration
+
+| Provider | Provider Prefix | Aliases | API Key | Provider Type |
+|----------|----------------|---------|---------|---------------|
+| **OpenAI** | `openai` | - | `OPENAI_API_KEY` | `OpenAIProvider` |
+| **Anthropic** | `anthropic` | `claude` | `ANTHROPIC_API_KEY` | `AnthropicProvider` |
+| **Google** | `google` | `gemini`, `googleai` | `GEMINI_API_KEY` | `GoogleProvider` |
+| **Mistral** | `mistral` | - | `MISTRAL_API_KEY` | `MistralProvider` |
+| **Cohere** | `cohere` | - | `COHERE_API_KEY` | `CohereProvider` |
+| **Ollama** | `ollama` | - | None (local) | `OllamaProvider` |
+| **OpenRouter** | `openrouter` | - | `OPENROUTER_API_KEY` | `OpenAIProvider` |
+| **Together AI** | `togetherai` | `together` | `TOGETHER_API_KEY` | `OpenAIProvider` |
+| **Lambda** | `lambda` | - | `LAMBDA_API_KEY` | `OpenAIProvider` |
+| **Google-OpenAI** | `google-openai` | - | `GEMINI_API_KEY` | `OpenAIProvider` |
+| **Ollama-OpenAI** | `ollama-openai` | - | None (local) | `OpenAIProvider` |
+
+## Setup
+
+```bash
+# Set API keys
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="..."
+```
+
+## Usage
+
+```dart
+// Basic
+Agent('openai');
+
+// With model
+Agent('anthropic:claude-3-5-sonnet');
+
+// Chat + embeddings
+Agent('openai?chat=gpt-4o&embeddings=text-embedding-3-large');
+```
+
+## Find Providers
+
+```dart
+// All providers
+Providers.all
+
+// By capability
+Providers.allWith({ProviderCaps.vision})
+
+// By name
+Providers.byName('claude') // → anthropic
+```
+
+## Custom Config
+
+```dart
+final provider = OpenAIProvider(
+  apiKey: 'key',
+  baseUrl: Uri.parse('https://custom.api.com/v1'),
+);
+Agent.forProvider(provider);
+```
+
+## Check Capabilities
+
+```dart
+// Check what a provider supports
+final agent = Agent('openrouter');
+print('Capabilities: ${provider.caps}');
+// Output: {chat, vision, toolCalls, streaming}
+
+// Check specific capability
+if (provider.caps.contains(ProviderCaps.embeddings)) {
+  final embed = await agent.embedQuery('test');
+} else {
+  print('Provider does not support embeddings');
+}
+```
+
+### Available Capabilities
+
+- **`chat`** - Chat conversations
+- **`embeddings`** - Vector embeddings
+- **`vision`** - Image/file processing
+- **`toolCalls`** - Function calling
+- **`multiToolCalls`** - Multiple tool calls
+- **`streaming`** - Stream responses
+- **`typedOutput`** - Structured output
+
+## List Models
+
+```dart
+// List all models from a provider
+final provider = Providers.openai;
+await for (final model in provider.listModels()) {
+  final status = model.stable ? 'stable' : 'preview';
+  print('${model.name}: ${model.displayName} [$status]');
+}
+
+// Example output:
+// gpt-4o: GPT-4 Optimized [stable]
+// gpt-4o-mini: GPT-4 Optimized Mini [stable]
+// o1-preview: OpenAI o1 Preview [preview]
+```
+
+### Model Stability
+
+Models are classified as stable or experimental:
+- **Stable**: `gpt-4o`, `claude-3-5-sonnet`, `gemini-2.0-flash`
+- **Preview**: `o1-preview`, `gemini-2.0-flash-exp`, models with dates
+
+## Examples
+
+- [List all provider models](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/provider_models.dart)
+- [Multi-provider conversations](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_provider.dart)
+- [Custom providers](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/custom_provider.dart)

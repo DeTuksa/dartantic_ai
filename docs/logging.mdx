@@ -2,53 +2,110 @@
 title: Logging
 ---
 
-Dartantic provides logging support using the Dart `logging` package. This allows
-you to see detailed information about internal operations, including LLM
-requests/responses, tool execution, and provider operations.
+# Logging
 
-## Enabling Logging
+Control debug output and monitoring with Dartantic's logging system.
 
-To enable logging for Dartantic operations, configure the logging package:
+## Quick Start
 
 ```dart
-import 'package:dartantic_ai/dartantic_ai.dart';
-import 'package:logging/logging.dart';
+// Enable default logging
+Agent.loggingOptions = const LoggingOptions();
 
-void main() async {
-  // Configure logging to see dartantic_ai internal operations
-  Logger.root.level = Level.ALL;
-  Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
-  });
-
-  final agent = Agent('openai');
-  final result = await agent.run('Hello world!');
-  print(result.output);
-}
+final agent = Agent('openai');
+await agent.send('Hello!');
+// See formatted logs in console
 ```
 
-## Filtering Dartantic Logs Only
-
-To filter Dartantic logs specifically:
+## Logging Levels
 
 ```dart
 import 'package:logging/logging.dart';
 
-void main() async {
-  // Configure logging for dartantic_ai specifically
-  hierarchicalLoggingEnabled = true;
-  final dartanticLogger = Logger('dartantic_ai');
-  dartanticLogger.level = Level.ALL;
-  dartanticLogger.onRecord.listen((record) {
-    print('[dartantic_ai] ${record.level.name}: ${record.message}');
-  });
+// Development - verbose output
+Agent.loggingOptions = LoggingOptions(level: Level.FINE);
 
-  // Your agent code here...
-}
+// Production - minimal output  
+Agent.loggingOptions = LoggingOptions(level: Level.WARNING);
 ```
 
-This is particularly useful for debugging tool execution, understanding provider
-behavior, or troubleshooting unexpected responses.
+| Level | Use Case | Output |
+|-------|----------|--------|
+| `Level.FINE` | Development | Verbose |
+| `Level.INFO` | General | Moderate |
+| `Level.WARNING` | Production | Minimal |
 
-If you want to see more details, check out
-[logging.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/logging.dart). 
+## Filter by Provider
+
+```dart
+// Only OpenAI logs
+Agent.loggingOptions = LoggingOptions(
+  filter: 'openai',
+  onRecord: (record) => print('OpenAI: ${record.message}'),
+);
+
+// Only HTTP retry logs
+Agent.loggingOptions = LoggingOptions(filter: 'http');
+```
+
+## Custom Output
+
+### Colored Console
+```dart
+Agent.loggingOptions = LoggingOptions(
+  onRecord: (record) {
+    final color = record.level == Level.WARNING ? '\x1B[33m' : '';
+    print('$color[${record.level.name}] ${record.message}\x1B[0m');
+  },
+);
+```
+
+### JSON Logging
+```dart
+Agent.loggingOptions = LoggingOptions(
+  onRecord: (record) => print(jsonEncode({
+    'timestamp': DateTime.now().toIso8601String(),
+    'level': record.level.name,
+    'message': record.message,
+  })),
+);
+```
+
+## Logger Hierarchy
+
+```
+dartantic
+├── agent         # Agent operations
+├── chat
+│   ├── openai    # OpenAI provider
+│   ├── anthropic # Anthropic provider
+│   └── google    # Google provider
+├── http.retry    # Rate limiting
+└── tools         # Tool execution
+```
+
+## Common Patterns
+
+### Debug Rate Limiting
+```dart
+Agent.loggingOptions = LoggingOptions(filter: 'http');
+```
+
+### Debug Tool Calls  
+```dart
+Agent.loggingOptions = LoggingOptions(filter: 'tool');
+```
+
+### Provider-Specific
+```dart
+Agent.loggingOptions = LoggingOptions(filter: 'anthropic');
+```
+
+## Examples
+
+- [Full logging example](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/logging.dart)
+
+## Next Steps
+
+- [Automatic Retry](/automatic-retry) - Handle rate limits
+- [Usage Tracking](/usage-tracking) - Monitor costs

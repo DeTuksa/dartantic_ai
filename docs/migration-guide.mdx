@@ -1,4 +1,493 @@
+---
+title: Migration Guide
+---
+
 # Migration Guide
+
+## Migrating from 0.9.x to 1.0.0
+
+This guide provides comprehensive migration instructions from dartantic_ai 0.9.x to dartantic_ai (Dartantic 1.0).
+
+### Package Name Change
+
+```yaml
+# OLD
+dependencies:
+  dartantic_ai: ^0.9.x
+
+# NEW
+dependencies:
+  dartantic_ai: ^1.0.0
+```
+
+### Core API Changes
+
+#### 1. Method Name Changes
+
+The main agent methods have been renamed for clarity:
+
+```dart
+// OLD - dartantic_ai
+final result = await agent.run('Hello');
+final typedResult = await agent.runFor<T>('Hello', outputSchema: schema);
+await for (final chunk in agent.runStream('Hello')) {...}
+
+// NEW - dartantic_ai (Dartantic 1.0)
+final result = await agent.send('Hello');
+final typedResult = await agent.sendFor<T>('Hello', outputSchema: schema);
+await for (final chunk in agent.sendStream('Hello')) {...}
+```
+
+#### 2. Constructor Changes
+
+```dart
+// OLD - dartantic_ai
+final agent = Agent.provider(
+  OpenAiProvider(),
+  systemPrompt: 'Be concise.',
+);
+
+// NEW - dartantic_ai
+final agent = Agent.forProvider(
+  Providers.openai,
+  systemPrompt: 'Be concise.',
+);
+```
+
+#### 3. Message Type Changes
+
+```dart
+// OLD - dartantic_ai
+var messages = <Message>[];
+final response = await agent.run('Hello', messages: messages);
+messages = response.messages.toList();
+
+// NEW - dartantic_ai
+var history = <ChatMessage>[];
+final response = await agent.send('Hello', history: history);
+history.addAll(response.messages);
+```
+
+#### 4. Provider Access Changes
+
+```dart
+// OLD - dartantic_ai
+final provider = OpenAiProvider();
+final provider = GeminiProvider();
+
+// NEW - dartantic_ai
+final provider = Providers.openai;
+final provider = Providers.google;
+final provider = Providers.byName('openai');
+```
+
+#### 5. Schema Definition Changes
+
+```dart
+// OLD - dartantic_ai
+final schema = <String, dynamic>{
+  'type': 'object',
+  'properties': {
+    'town': {'type': 'string'},
+    'country': {'type': 'string'},
+  },
+  'required': ['town', 'country'],
+}.toSchema();
+
+// NEW - dartantic_ai
+final schema = JsonSchema.create({
+  'type': 'object',
+  'properties': {
+    'town': {'type': 'string', 'description': 'Name of the town'},
+    'country': {'type': 'string', 'description': 'Name of the country'},
+  },
+  'required': ['town', 'country'],
+});
+```
+
+#### 6. Tool Definition Changes
+
+```dart
+// OLD - dartantic_ai
+Tool(
+  name: 'get_weather',
+  description: 'Get weather for a city',
+  inputSchema: WeatherInput.schemaMap.toSchema(),
+  onCall: onWeatherCall,
+)
+
+// NEW - dartantic_ai
+Tool(
+  name: 'get_weather',
+  description: 'Get weather for a city',
+  inputSchema: JsonSchema.create({
+    'type': 'object',
+    'properties': {
+      'city': {'type': 'string'},
+    },
+    'required': ['city'],
+  }),
+  onCall: (args) async => {'temp': 72, 'conditions': 'Sunny'},
+)
+```
+
+#### 7. System Prompt Removal
+
+The `systemPrompt` parameter has been removed from Agent and model constructors. Use `ChatMessage.system()` instead:
+
+```dart
+// OLD - dartantic_ai
+final agent = Agent(
+  'openai',
+  systemPrompt: 'You are a helpful assistant.',
+);
+final result = await agent.send('Hello');
+
+// NEW - dartantic_ai
+final agent = Agent('openai');
+final result = await agent.send(
+  'Hello',
+  history: [
+    const ChatMessage.system('You are a helpful assistant.'),
+  ],
+);
+```
+
+For reusable system prompts:
+
+```dart
+// Define once
+const systemMessage = ChatMessage.system('You are a helpful assistant.');
+
+// Reuse in multiple calls
+await agent.send('Hello', history: [systemMessage]);
+await agent.send('How are you?', history: [systemMessage]);
+
+// Multi-turn conversations
+final history = [systemMessage];
+final result = await agent.send('Hello', history: history);
+history.addAll(result.messages);
+```
+
+#### 8. Multi-Media Input Changes
+
+```dart
+// OLD - dartantic_ai
+final part = await DataPart.file(File('bio.txt'));
+
+// NEW - dartantic_ai (0.9.7+)
+import 'package:cross_file/cross_file.dart';
+
+final file = XFile.fromData(
+  await File('bio.txt').readAsBytes(), 
+  path: 'bio.txt',
+);
+final part = await DataPart.fromFile(file);
+
+// OR for streams:
+final part = await DataPart.stream(
+  file.openRead(), 
+  name: file.path
+);
+```
+
+#### 9. Environment Variable Access
+
+```dart
+// OLD - dartantic_ai
+// Only system environment variables
+
+// NEW - dartantic_ai
+// Option 1: System environment variables
+final key = Platform.environment['OPENAI_API_KEY'];
+
+// Option 2: Programmatic setting
+Agent.environment['OPENAI_API_KEY'] = 'sk-...';
+```
+
+#### 10. Model String Format Enhanced
+
+```dart
+// OLD - dartantic_ai
+Agent('openai');
+Agent('openai:gpt-4o');
+Agent('openai/gpt-4o');
+
+// NEW - dartantic_ai (all above work plus)
+Agent('openai?chat=gpt-4o&embeddings=text-embedding-3-large');
+```
+
+### New Features in 1.0
+
+#### 1. Embeddings Support
+```dart
+final agent = Agent('openai');
+final embedding = await agent.embedQuery('Hello world');
+final results = await agent.embedDocuments(['Text 1', 'Text 2']);
+final similarity = EmbeddingsModel.cosineSimilarity(e1, e2);
+```
+
+#### 2. Multi-Provider Conversations
+```dart
+final history = <ChatMessage>[];
+
+// Start with Gemini
+final gemini = Agent('google');
+var result = await gemini.send('Hi!', history: history);
+history.addAll(result.messages);
+
+// Continue with Claude
+final claude = Agent('anthropic');
+result = await claude.send('Continue...', history: history);
+```
+
+#### 3. Automatic Retry
+```dart
+// Built-in retry logic for rate limits and failures
+final agent = Agent('openai');
+final result = await agent.send('Hello!'); // Automatically retries on 429
+```
+
+#### 4. Usage Tracking
+```dart
+final result = await agent.send('Hello');
+print('Tokens used: ${result.usage.totalTokens}');
+print('Cost: ${result.usage.totalTokens * 0.002 / 1000}');
+```
+
+#### 5. System Prompt Management
+```dart
+final agent = Agent(
+  'openai',
+  systemPrompt: 'You are a helpful assistant.',
+);
+
+// Override with history
+final result = await agent.send(
+  'Hello!',
+  history: [
+    ChatMessage.system('You are a pirate. Speak like one.'),
+  ],
+);
+```
+
+#### 6. MCP Server Support
+```dart
+final mcpClient = McpClient.remote(
+  'huggingface',
+  url: Uri.parse('https://hf.co/mcp'),
+);
+
+final tools = await mcpClient.listTools();
+final agent = Agent('openai', tools: [...tools]);
+```
+
+#### 7. Advanced Model String Format
+```dart
+// Specify different models for chat and embeddings
+Agent('openai?chat=gpt-4o&embeddings=text-embedding-3-large');
+```
+
+#### 8. Cross-Platform File Support
+```dart
+import 'package:cross_file/cross_file.dart';
+
+final file = XFile.fromData(bytes, path: 'file.txt');
+final part = await DataPart.fromFile(file);
+```
+
+### Complete Migration Examples
+
+#### Basic Chat Migration
+
+```dart
+// OLD - dartantic_ai
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final agent = Agent(
+    'openai',
+    systemPrompt: 'Be concise, reply with one sentence.',
+  );
+
+  final response = await agent.run('Where does "hello world" come from?');
+  print(response.output);
+}
+
+// NEW - dartantic_ai
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final agent = Agent(
+    'openai',
+    systemPrompt: 'Be concise, reply with one sentence.',
+  );
+
+  final response = await agent.send('Where does "hello world" come from?');
+  print(response.output);
+}
+```
+
+#### Multi-Turn Chat Migration
+
+```dart
+// OLD - dartantic_ai
+var messages = <Message>[];
+
+final response1 = await agent.run(
+  'What is the capital of France?',
+  messages: messages,
+);
+messages = response1.messages.toList();
+
+final response2 = await agent.run(
+  'What is the population of that city?',
+  messages: messages,
+);
+
+// NEW - dartantic_ai
+var history = <ChatMessage>[];
+
+final response1 = await agent.send(
+  'What is the capital of France?',
+  history: history,
+);
+history.addAll(response1.messages);
+
+final response2 = await agent.send(
+  'What is the population of that city?',
+  history: history,
+);
+```
+
+#### Tool Usage Migration
+
+```dart
+// OLD - dartantic_ai
+final agent = Agent(
+  'openai',
+  tools: [
+    Tool(
+      name: 'time',
+      description: 'Get the current time in a given time zone',
+      inputSchema: TimeFunctionInput.schemaMap.toSchema(),
+      onCall: onTimeCall,
+    ),
+  ],
+);
+
+await agent.runStream('What time is it?')
+  .map((event) => stdout.write(event.output))
+  .drain();
+
+// NEW - dartantic_ai
+final agent = Agent(
+  'openai',
+  tools: [
+    Tool(
+      name: 'time',
+      description: 'Get the current time in a given time zone',
+      inputSchema: JsonSchema.create({
+        'type': 'object',
+        'properties': {
+          'timezone': {'type': 'string'},
+        },
+        'required': ['timezone'],
+      }),
+      onCall: (args) async => {'time': DateTime.now().toIso8601String()},
+    ),
+  ],
+);
+
+await for (final chunk in agent.sendStream('What time is it?')) {
+  stdout.write(chunk.output);
+}
+```
+
+#### Typed Output Migration
+
+```dart
+// OLD - dartantic_ai
+final agent = Agent(
+  'openai',
+  outputSchema: TownAndCountry.schemaMap.toSchema(),
+  outputFromJson: TownAndCountry.fromJson,
+);
+
+final result = await agent.runFor<TownAndCountry>(
+  'The windy city in the US of A.',
+);
+
+// NEW - dartantic_ai
+final agent = Agent('openai');
+
+final result = await agent.sendFor<TownAndCountry>(
+  'The windy city in the US of A.',
+  outputSchema: JsonSchema.create({
+    'type': 'object',
+    'properties': {
+      'town': {'type': 'string'},
+      'country': {'type': 'string'},
+    },
+    'required': ['town', 'country'],
+  }),
+  outputFromJson: TownAndCountry.fromJson,
+);
+```
+
+### Documentation Changes
+
+#### Removed Documentation Files
+- `model-discovery.mdx` → Functionality moved to `providers.mdx`
+- `provider-capabilities.mdx` → Integrated into `providers.mdx`
+- `supported-providers.mdx` → Renamed to `providers.mdx`
+
+#### New Documentation Files
+- `automatic-retry.mdx` - Built-in retry logic documentation
+- `environment-setup.mdx` - API key configuration guide
+- `error-handling.mdx` - Comprehensive error handling
+- `installation.mdx` - Platform-specific installation guide
+- `multi-provider-conversations.mdx` - Cross-provider chat patterns
+- `quick-start.mdx` - 30-second getting started guide
+- `system-prompts.mdx` - System prompt management
+- `tools.mdx` - Dedicated tools reference
+- `usage-tracking.mdx` - Token usage and cost tracking
+
+### Example File Changes
+
+#### Removed Examples
+- `agent_env.dart` - Functionality integrated
+- `env.dart` - Replaced by environment documentation
+- `list_models.dart` → `provider_models.dart`
+- `main.dart` → Split into specific examples
+- `openai_compat.dart` - No longer needed
+- `output_types.dart` → `typed_output.dart`
+- `providers.dart` → `provider_models.dart`
+- `tools.dart` → Split into `single_tool_call.dart` and `multi_tool_call.dart`
+
+#### New Examples
+- `agent.dart` - Comprehensive agent usage with tools
+- `chat.dart` - Multi-turn chat with tools and typed output
+- `model_string.dart` - Model string format examples
+- `multi_provider.dart` - Cross-provider conversations
+- `multi_tool_call.dart` - Multiple tool usage patterns
+- `single_tool_call.dart` - Simple tool usage
+- `single_turn_chat.dart` - Basic chat examples
+- `system_prompt.dart` - System prompt usage
+- `usage_tracking.dart` - Token usage examples
+
+### Migration Checklist
+
+- [ ] Update package dependency to `dartantic_ai: ^1.0.0`
+- [ ] Replace all `agent.run` calls with `agent.send`
+- [ ] Replace all `agent.runFor` calls with `agent.sendFor`
+- [ ] Replace all `agent.runStream` calls with `agent.sendStream`
+- [ ] Update `Message` type to `ChatMessage`
+- [ ] Update `messages` parameter to `history`
+- [ ] Replace provider instantiation with `Provider.xxx`
+- [ ] Update schema definitions to use `JsonSchema`
+- [ ] Update file handling to use `XFile` and `DataPart.fromFile`
+- [ ] Review and adopt new features as needed
 
 ## Migrating from 0.9.6 to 0.9.7
 
@@ -32,6 +521,121 @@ final part = await DataPart.stream(file.openRead(), name: file.path);
 - It also makes it easier to support file uploads from sources other than the
   local filesystem.
 
----
+### FODDER
 
-// Add future migration sections below 
+- remove systemPrompt
+
+- update model string to support chat, embeddings and other model names using custom relative URI: providerName?chat=...
+as well as `provideName` and `providerName:chatModel` and `providerName/chatModel`
+
+- Add a new Chat helper class for collecting messages for simplified message management
+
+- Create a new Dartantic type for global services:
+    - ChatAgent.environment => Dartantic.environment
+    - ChatAgent.loggingOptions => Dartantic.loggingOptions
+
+- a ChatAgent no longer creates providers, they take existing instances by name or by ref.
+
+  - 11 intrinsic providers, e.g. ChatProviders.google, ChatProviders.openai, etc.
+  - providers and models manage API keys and base URLs
+  - Agents use them by name or by ref, e.g. Agent('openai') or Agent.forProvider(ChatProviders.openai)
+
+- Agents don't manage a single provider that can do chat and embeddings (and future other things)
+
+  - ChatAgents use ChatProviders (and ChatModels) to implement runXxx with streaming, tools and typed output support
+  - use EmbeddingsProviders and EmbeddingModels manually to call embedXxx methods
+  - can be extended in the future for audio, visual and other speciality model providers in the future
+
+- Provider lookup by name or by using intrinsic providers
+
+  - ChatProvider.name, e.g. ChatProviders.anthropic
+  - ChatProviders.byName(name|alias), e.g. ChatProviders.byName('anthropic') or ChatProviders.byName('claude')
+  - EmbeddingsProvider.name, e.g. ChatProviders.openai
+  - EmebeddingsProviders.byName(name|alias), e.g. EmbeddingsProvider.forName['openai']
+  - Agent.forProvider(ChatProvider.name), e.g. Agent.forProvider(MyCustomProvider()) or Agent.forProvider(ChatProviders.google)
+  - Can extend a provider type's namespace, e.g.
+    ChatProvider.providerMap['acme'] = AcmeChatProvider();
+    final agent = Agent('acme')
+
+- Moving from TOutput/outputSchema on Agent to TOutput/outputSchema on runForXxx
+
+- Using model-specific ChatModelOptions (is that plumbed through?)
+
+- `AgentResponse` to `ChatResult<String>`
+
+  - ChatResult.output => output (String or TOutput) accumulated during chunk (Future or Stream)
+    - how to accumulate streamed output
+  - ChatResult.messages => messages accumulated during chunk (Future or Stream)
+    - how to accumulate streamed messages
+
+- Message => ChatMessage
+
+  - // Factory constructors now take text as first parameter
+    ChatMessage.user('Hello', parts: [])  // Text required
+    ChatMessage.system('You are helpful')
+    ChatMessage.model('Response text')
+
+- Tools now use generics for type-safe input handling.
+```dart
+  // Generic input type, flexible output
+  class SearchInput {
+  final String query;
+  SearchInput.fromJson(Map<String, dynamic> json) : query = json['query'];
+  }
+
+  final tool = Tool<SearchInput>(
+  name: 'search',
+  inputFromJson: SearchInput.fromJson,
+  onCall: (SearchInput input) async => await search(input.query),
+  );
+```
+
+- prompt + attachments + history vs. messages
+
+- Embeddings No Longer in Agent
+  final provider = EmbeddingsProviders.openai;
+  final model = provider.createModel(name: 'text-embedding-3-small');
+  final result = await model.embedQuery('text');
+
+  // Use provider's similarity functions
+  final similarity = EmbeddingsProvider.cosineSimilarity(embedding1, embedding2);
+
+- DotPrompt Support Removed
+
+  - see example/dot_prompt.dart
+
+-The `Agent.providerFor()` static method has been removed.
+    final provider = ChatProviders.byName('openai');
+
+- The capability system remains similar but with different organization, i.e. ChatProvider and EmbeddingsProvider each have their own
+
+- DataPart now uses cross-platform `XFile` instead of URL/stream methods.
+  // From XFile (cross-platform)
+  const path = 'bin/files/bio.txt';
+  final file = XFile.fromData(await File(path).readAsBytes(), path: path);
+  final part = await DataPart.fromFile(file);
+
+```dart
+
+/// Static helper methods for extracting specific types of parts from a list.
+extension MessagePartHelpers on Iterable<Part> {
+  /// Extracts and concatenates all text content from TextPart instances.
+  ///
+  /// Returns a single string with all text content concatenated together
+  /// without any separators. Empty text parts are included in the result.
+  String get text => whereType<TextPart>().map((p) => p.text).join();
+
+  /// Extracts all tool call parts from the list.
+  ///
+  /// Returns only ToolPart instances where kind == ToolPartKind.call.
+  List<ToolPart> get toolCalls =>
+      whereType<ToolPart>().where((p) => p.kind == ToolPartKind.call).toList();
+
+  /// Extracts all tool result parts from the list.
+  ///
+  /// Returns only ToolPart instances where kind == ToolPartKind.result.
+  List<ToolPart> get toolResults => whereType<ToolPart>()
+      .where((p) => p.kind == ToolPartKind.result)
+      .toList();
+}
+```

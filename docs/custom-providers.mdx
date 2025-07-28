@@ -1,101 +1,102 @@
 ---
 title: Custom Providers
 ---
-Dartantic allows you to extend its functionality by creating your own custom
-providers. This is useful for integrating with LLM services that are not yet
-natively supported, for creating mock providers for testing purposes or for
-amazing your friends at parties.
 
-The process involves two main steps:
-1.  Implementing the `Provider` and `Model` interfaces.
-2.  Registering your custom provider in the `Agent.providers` table (optional).
+# Custom Providers
 
-Once registered, your custom provider can be used just like any of the built-in
-providers. If you don't register your provider, you can still use it by passing
-the provider name to the `Agent.provider()` constructor.
+Create your own providers to extend Dartantic with custom AI services.
 
-## Example: Creating and Using a Custom Echo Provider
+## Dynamic Provider Registration
 
-Here's a complete example of how to create a simple `EchoProvider` that just
-echos back the prompt it receives.
-
-First, define your `Model` and `Provider` implementations:
+Register custom providers at runtime:
 
 ```dart
-import 'package:dartantic_ai/dartantic_ai.dart';
+// Add your custom provider to the registry
+Provider.providerMap['echo'] = EchoProvider();
 
-/// A simple model that echos back the prompt.
-class EchoModel implements Model {
-  @override
-  Set<ProviderCaps> get caps => {ProviderCaps.textGeneration};
+// Use it like any built-in provider
+final agent = Agent('echo');
+final result = await agent.send('Hello!');
+print(result.output); // Echoes back your input
+```
 
-  @override
-  String get generativeModelName => 'echo';
+## Creating a Custom Provider
 
-  @override
-  String get embeddingModelName => '';
+Implement the `Provider` class and a corresponding `ChatModel`:
 
-  @override
-  Stream<AgentResponse> runStream({
-    required String prompt,
-    Iterable<Message> messages = const [],
-    Iterable<Part> attachments = const [],
-  }) async* {
-    yield AgentResponse(
-      output: prompt,
-      messages: [
-        ...messages,
-        Message.user([TextPart(prompt)]),
-        Message.model([TextPart(prompt)]),
-      ],
-    );
-  }
+```dart
+class EchoProvider extends Provider<ChatModelOptions, EmbeddingsModelOptions> {
+  EchoProvider()
+    : super(
+        name: 'echo',
+        displayName: 'Echo',
+        defaultModelNames: {ModelKind.chat: 'echo'},
+        caps: {ProviderCaps.chat},
+      );
 
   @override
-  Future<Float64List> createEmbedding(String text, {EmbeddingType? type}) {
-    throw UnsupportedError('EchoModel does not support embeddings.');
-  }
+  ChatModel<ChatModelOptions> createChatModel({
+    String? name,
+    List<Tool<Object>>? tools,
+    double? temperature,
+    ChatModelOptions? options,
+  }) => EchoChatModel(
+    name: name ?? defaultModelNames[ModelKind.chat]!,
+    defaultOptions: options,
+  );
+  
+  // ... other required methods
 }
+```
 
-/// A custom provider that serves the [EchoModel].
-class EchoProvider implements Provider {
-  @override
-  String get name => 'echo';
+## Complete Example
+
+Here's a minimal echo provider that demonstrates the pattern:
+
+```dart
+class EchoChatModel extends ChatModel<ChatModelOptions> {
+  EchoChatModel({required super.name, ChatModelOptions? defaultOptions})
+    : super(defaultOptions: defaultOptions ?? const ChatModelOptions());
 
   @override
-  Set<ProviderCaps> get caps => {ProviderCaps.textGeneration};
-
-  @override
-  Model createModel(ModelSettings settings) => EchoModel();
-
-  @override
-  Future<Iterable<ModelInfo>> listModels() async => [
-        ModelInfo(
-          providerName: name,
-          name: 'echo',
-          kinds: const {ModelKind.chat},
-          stable: true,
+  Stream<ChatResult<ChatMessage>> sendStream(
+    List<ChatMessage> messages, {
+    ChatModelOptions? options,
+    JsonSchema? outputSchema,
+  }) {
+    // Echo back the last user message
+    return Stream.fromIterable([
+      ChatResult<ChatMessage>(
+        output: ChatMessage.fromJson(
+          messages.last.toJson()..['role'] = 'model',
         ),
-      ];
+      ),
+    ]);
+  }
 }
 ```
 
-Next, register your provider and use it to create an `Agent`:
+## Common Use Cases
 
-```dart
-void main() async {
-  // 1. Register your custom provider in the static table.
-  Agent.providers['echo'] = (_) => EchoProvider();
+### Mock Providers for Testing
+Create predictable providers for unit tests without API calls.
 
-  // 2. Create an agent using your provider's name.
-  final agent = Agent('echo');
-  final response = await agent.run('Hello, custom provider!');
+### Custom API Integration
+Connect to proprietary or internal AI services.
 
-  // 3. Verify that it works.
-  print(response.output); // Output: Hello, custom provider!
-  print(agent.model);    // Output: echo:echo
-}
-```
+### Local Model Wrappers
+Wrap local inference engines with Dartantic's unified API.
 
-For a complete implementation, see
-[custom_provider.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/custom_provider.dart). 
+### Specialized Processing
+Add custom logic like caching, filtering, or transformation.
+
+## Examples
+
+- [Custom provider demo](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/custom_provider.dart)
+- [Provider list](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/provider_models.dart)
+
+## Next Steps
+
+- [Providers](/providers) - Current built-in providers
+- [Environment Setup](/environment-setup) - Configure API keys
+- [Error Handling](/error-handling) - Handle provider errors

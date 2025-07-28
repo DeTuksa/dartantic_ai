@@ -1,0 +1,124 @@
+---
+title: Usage Tracking
+---
+
+# Usage Tracking
+
+Track token usage and costs automatically.
+
+## Basic Usage
+
+```dart
+final agent = Agent('openai');
+final result = await agent.send('Explain AI briefly');
+
+// Access usage
+print('Input tokens: ${result.usage.promptTokens}');
+print('Output tokens: ${result.usage.responseTokens}');
+print('Total tokens: ${result.usage.totalTokens}');
+```
+
+## Streaming Usage
+
+```dart
+// Usage comes in the final chunks
+var usage = const LanguageModelUsage();
+
+await for (final chunk in agent.sendStream('Tell a story')) {
+  stdout.write(chunk.output);
+  if (chunk.usage.totalTokens != null) {
+    usage = chunk.usage;
+  }
+}
+
+print('\nTotal tokens: ${usage.totalTokens}');
+```
+
+## Compare Providers
+
+```dart
+final providers = ['openai', 'anthropic', 'google'];
+
+for (final name in providers) {
+  final agent = Agent(name);
+  final result = await agent.send('Hello');
+  
+  print('$name: ${result.usage.totalTokens} tokens');
+}
+```
+
+## Embeddings Usage
+
+```dart
+final agent = Agent('openai');
+final result = await agent.embedDocuments([
+  'Text 1',
+  'Text 2',
+  'Text 3',
+]);
+
+print('Tokens used: ${result.usage.totalTokens}');
+```
+
+## Cost Estimation
+
+```dart
+// Example pricing (check current rates)
+const openaiInputPer1k = 0.00015;
+const openaiOutputPer1k = 0.0006;
+
+final result = await agent.send('Write a haiku');
+final inputCost = (result.usage.promptTokens ?? 0) / 1000 * openaiInputPer1k;
+final outputCost = (result.usage.responseTokens ?? 0) / 1000 * openaiOutputPer1k;
+
+print('Cost: \$${(inputCost + outputCost).toStringAsFixed(6)}');
+```
+
+## Cumulative Tracking
+
+```dart
+var totalTokens = 0;
+var totalCost = 0.0;
+
+// Track multiple requests
+for (var i = 0; i < 5; i++) {
+  final result = await agent.send('Question $i');
+  totalTokens += result.usage.totalTokens ?? 0;
+  
+  // Add cost calculation
+  final cost = totalTokens / 1000 * 0.002; // Example rate
+  totalCost += cost;
+}
+
+print('Total: $totalTokens tokens, \$$totalCost');
+```
+
+## Provider Support
+
+| Provider | Usage Data | Details |
+|----------|------------|---------|
+| OpenAI | ✓ | Prompt + completion tokens |
+| Anthropic | ✓ | Input + output tokens |
+| Google | ✓ | Total tokens |
+| Mistral | ✓ | Total tokens |
+| Cohere | ✓ | Billed units |
+| Ollama | - | Local models |
+
+## Best Practices
+
+1. **Use smaller models** for simple tasks
+2. **Cache responses** to avoid repeat costs
+3. **Monitor usage** regularly
+4. **Set budget alerts** for production
+5. **Compare providers** for cost efficiency
+
+## Examples
+
+- [Usage tracking demo](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/usage_tracking.dart)
+- [Provider comparison](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_provider.dart)
+
+## Next Steps
+
+- [Providers](/providers) - Compare provider costs
+- [Error Handling](/error-handling) - Handle rate limits
+- [Multi-Provider Conversations](/multi-provider-conversations) - Optimize costs

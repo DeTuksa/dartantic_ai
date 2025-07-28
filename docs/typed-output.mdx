@@ -2,186 +2,144 @@
 title: Typed Output
 ---
 
-By default, an LLM will return a string. You can use Dartantic to get typed
-output instead. To do so, you have to at least provide a schema that defines the
-output you're looking for.
+# Typed Output
 
-## JSON String with JSON Schema
+Because sometimes you need more than a string back from your AI.
 
-By initializing an `Agent` with an `outputSchema`, you'll get a JSON-formatted
-string returned to you, which you can then parse into a `Map` object.
-
-The following example provides JSON output using a hand-written `schemaMap`
-property, which configures the underlying LLM to response in JSON. You can also
-use the `toSchema` method on a `Map<String, dynamic>` to get a `JsonSchema`
-object.
+## Basic JSON
 
 ```dart
-import 'dart:convert';
-
-import 'package:dartantic_ai/dartantic_ai.dart';
-
-void main() async {
-  // Define a JSON schema for structured output
-  final townCountrySchema = {
+final result = await agent.send(
+  'The windy city in the US of A',
+  outputSchema: JsonSchema.create({
     'type': 'object',
     'properties': {
-      'town': {'type': 'string'},
-      'country': {'type': 'string'},
+      'city': {'type': 'string'},
     },
-    'required': ['town', 'country'],
-  };
+    'required': ['city'],
+  }),
+);
 
-  // Create an agent with the schema
-  final agent = Agent('openai', outputSchema: townCountrySchema.toSchema());
-
-  // Get structured output as a JSON string
-  final result = await agent.run('The windy city in the US of A.');
-  print(result.output); // Output: {"town":"Chicago","country":"United States"}
-
-  // Convert the JSON string to a Map
-  final json = jsonDecode(result.output);
-  print(json['town']); // Output: Chicago
-  print(json['country']); // Output: United States
-}
-``` 
-
-## JSON Map Result
-
-Using the `Agent.runFor<T>` method, you can ask Dartantic to convert the JSON
-string into a Dart object of type `T`. The easiest thing to do is to convert to
-a `Map<String, dynamic>`:
-
-```dart
-import 'package:dartantic_ai/dartantic_ai.dart';
-
-void main() async {
-  // Define a JSON schema for structured output
-  final townCountrySchema = {
-    'type': 'object',
-    'properties': {
-      'town': {'type': 'string'},
-      'country': {'type': 'string'},
-    },
-    'required': ['town', 'country'],
-  };
-
-  // Create an agent with the schema
-  final agent = Agent('openai', outputSchema: townCountrySchema.toSchema());
-
-  // Get structured output as a JSON Map
-  final result = await agent.runFor<Map<String, dynamic>>(
-    'The windy city in the US of A.',
-  );
-  print(result.output['town']); // Output: Chicago
-  print(result.output['country']); // Output: United States
-}
+print(result.output); // {"city":"Chicago"}
 ```
 
-## Typed Dart Object Result
-
-In additonal to mapping JSON to a `Map<String, dynamic>`, you can also map JSON
-to a Dart object. This example provides typed output using automatic json
-decoding from a hand-written `fromJson` method and a hand-written `schemaMap`
-property.
+## Parsed Map
 
 ```dart
-// Create a data class in your code
-class TownAndCountry {
-  final String town;
-  final String country;
-
-  TownAndCountry({required this.town, required this.country});
-
-  factory TownAndCountry.fromJson(Map<String, dynamic> json) => TownAndCountry(
-      town: json['town'],
-      country: json['country'],
-    );
-
-  static Map<String, dynamic> get schemaMap => {
+final result = await agent.sendFor<Map<String, dynamic>>(
+  'Name 3 colors that make you happy',
+  outputSchema: JsonSchema.create({
     'type': 'object',
     'properties': {
-      'town': {'type': 'string'},
-      'country': {'type': 'string'},
+      'colors': {
+        'type': 'array',
+        'items': {'type': 'string'},
+      },
     },
-    'required': ['town', 'country'],
-  };
+    'required': ['colors'],
+  }),
+);
 
-  @override
-  String toString() => 'TownAndCountry(town: $town, country: $country)';
-}
-
-void main() async {
-  // Use runFor with a type parameter for automatic conversion
-  final agent = Agent(
-    'openai',
-    outputSchema: TownAndCountry.schemaMap.toSchema(),
-    outputFromJson: TownAndCountry.fromJson,
-  );
-
-  final result = await agent.runFor<TownAndCountry>(
-    'The windy city in the US of A.',
-  );
-
-  print(result.output); // Output: TownAndCountry(town: Chicago, country: US)
-} 
+print(result.output['colors']); // ['sunshine yellow', 'ocean blue', 'grass green']
 ```
 
-This is where things get a little dicey. Hand-writing the `fromJson` method and
-`schemaMap` property is a lot of boilerplate and it's easy to make mistakes.
+## Custom Types
 
-## Typed Dart Object with json_serializable and soti_schema
-
-If you'd like to automatically generate the `fromJson` method and `schemaMap`
-property, you can use the
-[json_serializable](https://pub.dev/packages/json_serializable) and
-[soti_schema](https://pub.dev/packages/soti_schema) packages.
-
-`json_serializable` is a code generator that creates the `fromJson` method and
-`toJson` method for a Dart class. `soti_schema` is a code generator that creates
-the `schemaMap` property for a Dart class.
-
-Put them together with the associated builders, and you've got an automated
-system for generating the `fromJson` method and `schemaMap` property.
+Here's where things get interesting. Hand-writing JSON parsing is tedious and error-prone, but sometimes necessary:
 
 ```dart
-// Create a data class in your code
+class Weather {
+  final String city;
+  final int temp;
+  
+  Weather.fromJson(Map<String, dynamic> json)
+    : city = json['city'],
+      temp = json['temp'];
+}
+
+final result = await agent.sendFor<Weather>(
+  'How hot is it in the Big Apple right now?',
+  outputSchema: JsonSchema.create({
+    'type': 'object',
+    'properties': {
+      'city': {'type': 'string'},
+      'temp': {'type': 'integer'},
+    },
+    'required': ['city', 'temp'],
+  }),
+  outputFromJson: Weather.fromJson,
+);
+
+print('${result.output.city}: ${result.output.temp}°F');
+```
+
+## Schema Generation
+
+This is where things get a little dicey. Hand-writing schemas is a lot of boilerplate. Consider using `json_serializable` and `soti_schema` to automate this:
+
+```dart
 @SotiSchema()
 @JsonSerializable()
 class TownAndCountry {
-  TownAndCountry({required this.town, required this.country});
-
-  factory TownAndCountry.fromJson(Map<String, dynamic> json) =>
-      _$TownAndCountryFromJson(json);
-
   final String town;
   final String country;
-
-  Map<String, dynamic> toJson() => _$TownAndCountryToJson(this);
-
+  
+  TownAndCountry({required this.town, required this.country});
+  
+  factory TownAndCountry.fromJson(Map<String, dynamic> json) =>
+      _$TownAndCountryFromJson(json);
+  
   @jsonSchema
-  static Map<String, dynamic> get schemaMap => _$TownAndCountrySchemaMap;
-
-  @override
-  String toString() => 'TownAndCountry(town: $town, country: $country)';
-}
-
-void main() async {
-  // Use runFor with a type parameter for automatic conversion
-  final agent = Agent(
-    'openai',
-    outputSchema: TownAndCountry.schemaMap.toSchema(),
-    outputFromJson: TownAndCountry.fromJson,
-  );
-
-  final result = await agent.runFor<TownAndCountry>(
-    'The windy city in the US of A.',
-  );
-
-  print(result.output); // Output: TownAndCountry(town: Chicago, country: US)
+  static Map<String, dynamic> get schemaMap => 
+      _$TownAndCountrySchemaMap;
 }
 ```
 
-If you want to try this out yourself, check out the
-[output_types.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/output_types.dart)
-example. 
+Now you're cooking with gas! The generators handle the boring parts.
+
+## With Tools
+
+```dart
+// Typed output + tool calls in one request
+final result = await agent.sendFor<Recipe>(
+  'Get grandma\'s recipe for cookies',
+  outputSchema: recipeSchema,
+  outputFromJson: Recipe.fromJson,
+  tools: [recipeLookupTool],
+);
+
+print('${result.output.name}: ${result.output.ingredients}');
+```
+
+## Streaming
+
+```dart
+// Stream structured JSON
+await for (final chunk in agent.sendStream(
+  'List 3 facts',
+  outputSchema: factsSchema,
+)) {
+  stdout.write(chunk.output); // Streams JSON chunks
+}
+```
+
+## Provider Support
+
+| Provider | Typed Output | With Tools |
+|----------|--------------|------------|
+| OpenAI | ✓ | ✓ |
+| Anthropic | ✓ | ✓ |
+| Google | ✓ | ✓ |
+| Ollama | ✓ | ✓ |
+| Mistral | - | - |
+| Cohere | - | - |
+
+## Examples
+
+- [Typed output basics](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/typed_output.dart)
+- [Chat with typed output](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
+
+## Next Steps
+
+- [Tool Calling](/tool-calling) - Extend with functions
+- [Multi-turn Chat](/multi-turn-chat) - Structured conversations

@@ -1,76 +1,121 @@
 ---
-title: Multi-media Input
+title: Multi-Media Input
 ---
 
-Dartantic supports the inclusion of files, images, and other media as
-attachments to your prompts. Both OpenAI and Gemini providers can process
-multimedia content alongside text.
+# Multi-Media Input
 
-## DataPart - Local Files, URL Downloads and Raw Bytes
+Because sometimes words aren't enough—your AI needs to see what's in your fridge too.
 
-Use `DataPart.stream()` to include local files (text, images, etc.):
+## Local Files
 
 ```dart
-import 'dart:io';
-import 'package:dartantic_ai/dartantic_ai.dart';
+// Using cross_file for cross-platform support
+import 'package:cross_file/cross_file.dart';
 
-void main() async {
-  final agent = Agent('google');
+final agent = Agent('openai');
 
-  // Text file
-  final file = File('bio.txt');
-  final response1 = await agent.run(
-    'Can you summarize the attached file?',
-    attachments: [await DataPart.stream(file.openRead(), name: file.path)],
-  );
-  print(response1.output);
+// Text file
+final bioFile = XFile.fromData(
+  await File('bio.txt').readAsBytes(), 
+  path: 'bio.txt',
+);
+final result = await agent.send(
+  'Can you summarize the attached file?',
+  attachments: [await DataPart.fromFile(bioFile)],
+);
 
-  // Image file
-  final image = File('cupboard.jpg');
-  final response2 = await agent.run(
-    'What food do I have on hand?',
-    attachments: [await DataPart.stream(image.openRead(), name: image.path)],
-  );
-  print(response2.output);
+// Image file (the moment of truth)
+final fridgeFile = XFile.fromData(
+  await File('fridge.png').readAsBytes(),
+  path: 'fridge.png',
+);
+final result = await agent.send(
+  'What food do I have on hand?',
+  attachments: [await DataPart.fromFile(fridgeFile)],
+);
+// "I see leftover pizza, expired milk, and... is that a science experiment?"
+```
+
+## Download from URL
+
+```dart
+// Download and include file from URL
+final urlData = await DataPart.url(
+  Uri.parse('https://example.com/document.pdf'),
+);
+final result = await agent.send(
+  'Summarize this document',
+  attachments: [urlData],
+);
+```
+
+## Raw Bytes
+
+```dart
+// Include raw bytes with mime type
+final bytes = Uint8List.fromList([/* your data */]);
+final rawData = DataPart(
+  bytes: bytes,
+  mimeType: 'application/pdf',
+);
+final result = await agent.send(
+  'Process this data',
+  attachments: [rawData],
+);
+```
+
+## Web URLs
+
+```dart
+// Direct URL reference (OpenAI)
+final result = await agent.send(
+  'Describe this image',
+  attachments: [
+    LinkPart(Uri.parse('https://example.com/image.jpg')),
+  ],
+);
+```
+
+## Multiple Attachments
+
+```dart
+// Mix text and images
+final result = await agent.send(
+  'Based on the bio and fridge contents, suggest a meal',
+  attachments: [
+    await DataPart.fromFile(bioFile),
+    await DataPart.fromFile(fridgeFile),
+  ],
+);
+```
+
+## Streaming
+
+```dart
+// Stream responses with attachments
+await for (final chunk in agent.sendStream(
+  'Analyze these images',
+  attachments: [image1, image2],
+)) {
+  stdout.write(chunk.output);
 }
 ```
 
-> **Note:** `DataPart.stream` replaces the previous `DataPart.file` constructor. This change improves compatibility with web and WASM platforms, where direct file access is not available. Use a stream and provide a name for best results.
+## Provider Support
 
-In addition, you can use `DataPart.url()` to download a file from a URL and the
-standard `DataPart` constructor to pass in raw bytes and a mime type.
+| Provider | Images | Files | URLs |
+|----------|--------|-------|------|
+| OpenAI | ✓ | ✓ | ✓ |
+| Google | ✓ | ✓ | Upload first |
+| Anthropic | ✓ | ✓ | - |
+| Others | - | - | - |
 
-Different providers have different limits on the size of data that you can
-upload, depending on the model, your billing plan and, of course, royal station
-(Dukes? large files. Earls? Not so much...)
+## Examples
 
-## LinkPart - Web URLs
+- [Multimedia chat](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multimedia.dart)
+- [Multi-turn with images](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
 
-Use `LinkPart()` to reference web images:
+## Next Steps
 
-```dart
-import 'package:dartantic_ai/dartantic_ai.dart';
-
-void main() async {
-  final agent = Agent('openai:gpt-4o');
-
-  final imageUrl = Uri.parse(
-    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/'
-    'Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-'
-    'Gfp-wisconsin-madison-the-nature-boardwalk.jpg'
-  );
-
-  final response = await agent.run(
-    'Can you describe this image?',
-    attachments: [LinkPart(imageUrl)],
-  );
-  print(response.output);
-}
-```
-
-Different providers may have varying support for specific file types and web
-URLs. At the time of this writing, Gemini requires files uploaded to Google AI
-File Service for LinkPart URLs.
-
-You can find a working example in
-[multimedia.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/multimedia.dart). 
+- [Providers](/providers) - Check multimedia support
+- [Streaming Output](/streaming-output) - Stream with attachments

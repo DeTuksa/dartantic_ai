@@ -2,21 +2,16 @@
 title: Using DotPrompt
 ---
 
-DotPrompt is [a specification for the .prompt file
-format](https://google.github.io/dotprompt) that treats them as executable LLM
-interactions, providing schema validation, template rendering, and model
-configuration management.
+# Using DotPrompt
 
-The [dotprompt_dart](https://pub.dev/packages/dotprompt_dart) package is an
-implementation of the DotPrompt specification for Dart. That package does the
-parsing and validation of the .prompt files, and Dartantic executes them.
+Use Google's [DotPrompt specification](https://google.github.io/dotprompt) to define prompts with metadata, templates, and validation.
 
-To execute a .prompt file, you can use the `Agent.runPrompt()` method with a
-`DotPrompt` object:
+## Quick Start
 
 ```dart
-void main() async {
-  final prompt = DotPrompt('''
+import 'package:dotprompt_dart/dotprompt_dart.dart';
+
+final dotPrompt = DotPrompt('''
 ---
 model: openai
 input:
@@ -27,10 +22,50 @@ input:
 Summarize this in {{length}} words: {{text}}
 ''');
 
-  final result = await Agent.runPrompt(prompt);
-  print(result.output); // Output: Fox jumps dog.
-}
+// Extract model and render prompt
+final prompt = dotPrompt.render();
+final agent = Agent(dotPrompt.frontMatter.model!);
+
+final result = await agent.send(prompt);
+print(result.output); // "Fox jumps dog."
 ```
 
-You can find a working example in
-[dotprompt.dart](https://github.com/csells/dartantic_ai/blob/main/example/bin/dotprompt.dart). 
+## With Variables
+
+```dart
+final dotPrompt = DotPrompt('''
+---
+model: anthropic
+---
+Translate "{{phrase}}" to {{language}}
+''');
+
+final prompt = dotPrompt.render({
+  'phrase': 'Hello world',
+  'language': 'Spanish',
+});
+
+final agent = Agent('anthropic');
+await agent.send(prompt);
+```
+
+## From Files
+
+```dart
+final file = File('prompts/summarize.prompt');
+final content = await file.readAsString();
+final dotPrompt = DotPrompt(content);
+
+final agent = Agent(dotPrompt.frontMatter.model!);
+await agent.send(dotPrompt.render());
+```
+
+## Examples
+
+- [DotPrompt demo](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/dotprompt.dart)
+- [DotPrompt package](https://pub.dev/packages/dotprompt_dart)
+
+## Next Steps
+
+- [Basic Agent Usage](/basic-agent-usage) - Agent fundamentals
+- [System Prompts](/system-prompts) - Built-in prompt management

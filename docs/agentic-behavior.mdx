@@ -1,79 +1,89 @@
 ---
-title: Agentic Behavior - Multi-Step Tool Calling
+title: Agentic Behavior
 ---
 
-A key feature of an "agent" is its ability to perform multi-step reasoning.
-Instead of just calling one tool and stopping, an agent can use the result of
-one tool to inform its next action, chaining multiple tool calls together to
-solve a complex problem without requiring further user intervention.
+# Agentic Behavior
 
-Agents will loop, calling tools as many times as needed to fully resolve the
-user's prompt. They can use the output from one tool as the input for another,
-creating sophisticated chains of execution.
+Agents automatically chain multiple tool calls to solve complex problems.
 
-## Example: Multi-Step Tool Execution
-
-Let's see this in action. First, we'll set up some tools and a common prompt.
+## Multi-Step Reasoning
 
 ```dart
-// Two simple tools for our agent
+// Tools that work together
 final tools = [
   Tool(
     name: 'get_current_time',
-    description: 'Get the current date and time.',
-    onCall: (_) async => {'time': '2025-06-21T10:00:00Z'},
+    description: 'Get the current date and time',
+    onCall: (_) async => {'time': '2025-01-27T10:00:00Z'},
   ),
   Tool(
     name: 'find_events',
-    description: 'Find events for a specific date.',
-    inputSchema: {
-      'type': 'object',
-      'properties': {'date': {'type': 'string'}},
-      'required': ['date'],
-    }.toSchema(),
-    onCall: (_) async => {'events': ['Team Meeting at 11am']},
+    description: 'Find events for a date',
+    inputSchema: JsonSchema.object({
+      'date': JsonSchema.string(),
+    }),
+    onCall: (args) async => {
+      'events': ['Team Meeting at 11am', 'Lunch at 12pm'],
+    },
   ),
 ];
 
-// A prompt that requires a two-step tool chain
-const prompt = 'What events do I have today? Please find the current date first.';
+// Agent chains tools automatically
+final agent = Agent('openai', tools: tools);
+final result = await agent.send(
+  'What events do I have today? Find the current date first.'
+);
 
-// A helper to print the message history nicely
-void printMessages(List<Message> messages) {
-  for (var i = 0; i < messages.length; i++) {
-    final m = messages[i];
-    print('Message #${i + 1}: role=${m.role}');
-    for (final part in m.parts) {
-      print('  - $part');
-    }
-  }
-  print('---');
+// Agent will:
+// 1. Call get_current_time → gets "2025-01-27"
+// 2. Extract date from response
+// 3. Call find_events with that date
+// 4. Return final answer with events
+```
+
+## Complex Workflows
+
+```dart
+// Weather + activity planning
+final tools = [
+  weatherTool,    // Gets weather
+  activityTool,   // Suggests activities based on weather
+  bookingTool,    // Books the activity
+];
+
+final result = await agent.send(
+  'Plan an outdoor activity for tomorrow in Seattle'
+);
+// Agent chains: weather → activity → booking
+```
+
+## Loop Behavior
+
+Agents continue until task completion:
+- Call tools as needed
+- Use output from one as input to another
+- Handle errors and retry
+- Stop when answer is complete
+
+## Streaming Chains
+
+```dart
+// Watch the agent think
+await for (final chunk in agent.sendStream(
+  'Research and summarize climate change solutions',
+  tools: [searchTool, summaryTool],
+)) {
+  stdout.write(chunk.output);
 }
 ```
 
-When you run the agent, it will call the first tool, get the date, and then
-immediately use that date to call the second tool.
+## Examples
 
-```dart
-final agent = Agent('openai', tools: tools);
-final response = await agent.run(prompt);
-printMessages(response.messages);
-```
+- [Agent with tools](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
+- [Multi-tool calling](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_tool_call.dart)
 
-The resulting message history shows the full, two-step reasoning chain:
+## Next Steps
 
-```
-Message #1: role=user
-  - TextPart(text: "What events do I have today? Please find the current date first.")
-Message #2: role=model
-  - ToolPart(kind: call, id: ..., name: get_current_time, arguments: {})
-Message #3: role=model
-  - ToolPart(kind: result, id: ..., name: get_current_time, result: {time: 2025-06-21T10:00:00Z})
-Message #4: role=model
-  - ToolPart(kind: call, id: ..., name: find_events, arguments: {date: 2025-06-21})
-Message #5: role=model
-  - ToolPart(kind: result, id: ..., name: find_events, result: {events: [Team Meeting at 11am]})
-Message #6: role=model
-  - TextPart(text: "You have one event today: a Team Meeting at 11am.")
----
-```
+- [Tool Calling](/tool-calling) - Define custom tools
+- [Multi-turn Chat](/multi-turn-chat) - Maintain context
+- [System Prompts](/system-prompts) - Guide agent behavior

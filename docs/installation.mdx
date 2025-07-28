@@ -1,0 +1,74 @@
+---
+title: Installation
+---
+
+# Installation
+
+## Requirements
+
+- Dart SDK 3.8.1+
+- Flutter (if building Flutter apps)
+
+## Install
+
+```yaml
+dependencies:
+  dartantic_ai: ^1.0.0
+```
+
+```bash
+dart pub get
+```
+
+## API Keys
+
+Set environment variables for the providers you'll use:
+
+```bash
+# Native providers
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="..."
+export MISTRAL_API_KEY="..."
+
+# OpenAI-compatible
+export OPENROUTER_API_KEY="..."
+export TOGETHER_API_KEY="..."
+export COHERE_API_KEY="..."
+export LAMBDA_API_KEY="..."
+
+# Ollama runs locally - no key needed
+```
+
+See [Providers](/providers) for the complete list.
+
+## Verify Installation
+
+```dart
+import 'package:dartantic_ai/dartantic_ai.dart';
+
+void main() async {
+  final agent = Agent('openai'); // or any provider with API key set
+  final result = await agent.send('Say "Hello, Dartantic!"');
+  print(result.output);
+}
+```
+
+## Platform Notes
+
+### Flutter Apps
+Use `flutter_dotenv` to manage API keys:
+
+```yaml
+dependencies:
+  flutter_dotenv: ^5.0.2
+```
+
+### Web Apps
+Handle API keys server-side. Never expose them in client code.
+
+## Next Steps
+
+- [Quick Start](/quick-start) - Build your first app
+- [Basic Agent Usage](/basic-agent-usage) - Core concepts
+- [Examples](https://github.com/csells/darantic_ai/tree/main/packages/dartantic_ai/example) - Working code

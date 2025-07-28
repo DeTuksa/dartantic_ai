@@ -1,3 +1,7 @@
+## 1.0.0
+
+TODO
+
 ## 0.9.7
 
 - Added the ability to set embedding dimensionality

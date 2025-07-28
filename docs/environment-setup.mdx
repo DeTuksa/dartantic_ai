@@ -1,0 +1,136 @@
+---
+title: Environment Setup
+---
+
+# Environment Setup
+
+Set API keys via environment variables - Dartantic automatically discovers them.
+
+## Quick Start
+
+```bash
+# Set your API keys
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="AI..."
+
+# Use without configuration
+dart run
+```
+
+```dart
+// Keys are auto-discovered
+final agent = Agent('openai');
+final result = await agent.send('Hello!');
+```
+
+## Environment Variables
+
+| Provider | Variable | Required |
+|----------|----------|----------|
+| OpenAI | `OPENAI_API_KEY` | ✅ |
+| Anthropic | `ANTHROPIC_API_KEY` | ✅ |
+| Google | `GEMINI_API_KEY` | ✅ |
+| Mistral | `MISTRAL_API_KEY` | ✅ |
+| Cohere | `COHERE_API_KEY` | ✅ |
+| OpenRouter | `OPENROUTER_API_KEY` | ✅ |
+| Together AI | `TOGETHER_API_KEY` | ✅ |
+| Lambda | `LAMBDA_API_KEY` | ✅ |
+| Ollama | None (local) | ❌ |
+
+## Two Ways to Set Environment Variables
+
+### 1. Platform.environment (Read from System)
+
+Dartantic automatically reads from system environment variables:
+
+```bash
+# Set in your shell
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="AI..."
+```
+
+Then access them in code:
+```dart
+// Read from system
+final openaiKey = Platform.environment['OPENAI_API_KEY'];
+print('OpenAI key is ${openaiKey != null ? "set" : "missing"}');
+```
+
+### 2. Agent.environment (Set Programmatically)
+
+Set environment variables in code, useful for loading from .env files:
+
+```dart
+// Set programmatically
+Agent.environment['OPENAI_API_KEY'] = 'sk-...';
+Agent.environment['ANTHROPIC_API_KEY'] = 'sk-ant-...';
+
+// Example: Load from .env file
+void loadEnv() {
+  final env = File('.env');
+  if (env.existsSync()) {
+    for (final line in env.readAsLinesSync()) {
+      if (line.contains('=') && !line.startsWith('#')) {
+        final parts = line.split('=');
+        Agent.environment[parts[0]] = parts.sublist(1).join('=');
+      }
+    }
+  }
+}
+```
+
+## Get API Keys
+
+### Free Options
+- **[Google Gemini](https://aistudio.google.com/app/apikey)** - Generous free tier
+- **[Ollama](https://ollama.ai)** - Completely free local models
+
+### Paid with Credits
+- **[OpenAI](https://platform.openai.com/api-keys)** - $5 free credit
+- **[Anthropic](https://console.anthropic.com/settings/keys)** - $5 free credit
+
+## Troubleshooting
+
+Check your setup:
+```dart
+void checkEnv() {
+  final keys = {
+    'OpenAI': 'OPENAI_API_KEY',
+    'Anthropic': 'ANTHROPIC_API_KEY',
+    'Google': 'GEMINI_API_KEY',
+  };
+  
+  for (final e in keys.entries) {
+    final key = Platform.environment[e.value];
+    print('${e.key}: ${key != null ? "✅ Set" : "❌ Missing"}');
+  }
+}
+```
+
+## Common Errors
+
+| Error | Fix |
+|-------|-----|
+| "API key not found" | Set the environment variable |
+| "Invalid API key" | Check key on provider dashboard |
+| "Rate limit" | Wait or upgrade plan |
+
+## Best Practices
+
+1. **Never hardcode keys** in source code
+2. **Use .env files** for local development
+3. **Use Ollama** for free testing
+4. **Validate keys** on startup
+5. **Keep different keys** for dev/prod
+
+## Examples
+
+- [Environment setup](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
+
+## Next Steps
+
+- [Quick Start](/quick-start) - Start building
+- [Providers](/providers) - Available providers
+- [Basic Agent Usage](/basic-agent-usage) - Using agents

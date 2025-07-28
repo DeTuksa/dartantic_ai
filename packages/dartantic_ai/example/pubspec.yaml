@@ -1,0 +1,27 @@
+name: example
+description: Examples using dartantic_ai.
+publish_to: none
+
+environment:
+  sdk: ^3.7.2
+
+// TODO: remove stuff I don't need
+dependencies:
+  chrono_dart: ^2.0.2
+  cross_file: ^0.3.4+2
+  dartantic_ai:
+    path: ..
+  dartantic_interface:
+    path: ../../dartantic_interface
+  dotprompt_dart: ^0.2.0
+  http: ^1.2.0
+  json_annotation: ^4.9.0
+  json_schema: ^5.2.1
+  logging: ^1.3.0
+  soti_schema: ^1.0.0
+  timezone: ^0.10.1
+
+dev_dependencies:
+  all_lint_rules_community: ^0.0.43
+  build_runner: ^2.4.15
+  json_serializable: ^6.9.0

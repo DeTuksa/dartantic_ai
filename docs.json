@@ -20,33 +20,46 @@
           "href": "/"
         },
         {
-          "title": "Migration Guide",
-          "href": "/migration-guide"
+          "title": "Installation",
+          "href": "/installation"
+        },
+        {
+          "title": "Quick Start",
+          "href": "/quick-start"
         },
         {
           "title": "Basic Agent Usage",
           "href": "/basic-agent-usage"
         },
         {
-          "title": "Features",
-          "href": "/features"
-        },
-        {
-          "title": "Supported Providers",
-          "href": "/supported-providers"
-        },
-        {
-          "title": "Notes On AI Codegen",
-          "href": "/notes-on-ai-codegen"
+          "title": "Migration Guide",
+          "href": "/migration-guide"
         }
       ]
     },
     {
-      "group": "Core Features",
+      "group": "Core Concepts",
+      "pages": [
+        {
+          "title": "Providers",
+          "href": "/providers"
+        },
+        {
+          "title": "Tools",
+          "href": "/tools"
+        }
+      ]
+    },
+    {
+      "group": "Features",
       "pages": [
         {
           "title": "Multi-turn Chat",
           "href": "/multi-turn-chat"
+        },
+        {
+          "title": "Multi-Provider Conversations",
+          "href": "/multi-provider-conversations"
         },
         {
           "title": "Typed Output",
@@ -55,56 +68,89 @@
         {
           "title": "Tool Calling",
           "href": "/tool-calling"
-        }
-      ]
-    },
-    {
-      "group": "Advanced Features",
-      "pages": [
-        {
-          "title": "Agentic Behavior",
-          "href": "/agentic-behavior"
         },
         {
           "title": "Streaming Output",
           "href": "/streaming-output"
         },
         {
-          "title": "Multi-media Input",
+          "title": "System Prompts",
+          "href": "/system-prompts"
+        },
+        {
+          "title": "Multi-Media Input",
           "href": "/multi-media-input"
         },
         {
           "title": "Embeddings",
           "href": "/embeddings"
-        },
-        {
-          "title": "Using DotPrompt",
-          "href": "/using-dotprompt"
         }
       ]
     },
     {
-      "group": "Integration & Configuration",
+      "group": "Advanced",
       "pages": [
+        {
+          "title": "Error Handling",
+          "href": "/error-handling"
+        },
+        {
+          "title": "Usage Tracking",
+          "href": "/usage-tracking"
+        },
+        {
+          "title": "Custom Providers",
+          "href": "/custom-providers"
+        },
+        {
+          "title": "Automatic Retry",
+          "href": "/automatic-retry"
+        },
         {
           "title": "Logging",
           "href": "/logging"
-        },
+        }
+      ]
+    },
+    {
+      "group": "Integration",
+      "pages": [
         {
-          "title": "Model Discovery",
-          "href": "/model-discovery"
+          "title": "Environment Setup",
+          "href": "/environment-setup"
         },
         {
           "title": "MCP Server Support",
           "href": "/mcp-support"
         },
         {
-          "title": "Provider Capabilities",
-          "href": "/provider-capabilities"
+          "title": "Using DotPrompt",
+          "href": "/using-dotprompt"
         },
         {
-          "title": "Custom Providers",
-          "href": "/custom-providers"
+          "title": "Agentic Behavior",
+          "href": "/agentic-behavior"
+        }
+      ]
+    },
+    {
+      "group": "Reference",
+      "pages": [
+        {
+          "title": "Features Overview",
+          "href": "/features"
+        },
+        {
+          "title": "Contributing",
+          "href": "/contributing"
+        },
+        {
+          "title": "Notes On AI Codegen",
+          "href": "/notes-on-ai-codegen"
+        },
+        {
+          "title": "API Reference ↗",
+          "href": "https://pub.dev/documentation/dartantic_ai/latest/"
         }
       ]
     }

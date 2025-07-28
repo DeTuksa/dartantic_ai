@@ -1,5 +1,3 @@
-/// Utility functions for chat providers.
-
 /// Safely appends a path to a base URL.
 ///
 /// Unlike [Uri.resolve], this function preserves the existing path in the

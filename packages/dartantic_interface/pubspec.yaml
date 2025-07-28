@@ -1,8 +1,7 @@
 name: dartantic_interface
-
 description: Interface definitions for dartantic_ai.
-
 version: 1.0.0
+repository: https://github.com/csells/dartantic_ai
 
 environment:
   sdk: ^3.8.1

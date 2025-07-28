@@ -2,11 +2,10 @@
 title: MCP (Model Context Protocol) Support
 ---
 
-# MCP (Model Context Protocol) Support
+Extend agents with external tools from MCP servers - remote APIs or local
+processes.
 
-Extend agents with external tools from MCP servers - remote APIs or local processes.
-
-## Quick Start
+## Remote MCP Servers
 
 ```dart
 // Connect to remote MCP server
@@ -19,24 +18,8 @@ final huggingFace = McpClient.remote(
 final tools = await huggingFace.listTools();
 
 // Use with your agent
-final agent = Agent('google', tools: [...tools]);
+final agent = Agent('google', tools: tools);
 final result = await agent.send('Who is hugging face?');
-```
-
-## Remote MCP Servers
-
-Connect to hosted MCP endpoints:
-
-```dart
-final deepwiki = McpClient.remote(
-  'deepwiki',
-  url: Uri.parse('https://mcp.deepwiki.com/mcp'),
-);
-
-final tools = await deepwiki.listTools();
-final agent = Agent('openai', tools: [...tools]);
-
-await agent.send('What model providers does dartantic support?');
 ```
 
 ## Local MCP Servers
@@ -82,19 +65,10 @@ final agent = Agent('google', tools: [
 await agent.send('What time is it and who is hugging face?');
 ```
 
-## Available MCP Servers
-
-Popular MCP servers to try:
-- **HuggingFace** - `https://hf.co/mcp`
-- **DeepWiki** - `https://mcp.deepwiki.com/mcp`
-- **Local servers** - See [MCP servers list](https://github.com/modelcontextprotocol/servers)
-
 ## Examples
 
-- [Complete MCP example](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/mcp_servers.dart)
-- [MCP specification](https://spec.modelcontextprotocol.io/)
+- [MCP Servers](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/mcp_servers.dart)
 
 ## Next Steps
 
 - [Tool Calling](/tool-calling) - Create custom tools
-- [Multi-Provider Conversations](/multi-provider-conversations) - Share tools across providers

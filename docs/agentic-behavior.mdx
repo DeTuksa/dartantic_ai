@@ -2,9 +2,8 @@
 title: Agentic Behavior
 ---
 
-# Agentic Behavior
-
-Agents automatically chain multiple tool calls to solve complex problems.
+What makes an agent an agent is the ability to chain multiple tool calls to
+solve more complex problems.
 
 ## Multi-Step Reasoning
 
@@ -62,28 +61,15 @@ final result = await agent.send(
 Agents continue until task completion:
 - Call tools as needed
 - Use output from one as input to another
-- Handle errors and retry
 - Stop when answer is complete
-
-## Streaming Chains
-
-```dart
-// Watch the agent think
-await for (final chunk in agent.sendStream(
-  'Research and summarize climate change solutions',
-  tools: [searchTool, summaryTool],
-)) {
-  stdout.write(chunk.output);
-}
-```
 
 ## Examples
 
-- [Agent with tools](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
-- [Multi-tool calling](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_tool_call.dart)
+- [Agent with tools](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
+- [Multi-tool calling](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_tool_call.dart)
 
 ## Next Steps
 
 - [Tool Calling](/tool-calling) - Define custom tools
 - [Multi-turn Chat](/multi-turn-chat) - Maintain context
-- [System Prompts](/system-prompts) - Guide agent behavior
+- [System Messages](/system-messages) - Guide agent behavior

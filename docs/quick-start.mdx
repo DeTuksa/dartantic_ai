@@ -2,52 +2,117 @@
 title: Quick Start
 ---
 
-# Quick Start
-
-Zero to AI hero in 30 seconds. No PhD required.
+Zero to hero; no PhD required.
 
 ## Install
 
 ```yaml
 dependencies:
-  dartantic_ai: ^1.0.0
+  dartantic_ai: ^VERSION
 ```
+
+## API Keys
+
+Set environment variables for the providers you'll use:
+
+```bash
+# Native providers
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GEMINI_API_KEY="..."
+export MISTRAL_API_KEY="..."
+
+# OpenAI-compatible
+export OPENROUTER_API_KEY="..."
+export TOGETHER_API_KEY="..."
+export COHERE_API_KEY="..."
+export LAMBDA_API_KEY="..."
+
+# Ollama runs locally - no key needed
+```
+Prefer to handle API keys server-side. Take special care to not expose them in
+your client code.
+
+See [Providers](/providers) for the complete list.
 
 ## Your First Chat
 
-```dart
-import 'package:dartantic_ai/dartantic_ai.dart';
-
-final agent = Agent('openai');  // or 'claude', 'gemini', pick your poison
-final result = await agent.send('Why do programmers prefer dark mode?');
-print(result.output);
-// "Because light attracts bugs!"
-```
-
-## Stream Like Netflix
+The following shows simple agent usage using the `Agent()` constructor, which
+takes a model string.
 
 ```dart
-// Watch the AI think in real-time
-await for (final chunk in agent.sendStream('Write me a haiku about debugging')) {
-  stdout.write(chunk.output);
+void main() async {
+  // Create an agent with a model string
+  final agent = Agent(
+    'openai',  // Can also use 'openai:gpt-4o' or 'openai/gpt-4o'
+  );
+
+  // Run the agent with a prompt and system message
+  final result = await agent.send(
+    'Where does "hello world" come from?',
+    history: [
+      const ChatMessage.system('Be concise, reply with one sentence.'),
+    ],
+  );
+  print(result.output); // Output: one sentence on the origin of "hello world"
 }
-// "Console log here...
-//  Mystery deepens further...
-//  Found it! Semicolon."
 ```
 
-## Embeddings (Math for Words)
+Alternatively, you can use the `Agent.forProvider()` constructor which takes a
+provider directly:
 
 ```dart
-final agent = Agent('openai');
-final embed = await agent.embedQuery('The meaning of life');
-print(embed.embeddings.length); // 1536 numbers that somehow mean something
+void main() async {
+  // Create an agent with a provider
+  final agent = Agent.forProvider(
+    Providers.openai,
+  );
+
+  // Run the agent with a prompt and system message
+  final result = await agent.send(
+    'Where does "hello world" come from?',
+    history: [
+      const ChatMessage.system('Be concise, reply with one sentence.'),
+    ],
+  );
+  print(result.output); // Output: one sentence on the origin of "hello world"
+}
 ```
+
+## Model Strings
+
+The model string used by `Agent` can be specified in several ways:
+- Just the `providerName`, e.g. `openai` → specifies whatever the default chat
+  and embeddings models are for that provider
+- `providerName:chatModelName`, e.g. `google:gemini-2.0-flash` → specifies a
+  provider and model, separated by a **colon**
+- `providerName/chatModelName`, e.g. `google/gemini-2.0-flash` → specifies a
+  provider and model, separated by a **slash**
+- `providerName?chat=chatModelName&embeddings=embeddingsModelName` →
+  `openai?chat=gpt-4&embeddings=text-embedding-ada-002` → uses query format
+
+## Providers
+A provider is a Dart type like `GoogleProvider` that knows how to expose model
+objects. When you pass in a model string, you're really looking up a provider
+object and one or more types of model objects for the agent to do its work. All
+the providers support a chat model (e.g. `GoogleChatModel`) and several of them
+also support an embeddings model (e.g. `GoogleEmbeddingsModel`).
+
+You can see the list of [Supported Providers](/providers) that Dartantic
+exposes. And you can build your own [Custom Providers](/custom-providers) if you
+like.
+
+## Provider Aliases
+
+Some providers support multiple provider prefixes. The alias can be used where
+the provider name is specified, e.g. `gemini:gemini-2.0-flash` →
+`google:gemini-2.0-flash`. Here's where you can see the list of aliases for each
+of the [Supported Providers](/providers).
 
 ## What's Next?
 
 Now that you've tasted power, dive deeper:
 
-- [Examples](https://github.com/csells/darantic_ai/tree/main/packages/dartantic_ai/example) - Real code that actually works
+- [Examples](https://github.com/csells/dartantic_ai/tree/main/packages/dartantic_ai/example/bin) - Pretty much all the things
 - [Providers](/providers) - Pick your AI overlord  
 - [Tools](/tool-calling) - Give your AI superpowers

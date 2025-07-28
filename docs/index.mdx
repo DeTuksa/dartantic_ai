@@ -2,8 +2,6 @@
 title: Welcome to Dartantic!
 ---
 
-# Dartantic
-
 Hello and welcome to Dartantic!
 
 The [dartantic_ai package](https://pub.dev/packages/dartantic_ai) is an agent framework inspired by pydantic-ai and designed to make building client and server-side apps in Dart with generative AI easier and more fun!
@@ -28,18 +26,18 @@ Enjoy!
 
 ## What is Dartantic AI?
 
-One API, 15 provider configurations:
+One API, 11 provider configurations out of the box:
 - **5 native implementations**: OpenAI, Google (Gemini), Anthropic (Claude), Mistral, Ollama
 - **6 OpenAI-compatible**: OpenRouter, Together AI, Cohere, Lambda, Google-OpenAI, Ollama-OpenAI
 - **Chat + Embeddings**: OpenAI, Google, Mistral, Cohere all support both
 
-Switch providers with one line of code. All models. Single API. Easier and more fun!
+Switch providers with one line of code. All models. Single API. Enjoy!
 
 ## Installation
 
 ```yaml
 dependencies:
-  dartantic_ai: ^1.0.0
+  dartantic_ai: ^VERSION
 ```
 
 ## Quick Examples
@@ -86,20 +84,16 @@ print(embed.embeddings.length); // 1536
 ```dart
 final history = <ChatMessage>[];
 
-// Start with fast Gemini
+// Start with Gemini
 final gemini = Agent('google');
-final result1 = await gemini.send('Hi, I'm Alice', history: history);
+final result1 = await gemini.send('Hi, I\'m Alice', history: history);
 history.addAll(result1.messages);
 
-// Switch to Claude for reasoning
+// Switch to Claude
 final claude = Agent('anthropic');
-final result2 = await claude.send('What's my name?', history: history);
+final result2 = await claude.send('What\'s my name?', history: history);
 print(result2.output); // "Your name is Alice"
 ```
-
-## Quick Start
-
-Get started in 5 minutes: [Quick Start Guide](/quick-start)
 
 ## Key Features
 
@@ -115,14 +109,13 @@ Get started in 5 minutes: [Quick Start Guide](/quick-start)
 ## Examples
 
 See complete working examples:
-- [Basic chat](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
-- [Multi-turn conversations](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_turn_chat.dart)
-- [Tool calling](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/single_tool_call.dart)
-- [Multi-provider chat](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_provider.dart)
-- [Agent with tools](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
+- [Basic chat](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
+- [Multi-turn conversations](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_turn_chat.dart)
+- [Tool calling](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/single_tool_call.dart)
+- [Multi-provider chat](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_provider.dart)
+- [Agent with tools](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
 
 ## Next Steps
 
-- [Installation](/installation) - Platform-specific setup
+- [Quick Start Guide](/quick-start)
 - [Providers](/providers) - Available providers and capabilities
-- [Basic Agent Usage](/basic-agent-usage) - Core concepts

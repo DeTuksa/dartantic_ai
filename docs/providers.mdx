@@ -2,9 +2,7 @@
 title: Providers
 ---
 
-# Providers
-
-One API to rule them all—access 15+ AI providers without the headache.
+Out of the box support for 11 providers, with more to come.
 
 ## Provider Capabilities
 
@@ -120,19 +118,13 @@ await for (final model in provider.listModels()) {
 }
 
 // Example output:
-// gpt-4o: GPT-4 Optimized [stable]
-// gpt-4o-mini: GPT-4 Optimized Mini [stable]
-// o1-preview: OpenAI o1 Preview [preview]
+// - openai:gpt-4-0613  (chat)
+// - openai:gpt-4  (chat)
+// - openai:gpt-3.5-turbo  (chat)
 ```
-
-### Model Stability
-
-Models are classified as stable or experimental:
-- **Stable**: `gpt-4o`, `claude-3-5-sonnet`, `gemini-2.0-flash`
-- **Preview**: `o1-preview`, `gemini-2.0-flash-exp`, models with dates
 
 ## Examples
 
-- [List all provider models](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/provider_models.dart)
-- [Multi-provider conversations](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_provider.dart)
-- [Custom providers](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/custom_provider.dart)
+- [List all provider models](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/provider_models.dart)
+- [Multi-provider conversations](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_provider.dart)
+- [Custom providers](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/custom_provider.dart)

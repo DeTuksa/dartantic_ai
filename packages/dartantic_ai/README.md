@@ -73,7 +73,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dartantic_ai: ^1.0.0
+  dartantic_ai: ^VERSION
 ```
 
 ## Contributing & Community

@@ -2,11 +2,9 @@
 title: Logging
 ---
 
-# Logging
+Route and filter debug output from the agent.
 
-Control debug output and monitoring with Dartantic's logging system.
-
-## Quick Start
+## Basic Usage
 
 ```dart
 // Enable default logging
@@ -48,62 +46,9 @@ Agent.loggingOptions = LoggingOptions(
 Agent.loggingOptions = LoggingOptions(filter: 'http');
 ```
 
-## Custom Output
-
-### Colored Console
-```dart
-Agent.loggingOptions = LoggingOptions(
-  onRecord: (record) {
-    final color = record.level == Level.WARNING ? '\x1B[33m' : '';
-    print('$color[${record.level.name}] ${record.message}\x1B[0m');
-  },
-);
-```
-
-### JSON Logging
-```dart
-Agent.loggingOptions = LoggingOptions(
-  onRecord: (record) => print(jsonEncode({
-    'timestamp': DateTime.now().toIso8601String(),
-    'level': record.level.name,
-    'message': record.message,
-  })),
-);
-```
-
-## Logger Hierarchy
-
-```
-dartantic
-├── agent         # Agent operations
-├── chat
-│   ├── openai    # OpenAI provider
-│   ├── anthropic # Anthropic provider
-│   └── google    # Google provider
-├── http.retry    # Rate limiting
-└── tools         # Tool execution
-```
-
-## Common Patterns
-
-### Debug Rate Limiting
-```dart
-Agent.loggingOptions = LoggingOptions(filter: 'http');
-```
-
-### Debug Tool Calls  
-```dart
-Agent.loggingOptions = LoggingOptions(filter: 'tool');
-```
-
-### Provider-Specific
-```dart
-Agent.loggingOptions = LoggingOptions(filter: 'anthropic');
-```
-
 ## Examples
 
-- [Full logging example](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/logging.dart)
+- [Logging](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/logging.dart)
 
 ## Next Steps
 

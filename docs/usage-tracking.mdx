@@ -2,9 +2,7 @@
 title: Usage Tracking
 ---
 
-# Usage Tracking
-
-Track token usage and costs automatically.
+Track token usage and costs.
 
 ## Basic Usage
 
@@ -16,22 +14,6 @@ final result = await agent.send('Explain AI briefly');
 print('Input tokens: ${result.usage.promptTokens}');
 print('Output tokens: ${result.usage.responseTokens}');
 print('Total tokens: ${result.usage.totalTokens}');
-```
-
-## Streaming Usage
-
-```dart
-// Usage comes in the final chunks
-var usage = const LanguageModelUsage();
-
-await for (final chunk in agent.sendStream('Tell a story')) {
-  stdout.write(chunk.output);
-  if (chunk.usage.totalTokens != null) {
-    usage = chunk.usage;
-  }
-}
-
-print('\nTotal tokens: ${usage.totalTokens}');
 ```
 
 ## Compare Providers
@@ -93,32 +75,10 @@ for (var i = 0; i < 5; i++) {
 print('Total: $totalTokens tokens, \$$totalCost');
 ```
 
-## Provider Support
-
-| Provider | Usage Data | Details |
-|----------|------------|---------|
-| OpenAI | ✓ | Prompt + completion tokens |
-| Anthropic | ✓ | Input + output tokens |
-| Google | ✓ | Total tokens |
-| Mistral | ✓ | Total tokens |
-| Cohere | ✓ | Billed units |
-| Ollama | - | Local models |
-
-## Best Practices
-
-1. **Use smaller models** for simple tasks
-2. **Cache responses** to avoid repeat costs
-3. **Monitor usage** regularly
-4. **Set budget alerts** for production
-5. **Compare providers** for cost efficiency
-
 ## Examples
 
-- [Usage tracking demo](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/usage_tracking.dart)
-- [Provider comparison](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_provider.dart)
+- [Usage Tracking](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/usage_tracking.dart)
 
 ## Next Steps
 
 - [Providers](/providers) - Compare provider costs
-- [Error Handling](/error-handling) - Handle rate limits
-- [Multi-Provider Conversations](/multi-provider-conversations) - Optimize costs

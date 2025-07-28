@@ -1,8 +1,6 @@
 ---
-title: Multi-Media Input
+title: Multimedia Input
 ---
-
-# Multi-Media Input
 
 Because sometimes words aren't enough—your AI needs to see what's in your fridge too.
 
@@ -89,31 +87,9 @@ final result = await agent.send(
 );
 ```
 
-## Streaming
-
-```dart
-// Stream responses with attachments
-await for (final chunk in agent.sendStream(
-  'Analyze these images',
-  attachments: [image1, image2],
-)) {
-  stdout.write(chunk.output);
-}
-```
-
-## Provider Support
-
-| Provider | Images | Files | URLs |
-|----------|--------|-------|------|
-| OpenAI | ✓ | ✓ | ✓ |
-| Google | ✓ | ✓ | Upload first |
-| Anthropic | ✓ | ✓ | - |
-| Others | - | - | - |
-
 ## Examples
 
-- [Multimedia chat](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multimedia.dart)
-- [Multi-turn with images](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
+- [Multimedia chat](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/multimedia.dart)
 
 ## Next Steps
 

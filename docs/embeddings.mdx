@@ -2,9 +2,7 @@
 title: Embeddings
 ---
 
-# Embeddings
-
-Generate vector embeddings with the same Agent.
+Some providers produce embeddings as well as chat responses.
 
 ## Basic Usage
 
@@ -58,17 +56,6 @@ final best = sims.indexOf(sims.reduce(max));
 print('Best match: index $best');
 ```
 
-## Provider Support
-
-| Provider | Embeddings | Default Dims | Notes |
-|----------|------------|--------------|-------|
-| OpenAI | ✓ | 1536 | Configurable dimensions |
-| Google | ✓ | 768 | Fast and efficient |
-| Mistral | ✓ | 1024 | European servers |
-| Cohere | ✓ | 1024 | RAG-optimized |
-| Anthropic | - | - | Chat only |
-| Ollama | - | - | Chat only |
-
 ## Configuration
 
 ```dart
@@ -84,20 +71,10 @@ final agent = Agent(
 );
 ```
 
-## Use Cases
-
-- **Semantic search**: Find similar documents
-- **Clustering**: Group related content
-- **Recommendations**: Find similar items
-- **Duplicate detection**: Identify similar text
-- **RAG applications**: Retrieve relevant context
-
 ## Examples
 
-- [Embeddings demo](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/embeddings.dart)
-- [Basic usage](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
+- [Embeddings](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/embeddings.dart)
 
 ## Next Steps
 
 - [Providers](/providers) - Embeddings support by provider
-- [Basic Agent Usage](/basic-agent-usage) - Using embeddings with agents

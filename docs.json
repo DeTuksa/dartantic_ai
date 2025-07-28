@@ -20,16 +20,16 @@
           "href": "/"
         },
         {
-          "title": "Installation",
-          "href": "/installation"
-        },
-        {
           "title": "Quick Start",
           "href": "/quick-start"
         },
         {
-          "title": "Basic Agent Usage",
-          "href": "/basic-agent-usage"
+          "title": "Agentic Behavior",
+          "href": "/agentic-behavior"
+        },
+        {
+          "title": "Providers",
+          "href": "/providers"
         },
         {
           "title": "Migration Guide",
@@ -38,28 +38,15 @@
       ]
     },
     {
-      "group": "Core Concepts",
-      "pages": [
-        {
-          "title": "Providers",
-          "href": "/providers"
-        },
-        {
-          "title": "Tools",
-          "href": "/tools"
-        }
-      ]
-    },
-    {
       "group": "Features",
       "pages": [
         {
-          "title": "Multi-turn Chat",
-          "href": "/multi-turn-chat"
+          "title": "Streaming Output",
+          "href": "/streaming-output"
         },
         {
-          "title": "Multi-Provider Conversations",
-          "href": "/multi-provider-conversations"
+          "title": "Multi-turn Chat",
+          "href": "/multi-turn-chat"
         },
         {
           "title": "Typed Output",
@@ -70,20 +57,12 @@
           "href": "/tool-calling"
         },
         {
-          "title": "Streaming Output",
-          "href": "/streaming-output"
-        },
-        {
-          "title": "System Prompts",
-          "href": "/system-prompts"
+          "title": "System Messages",
+          "href": "/system-messages"
         },
         {
           "title": "Multi-Media Input",
           "href": "/multi-media-input"
-        },
-        {
-          "title": "Embeddings",
-          "href": "/embeddings"
         }
       ]
     },
@@ -91,16 +70,12 @@
       "group": "Advanced",
       "pages": [
         {
-          "title": "Error Handling",
-          "href": "/error-handling"
+          "title": "Embeddings",
+          "href": "/embeddings"
         },
         {
           "title": "Usage Tracking",
           "href": "/usage-tracking"
-        },
-        {
-          "title": "Custom Providers",
-          "href": "/custom-providers"
         },
         {
           "title": "Automatic Retry",
@@ -109,6 +84,10 @@
         {
           "title": "Logging",
           "href": "/logging"
+        },
+        {
+          "title": "Custom Providers",
+          "href": "/custom-providers"
         }
       ]
     },
@@ -126,27 +105,23 @@
         {
           "title": "Using DotPrompt",
           "href": "/using-dotprompt"
-        },
-        {
-          "title": "Agentic Behavior",
-          "href": "/agentic-behavior"
         }
       ]
     },
     {
-      "group": "Reference",
+      "group": "Miscellaneous",
       "pages": [
         {
-          "title": "Features Overview",
-          "href": "/features"
+          "title": "Notes On AI Codegen",
+          "href": "/notes-on-ai-codegen"
         },
         {
           "title": "Contributing",
           "href": "/contributing"
         },
         {
-          "title": "Notes On AI Codegen",
-          "href": "/notes-on-ai-codegen"
+          "title": "Discussion ↗",
+          "href": "https://github.com/csells/dartantic_ai/discussions"
         },
         {
           "title": "API Reference ↗",

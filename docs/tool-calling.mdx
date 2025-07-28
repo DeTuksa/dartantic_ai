@@ -1,12 +1,12 @@
-n---
+---
 title: Tool Calling
 ---
 
-# Tool Calling
+Imagine that you'd like to extend the capabilities of your AI Agent with some
+new abilities. For example, out of the box, an LLM doesn't know what time it is.
+If you ask it anyway, you're not going to get a very good answer.
 
-Imagine that you'd like to extend the capabilities of your AI Agent with some new abilities. For example, out of the box, an LLM doesn't know what time it is. That seems pretty basic, but if it did tell you what time it was, all it could do is make something up.
-
-So, if you want to teach the LLM to tell the time, you need to give it a tool.
+If you want to teach the LLM to tell the time, you need to give it a tool.
 
 ## Basic Example
 
@@ -63,6 +63,9 @@ await for (final chunk in agent.sendStream(
 
 ## Error Handling
 
+If you throw an error in a tool, it will be caught and returned to the LLM as an
+error message so it can handle it gracefully (ideally).
+
 ```dart
 final tool = Tool(
   name: 'divide',
@@ -115,32 +118,18 @@ final weatherTool = Tool(
 );
 ```
 
-## Provider Support
-
-| Provider | Single Tool | Multi-Tool | Streaming |
-|----------|-------------|------------|-----------|
-| OpenAI | ✓ | ✓ | ✓ |
-| Anthropic | ✓ | ✓ | ✓ |
-| Google | ✓ | ✓ | ✓ |
-| Ollama | ✓ | ✓ | ✓ |
-| Mistral | ✓ | - | ✓ |
-| Cohere | ✓ | - | ✓ |
-
-Check capabilities:
-```dart
-provider.caps.contains(ProviderCaps.toolCalls)
-provider.caps.contains(ProviderCaps.multiToolCalls)
-```
-
 ## Examples
 
-- [Single tool call](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/single_tool_call.dart)
-- [Multiple tool calls](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_tool_call.dart)
-- [Agent with tools](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
-- [MCP server tools](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/mcp_servers.dart)
+- [Single tool
+  call](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/single_tool_call.dart)
+- [Multiple tool
+  calls](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_tool_call.dart)
+- [Agent with
+  tools](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
+- [MCP server
+  tools](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/mcp_servers.dart)
 
 ## Next Steps
 
-- [Tools](/tools) - Tool creation guide
 - [Typed Output](/typed-output) - Structured responses with tools
 - [Multi-turn Chat](/multi-turn-chat) - Conversations with tool memory

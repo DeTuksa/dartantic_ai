@@ -2,27 +2,12 @@
 title: Custom Providers
 ---
 
-# Custom Providers
-
-Create your own providers to extend Dartantic with custom AI services.
-
-## Dynamic Provider Registration
-
-Register custom providers at runtime:
-
-```dart
-// Add your custom provider to the registry
-Provider.providerMap['echo'] = EchoProvider();
-
-// Use it like any built-in provider
-final agent = Agent('echo');
-final result = await agent.send('Hello!');
-print(result.output); // Echoes back your input
-```
+Create your own providers and use them like the built-in providers. You can
+choose to implement either a `ChatModel` or an `EmbeddingsModel` or both.
 
 ## Creating a Custom Provider
 
-Implement the `Provider` class and a corresponding `ChatModel`:
+Here's a simple example of a custom provider that exposes a `ChatModel`:
 
 ```dart
 class EchoProvider extends Provider<ChatModelOptions, EmbeddingsModelOptions> {
@@ -49,9 +34,9 @@ class EchoProvider extends Provider<ChatModelOptions, EmbeddingsModelOptions> {
 }
 ```
 
-## Complete Example
+## Custom Model
 
-Here's a minimal echo provider that demonstrates the pattern:
+Here's a minimal chat model example:
 
 ```dart
 class EchoChatModel extends ChatModel<ChatModelOptions> {
@@ -76,27 +61,34 @@ class EchoChatModel extends ChatModel<ChatModelOptions> {
 }
 ```
 
-## Common Use Cases
+With your custom provider, you can use it with an agent:
 
-### Mock Providers for Testing
-Create predictable providers for unit tests without API calls.
+```dart
+final agent = Agent.forProvider(EchoProvider());
+final result = await agent.send('Hello!');
+print(result.output); // Echoes back your input
+```
 
-### Custom API Integration
-Connect to proprietary or internal AI services.
+## Dynamic Provider Registration
 
-### Local Model Wrappers
-Wrap local inference engines with Dartantic's unified API.
+If you'd like to participate in the named lookup of providers, you can add your
+custom provider to the provider map:
 
-### Specialized Processing
-Add custom logic like caching, filtering, or transformation.
+```dart
+// Add your custom provider to the registry
+Provider.providerMap['echo'] = EchoProvider();
+
+// Use it like any built-in provider
+final agent = Agent('echo');
+final result = await agent.send('Hello!');
+print(result.output); // Echoes back your input
+```
 
 ## Examples
 
-- [Custom provider demo](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/custom_provider.dart)
-- [Provider list](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/provider_models.dart)
+- [Custom Provider](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/custom_provider.dart)
 
 ## Next Steps
 
 - [Providers](/providers) - Current built-in providers
 - [Environment Setup](/environment-setup) - Configure API keys
-- [Error Handling](/error-handling) - Handle provider errors

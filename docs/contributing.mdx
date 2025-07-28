@@ -1,8 +1,16 @@
-# Contributing to dartantic_ai
+---
+title: Contributing to dartantic_ai
+---
 
-We welcome contributions to dartantic_ai! This guide will help you get started with contributing to the project.
+Your contributions to dartantic_ai are welcome! This guide will help you get
+started with contributing to the project.
 
-## How to Contribute
+## How to Contribute an Issue
+
+If you have found a bug or have a feature request, please open an issue on the
+[GitHub repository](https://github.com/csells/dartantic_ai/issues).
+
+## How to Contribute a PR
 
 ### 1. Fork and Clone
 
@@ -25,7 +33,8 @@ dart pub get
 
 #### Set Up API Keys for Testing
 
-To run the full test suite, you'll need API keys for various providers. Set these environment variables:
+To run the full test suite, you'll need API keys for various providers. Set
+these environment variables:
 
 ```bash
 export OPENAI_API_KEY="your-openai-key"
@@ -80,7 +89,8 @@ All tests should pass before you make any changes.
 
 1. **No Exception Hiding**: Let exceptions bubble up for diagnosis
 2. **Provider Filtering**: Only filter by capabilities (e.g., `ProviderCaps`)
-3. **80/20 Rule**: Test common cases across all providers, edge cases on Google only
+3. **80/20 Rule**: Test common cases across all providers, edge cases on Google
+   only
 4. **No Duplication**: Each functionality should be tested in ONE file only
 
 #### Example Test Pattern

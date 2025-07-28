@@ -1,0 +1,34 @@
+---
+title: System Prompts
+---
+
+Set default behavior and personality for your agents.
+
+## Basic Usage
+
+```dart
+final agent = Agent('openai');
+
+// Use default assistant
+final result1 = await agent.send(
+  'Hello!',
+  history: [ChatMessage.system('You are a helpful assistant.')],
+);
+// Response: "Hello! How can I help you today?"
+
+// Use pirate personality
+final result2 = await agent.send(
+  'Hello!',
+  history: [ChatMessage.system('You are a pirate. Speak like one.')],
+);
+// Response: "Ahoy, matey!"
+```
+
+## Examples
+
+- [System message usage](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/system_message.dart)
+
+## Next Steps
+
+- [Tool Calling](/tool-calling) - Combine prompts with tools
+- [Agentic Behavior](/agentic-behavior) - Complex agent workflows

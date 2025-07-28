@@ -2,9 +2,7 @@
 title: Streaming Output
 ---
 
-# Streaming Output
-
-Watch your AI think in real-time. It's like watching paint dry, but fascinating.
+Watch your AI think in real-time. It's like watching paint dry, but faster.
 
 ## Basic Streaming
 
@@ -20,6 +18,25 @@ await for (final chunk in agent.sendStream('Tell me your best joke')) {
 // "Because they make up everything!"
 ```
 
+## With Messages
+
+```dart
+final agent = Agent('openai');
+
+final history = [ChatMessage.system('You are a comedian.')];
+
+await for (final chunk in agent.sendStream(
+  'Tell me your best joke',
+  history: history,
+)) {
+  // Stream the output
+  stdout.write(chunk.output); 
+
+  // Add new messages to the history
+  history.addAll(chunk.messages);
+}
+```
+
 ## With Tools
 
 ```dart
@@ -28,8 +45,8 @@ await for (final chunk in agent.sendStream(
   'Weather in NYC?',
   tools: [weatherTool],
 )) {
-  stdout.write(chunk.output);
   // Tool results integrated into stream
+  stdout.write(chunk.output);
 }
 ```
 
@@ -42,18 +59,6 @@ await for (final chunk in agent.sendStream(
   outputSchema: factsSchema,
 )) {
   stdout.write(chunk.output); // Streams JSON chunks
-}
-```
-
-## Error Handling
-
-```dart
-try {
-  await for (final chunk in agent.sendStream('Hello')) {
-    stdout.write(chunk.output);
-  }
-} catch (e) {
-  print('Stream error: $e');
 }
 ```
 
@@ -72,17 +77,11 @@ await for (final chunk in agent.sendStream('Story time')) {
 print('\nTokens used: ${usage.totalTokens}');
 ```
 
-## Provider Support
-
-All providers support streaming:
-- OpenAI, Anthropic, Google
-- Mistral, Cohere, Ollama
-
 ## Examples
 
-- [Chat with streaming](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
-- [Multi-turn streaming](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_turn_chat.dart)
-- [Agent with streaming](https://github.com/csells/darantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
+- [Chat with streaming](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/chat.dart)
+- [Multi-turn streaming](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/multi_turn_chat.dart)
+- [Agent with streaming](https://github.com/csells/dartantic_ai/blob/main/packages/dartantic_ai/example/bin/agent.dart)
 
 ## Next Steps
 

@@ -428,5 +428,3 @@ extension SchemaMapper on Map<String, dynamic> {
     }
   }
 }
-
-// TODO: Add tool choice support when it's re-implemented

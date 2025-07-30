@@ -1,3 +1,7 @@
+## 1.0.3
+
+- Fixed quickstart example code and updated README
+
 ## 1.0.2
 
 - fixed a compilation error on the web

@@ -25,16 +25,20 @@ with generative AI easier and more fun!
 
 ```dart
 import 'package:dartantic_ai/dartantic_ai.dart';
+import 'package:dartantic_interface/dartantic_interface.dart' show ChatMessage;
+import 'package:json_schema/json_schema.dart' show JsonSchema;
 
 void main() async {
   // Create an agent with your preferred provider
   final agent = Agent(
     'openai',  // or 'google', 'anthropic', 'ollama', etc.
-    history: [ChatMessage.system('You are a helpful assistant.')],
   );
 
   // Generate text
-  final result = await agent.send('Explain quantum computing in simple terms');
+  final result = await agent.send(
+    'Explain quantum computing in simple terms', 
+    history: [ChatMessage.system('You are a helpful assistant.')],
+  );
   print(result.output);
 
   // Use typed outputs
@@ -74,6 +78,7 @@ Add to your `pubspec.yaml`:
 ```yaml
 dependencies:
   dartantic_ai: ^VERSION
+  dartantic_interface: ^VERSION
 ```
 
 ## Contributing & Community

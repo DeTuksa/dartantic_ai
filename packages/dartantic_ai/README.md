@@ -30,11 +30,13 @@ void main() async {
   // Create an agent with your preferred provider
   final agent = Agent(
     'openai',  // or 'google', 'anthropic', 'ollama', etc.
-    history: [ChatMessage.system('You are a helpful assistant.')],
   );
 
   // Generate text
-  final result = await agent.send('Explain quantum computing in simple terms');
+  final result = await agent.send(
+    'Explain quantum computing in simple terms', 
+    history: [ChatMessage.system('You are a helpful assistant.')],
+  );
   print(result.output);
 
   // Use typed outputs

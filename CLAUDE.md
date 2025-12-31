@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Dartantic is an agentic AI framework for Dart that provides easy integration with multiple AI providers (OpenAI, Google, Anthropic, Mistral, Cohere, Ollama). It features streaming output, typed responses, tool calling, embeddings, and MCP (Model Context Protocol) support.
+Dartantic is an agentic AI framework for Dart that provides easy integration with multiple AI providers (OpenAI, OpenAI Responses API, Google, Anthropic, Mistral, Cohere, Ollama, OpenRouter). It features streaming output, typed responses, tool calling, embeddings, and MCP (Model Context Protocol) support.
 
 The project is organized as a monorepo with multiple packages:
 - `packages/dartantic_interface/` - Core interfaces and types shared across all Dartantic packages
 - `packages/dartantic_ai/` - Main implementation with provider integrations (primary development focus)
 - `packages/dartantic_chat/` - Flutter chat UI widgets for AI applications (fork of flutter/ai toolkit)
 - `samples/dartantic_cli/` - Command-line interface for the Dartantic framework
+- `samples/chatarang/` - Interactive command-line chat application with tool support
 
 ## Documentation
 
@@ -144,6 +145,24 @@ Dartantic uses a six-layer architecture with clear separation of concerns:
 - **State Isolation**: Each request gets its own `StreamingState` instance; no state leaks between requests
 - **Provider Agnostic**: Same orchestrators work across all providers; provider quirks isolated in implementation layer
 
+### Architecture Best Practices
+
+- **TDD (Test-Driven Development)** - write the tests first; the implementation code isn't done until the tests pass
+- **DRY (Don't Repeat Yourself)** – eliminate duplicated logic by extracting shared utilities and modules
+- **Separation of Concerns** – each module should handle one distinct responsibility
+- **Single Responsibility Principle (SRP)** – every class/module/function/file should have exactly one reason to change
+- **Clear Abstractions & Contracts** – expose intent through small, stable interfaces and hide implementation details
+- **Low Coupling, High Cohesion** – keep modules self-contained, minimize cross-dependencies
+- **Scalability & Statelessness** – design components to scale horizontally and prefer stateless services when possible
+- **Observability & Testability** – build in logging, metrics, tracing, and ensure components can be unit/integration tested
+- **KISS (Keep It Simple, Sir)** - keep solutions as simple as possible
+- **YAGNI (You're Not Gonna Need It)** – avoid speculative complexity or over-engineering
+- **Don't Swallow Errors** - exceptions should be thrown so errors can be seen, root causes found, and fixes applied
+- **No Placeholder Code** - we're building production code, not toys
+- **No Comments for Removed Functionality** - source is for current requirements only; use version control for history
+- **Layered Architecture** - organize code into clear tiers where each layer depends only on the one(s) below it
+- **Prefer Non-Nullable Variables** - use nullability sparingly
+
 ### Message Flow
 
 Dartantic maintains clean request/response semantics:
@@ -251,8 +270,9 @@ See `wiki/Provider-Implementation-Guide.md` for detailed guide.
 
 ## Dartantic Chat
 
-The `packages/dartantic_chat/` package provides Flutter chat UI widgets. See `packages/dartantic_chat/CLAUDE.md` for package-specific guidance including:
-- Widget architecture (AgentChatView, ChatHistoryProvider, DartanticProvider)
+The `packages/dartantic_chat/` package provides Flutter chat UI widgets:
+- Widget architecture: `AgentChatView`, `ChatHistoryProvider`, `DartanticProvider`
 - Input state machine and action button patterns
-- Testing patterns (EchoProvider timing, finding action buttons by tooltip)
+- Testing patterns: EchoProvider timing, finding action buttons by tooltip
 - Example apps in `packages/dartantic_chat/example/lib/`
+- See `wiki/Chat-Architecture.md` for architecture documentation

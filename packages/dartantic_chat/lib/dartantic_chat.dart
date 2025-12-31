@@ -16,7 +16,15 @@
 library;
 
 export 'package:dartantic_interface/dartantic_interface.dart'
-    show ChatMessage, ChatMessageRole, Part, DataPart, LinkPart, TextPart;
+    show
+        ChatMessage,
+        ChatMessageRole,
+        DataPart,
+        LinkPart,
+        Part,
+        TextPart,
+        ToolPart,
+        ToolPartKind;
 
 export 'src/llm_exception.dart';
 export 'src/providers/providers.dart';

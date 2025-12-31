@@ -33,12 +33,12 @@ class MessageStyle {
   /// provided [style], it falls back to the corresponding property in the
   /// [defaultStyle].
   ///
-  /// If [defaultStyle] is not provided, it uses [LlmMessageStyle.defaultStyle].
+  /// If [defaultStyle] is not provided, it uses [MessageStyle.defaultStyle].
   ///
   /// Parameters:
   ///   - [style]: The custom style to apply. Can be null.
   ///   - [defaultStyle]: The default style to use as a fallback. If null, uses
-  ///     [LlmMessageStyle.defaultStyle].
+  ///     [MessageStyle.defaultStyle].
   ///
   /// Returns: A new [MessageStyle] instance with resolved properties.
   factory MessageStyle.resolve(

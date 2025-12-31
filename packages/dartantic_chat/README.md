@@ -146,7 +146,7 @@ contains the following:
   `package:image_picker`.
 
 [`gemini.dart` sample]:
-    https://github.com/csells/dartantic_chat/blob/main/example/lib/gemini/gemini.dart
+    https://github.com/csells/dartantic/tree/main/packages/dartantic_chat/blob/main/example/lib/gemini/gemini.dart
 
 [record-setup]: https://pub.dev/packages/record#setup-permissions-and-others
 [file-setup]: https://pub.dev/packages/file_selector#usage
@@ -333,7 +333,7 @@ calling out of the box through the `Agent` class. Check out the [function
 calling example][] for details.
 
 [function calling example]:
-    https://github.com/csells/dartantic_chat/blob/main/example/lib/function_calls/function_calls.dart
+    https://github.com/csells/dartantic/tree/main/packages/dartantic_chat/blob/main/example/lib/function_calls/function_calls.dart
 
 ### Disable attachments and audio input
 
@@ -471,7 +471,7 @@ AgentChatView(
 For a complete list of the styles available, check out the [styles example][].
 
 [styles example]:
-    https://github.com/csells/dartantic_chat/blob/main/example/lib/styles/styles.dart
+    https://github.com/csells/dartantic/tree/main/packages/dartantic_chat/blob/main/example/lib/styles/styles.dart
 
 ### Chat without UI
 
@@ -604,7 +604,7 @@ The [EchoProvider][] implementation provides a good starting point for your own
 custom provider.
 
 [EchoProvider]:
-    https://github.com/csells/dartantic_chat/blob/main/lib/src/providers/implementations/echo_provider.dart
+    https://github.com/csells/dartantic/tree/main/packages/dartantic_chat/blob/main/lib/src/providers/implementations/echo_provider.dart
 
 ## Samples
 
@@ -616,13 +616,13 @@ cd example
 flutter run --dart-define=GEMINI_API_KEY=your-api-key-here
 ```
 
-[example apps]: https://github.com/csells/dartantic_chat/tree/main/example/lib
+[example apps]: https://github.com/csells/dartantic/tree/main/packages/dartantic_chat/tree/main/example/lib
 
 ## Feedback
 
 As you use this package, please [log issues and feature
-requests](https://github.com/csells/dartantic_chat/issues) as well as submit any
-[code you'd like to contribute](https://github.com/csells/dartantic_chat/pulls).
+requests](https://github.com/csells/dartantic/tree/main/packages/dartantic_chat/issues) as well as submit any
+[code you'd like to contribute](https://github.com/csells/dartantic/tree/main/packages/dartantic_chat/pulls).
 
 ## License
 

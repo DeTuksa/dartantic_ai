@@ -11,6 +11,8 @@ import 'package:mime/mime.dart';
 import 'package:super_clipboard/super_clipboard.dart';
 import 'package:dartantic_interface/dartantic_interface.dart';
 
+import 'paste_extensions.dart';
+
 /// Handles paste operations, supporting both text and image pasting.
 ///
 /// This function processes the clipboard contents and either:
@@ -49,6 +51,7 @@ Future<void> handlePaste({
         Formats.gif,
         Formats.tiff,
         Formats.webp,
+        Formats.heic,
       ];
 
       final fileFormats = [
@@ -60,7 +63,33 @@ Future<void> handlePaste({
         Formats.ppt,
         Formats.pptx,
         Formats.epub,
+        Formats.mp3,
+        Formats.wav,
+        Formats.mp4,
+        Formats.mov,
+        Formats.avi,
+        Formats.zip,
+        Formats.tar,
       ];
+
+      if (reader.canProvide(Formats.fileUri)) {
+        await reader.readValue(Formats.fileUri).then((val) async {
+          if (val != null) {
+            if (val.isScheme('file')) {
+              final path = val.toFilePath();
+              final file = XFile(path);
+              final attachment = await file.readAsBytes();
+              final mimeType =
+                  lookupMimeType(file.path, headerBytes: attachment) ??
+                  'application/octet-stream';
+              onAttachments([
+                DataPart(attachment, mimeType: mimeType, name: file.name),
+              ]);
+            }
+          }
+        });
+        return;
+      }
 
       for (final format in fileFormats) {
         if (reader.canProvide(format)) {
@@ -72,13 +101,18 @@ Future<void> handlePaste({
                 chunks.expand((e) => e).toList(),
               );
               final mimeType =
-                  lookupMimeType('', headerBytes: attachmentBytes) ??
+                  lookupMimeType(
+                    file.fileName ?? '',
+                    headerBytes: attachmentBytes,
+                  ) ??
                   'application/octet-stream';
+              final fileName =
+                  file.fileName ??
+                  'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${getExtensionFromMime(mimeType)}';
               final dataPart = DataPart(
                 attachmentBytes,
                 mimeType: mimeType,
-                name:
-                    'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${_getExtensionFromMime(mimeType)}',
+                name: fileName,
               );
               onAttachments([dataPart]);
               return;
@@ -92,7 +126,6 @@ Future<void> handlePaste({
         if (reader.canProvide(format)) {
           reader.getFile(format, (file) async {
             final stream = file.getStream();
-
             await stream.toList().then((chunks) {
               final attachmentBytes = Uint8List.fromList(
                 chunks.expand((e) => e).toList(),
@@ -104,7 +137,7 @@ Future<void> handlePaste({
                 attachmentBytes,
                 mimeType: mimeType,
                 name:
-                    'pasted_image_${DateTime.now().millisecondsSinceEpoch}.${_getExtensionFromMime(mimeType)}',
+                    'pasted_image_${DateTime.now().millisecondsSinceEpoch}.${getExtensionFromMime(mimeType)}',
               );
               onAttachments([dataPart]);
               return;
@@ -112,24 +145,6 @@ Future<void> handlePaste({
           });
           return;
         }
-      }
-
-      if (reader.canProvide(Formats.fileUri)) {
-        await reader.readValue(Formats.fileUri).then((val) async {
-          if (val != null) {
-            if (val.isScheme('file')) {
-              final path = val.toFilePath();
-              final file = XFile(path);
-              final attachment = await file.readAsBytes();
-              debugPrint('File path is: ${file.mimeType} ${file.name}');
-              final mimeType = file.mimeType ?? 'application/octet-stream';
-              onAttachments([
-                DataPart(attachment, mimeType: mimeType, name: file.name),
-              ]);
-            }
-          }
-        });
-        return;
       }
     }
 
@@ -152,24 +167,4 @@ Future<void> handlePaste({
     debugPrint('Error pasting image: $e');
     debugPrintStack(stackTrace: s);
   }
-}
-
-/// Determines the appropriate file extension for a given MIME type.
-///
-/// Parameters:
-///   - [mimeType]: The MIME type to get the extension for (e.g., 'image/png')
-///
-/// Returns:
-///   A string representing the file extension (without the dot), defaults to 'bin' if unknown
-String _getExtensionFromMime(String mimeType, [List<int>? bytes]) {
-  String detectedMimeType = mimeType;
-  if (bytes != null &&
-      (mimeType.isEmpty || mimeType == 'application/octet-stream')) {
-    detectedMimeType = lookupMimeType('', headerBytes: bytes) ?? mimeType;
-  }
-  final extension = extensionFromMime(detectedMimeType);
-  if (extension == null || extension.isEmpty) {
-    return detectedMimeType.startsWith('image/') ? 'png' : 'bin';
-  }
-  return extension.startsWith('.') ? extension.substring(1) : extension;
 }

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:cross_file/cross_file.dart';
+import 'package:dartantic_chat/src/helpers/paste_helper/paste_extensions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show TextEditingController;
 import 'package:mime/mime.dart';
@@ -56,27 +56,6 @@ Future<void> handlePasteWeb({
   }
 }
 
-/// Determines the appropriate file extension for a given MIME type.
-///
-/// Parameters:
-///   - [mimeType]: The MIME type to get the extension for (e.g., 'image/png')
-///   - [bytes]: Optional header bytes to detect the MIME type if the provided type is generic.
-///
-/// Returns:
-///   A string representing the file extension (without the dot), defaults to 'bin' if unknown
-String _getExtensionFromMime(String mimeType, [List<int>? bytes]) {
-  String detectedMimeType = mimeType;
-  if (bytes != null &&
-      (mimeType.isEmpty || mimeType == 'application/octet-stream')) {
-    detectedMimeType = lookupMimeType('', headerBytes: bytes) ?? mimeType;
-  }
-  final extension = extensionFromMime(detectedMimeType);
-  if (extension == null || extension.isEmpty) {
-    return detectedMimeType.startsWith('image/') ? 'png' : 'bin';
-  }
-  return extension.startsWith('.') ? extension.substring(1) : extension;
-}
-
 /// Internal function to handle the actual clipboard reading and data processing.
 ///
 /// It checks for various data formats (files, images, plain text, HTML) in a specific order
@@ -101,40 +80,35 @@ Future<void> _pasteOperation({
     final imageFormats = [
       Formats.png,
       Formats.jpeg,
+      Formats.svg,
       Formats.bmp,
       Formats.gif,
       Formats.tiff,
       Formats.webp,
+      Formats.heic,
     ];
 
-    final fileFormats = [
-      Formats.pdf,
-      Formats.doc,
-      Formats.docx,
-      Formats.xls,
-      Formats.xlsx,
-      Formats.ppt,
-      Formats.pptx,
-      Formats.epub,
-    ];
-
-    for (final format in fileFormats) {
+    for (final format in Formats.standardFormats.whereType<FileFormat>()) {
       if (reader.canProvide(format)) {
         reader.getFile(format, (file) async {
           final stream = file.getStream();
-
           await stream.toList().then((chunks) {
             final attachmentBytes = Uint8List.fromList(
               chunks.expand((e) => e).toList(),
             );
             final mimeType =
-                lookupMimeType('', headerBytes: attachmentBytes) ??
+                lookupMimeType(
+                  file.fileName ?? '',
+                  headerBytes: attachmentBytes,
+                ) ??
                 'application/octet-stream';
+            final fileName =
+                file.fileName ??
+                'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${getExtensionFromMime(mimeType)}';
             final dataPart = DataPart(
               attachmentBytes,
               mimeType: mimeType,
-              name:
-                  'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${_getExtensionFromMime(mimeType)}',
+              name: fileName,
             );
             onAttachments([dataPart]);
             return;
@@ -142,23 +116,6 @@ Future<void> _pasteOperation({
         });
         return;
       }
-    }
-
-    if (reader.canProvide(Formats.fileUri)) {
-      await reader.readValue(Formats.fileUri).then((val) async {
-        if (val != null) {
-          if (val.isScheme('file')) {
-            final path = val.toFilePath();
-            final file = XFile(path);
-            final attachment = await file.readAsBytes();
-            final mimeType = file.mimeType ?? 'application/octet-stream';
-            onAttachments([
-              DataPart(attachment, mimeType: mimeType, name: file.name),
-            ]);
-          }
-        }
-      });
-      return;
     }
 
     for (final format in imageFormats) {
@@ -170,12 +127,18 @@ Future<void> _pasteOperation({
               chunks.expand((e) => e).toList(),
             );
             final mimeType =
-                lookupMimeType('', headerBytes: attachmentBytes) ?? 'image/png';
+                lookupMimeType(
+                  file.fileName ?? '',
+                  headerBytes: attachmentBytes,
+                ) ??
+                'image/png';
+            final fileName =
+                file.fileName ??
+                'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${getExtensionFromMime(mimeType)}';
             final dataPart = DataPart(
               attachmentBytes,
               mimeType: mimeType,
-              name:
-                  'pasted_image_${DateTime.now().millisecondsSinceEpoch}.${_getExtensionFromMime(mimeType)}',
+              name: fileName,
             );
             onAttachments([dataPart]);
             return;

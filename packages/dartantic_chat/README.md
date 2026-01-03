@@ -134,9 +134,26 @@ contains the following:
 </manifest>
 ```
 
-- **Clipboard access:** To enable clipboard functionality, refer to the
-  [super_clipboard documentation][clipboard-setup] for
-  `package:super_clipboard`
+- **Clipboard access:**
+
+To enable copying and pasting images and other custom data to and from the Android clipboard, add the following content provider to your `AndroidManifest.xml` inside the `<application>` tag:
+
+```xml
+<manifest>
+    <application>
+        ...
+        <provider
+            android:name="com.superlist.super_native_extensions.DataProvider"
+            android:authorities="<your-package-name>.SuperClipboardDataProvider"
+            android:exported="true"
+            android:grantUriPermissions="true">
+        </provider>
+        ...
+    </application>
+</manifest>
+```
+
+Be sure to replace `<your-package-name>` in the snippet with your actual package name (e.g., `com.example.myapp`).
 
 - **Microphone access:** To enable voice input for users, update configs
   according to the [permission and setup instructions][record-setup] for
@@ -155,7 +172,6 @@ contains the following:
 [record-setup]: https://pub.dev/packages/record#setup-permissions-and-others
 [file-setup]: https://pub.dev/packages/file_selector#usage
 [image-setup]: https://pub.dev/packages/image_picker#installation
-[clipboard-setup]: https://pub.dev/packages/super_clipboard
 
 ## User experience
 

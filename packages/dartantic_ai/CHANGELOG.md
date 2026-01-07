@@ -1,3 +1,7 @@
+## 2.2.2
+
+- Updated mcp_dart dependency to 1.2.1 to fix a null issue.
+
 ## 2.2.1
 
 - **Gemini 3 Tool Calling Fix**: Fixed "Function call is missing a

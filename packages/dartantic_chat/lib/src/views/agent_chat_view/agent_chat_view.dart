@@ -261,36 +261,22 @@ class _AgentChatViewState extends State<AgentChatView>
     return Positioned.fill(
       child: Material(
         color:
-            style.backgroundColor ??
+            style.backgroundColor?.withAlpha((0.6 * 255).round()) ??
             Theme.of(
               context,
             ).colorScheme.surface.withAlpha((0.6 * 255).round()),
-        child: Center(
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color:
-                  style.backgroundColor?.withAlpha((0.6 * 255).round()) ??
-                  Theme.of(
-                    context,
-                  ).colorScheme.surface.withAlpha((0.6 * 255).round()),
-              borderRadius: BorderRadius.circular(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Icon(
+              Icons.upload_file_rounded,
+              size: style.iconSize,
+              color: style.iconColor,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Icon(
-                  Icons.upload_file_rounded,
-                  size: style.iconSize,
-                  color: style.iconColor,
-                ),
-                Text(style.text ?? 'Drop files here', style: style.textStyle),
-              ],
-            ),
-          ),
+            Text(style.text ?? 'Drop files here', style: style.textStyle),
+          ],
         ),
       ),
     );

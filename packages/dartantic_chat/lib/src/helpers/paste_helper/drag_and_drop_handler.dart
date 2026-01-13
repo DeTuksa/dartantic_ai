@@ -92,40 +92,47 @@ class DragAndDropHandler {
               });
               futures.add(completer.future);
             } else {
+              final completer = Completer<void>();
               bool handled = false;
               for (final format in _formats) {
                 if (handled) break;
                 if (item.dataReader!.canProvide(format)) {
                   handled = true;
                   item.dataReader!.getFile(format, (file) async {
-                    final stream = file.getStream();
-                    await stream
-                        .toList()
-                        .then((chunks) {
-                          final attachmentBytes = Uint8List.fromList(
-                            chunks.expand((e) => e).toList(),
-                          );
-                          final mimeType =
-                              lookupMimeType(
-                                file.fileName ?? '',
-                                headerBytes: attachmentBytes,
-                              ) ??
-                              'application/octet-stream';
-                          final fileName =
-                              file.fileName ??
-                              'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${getExtensionFromMime(mimeType)}';
-                          final dataPart = DataPart(
-                            attachmentBytes,
-                            mimeType: mimeType,
-                            name: fileName,
-                          );
-                          onAttachments([dataPart]);
-                        })
-                        .onError((error, stackTrace) {
-                          debugPrint('Error handling dropped file -> $error');
-                        });
+                    try {
+                      final stream = file.getStream();
+                      final chunks = await stream.toList();
+                      final attachmentBytes = Uint8List.fromList(
+                        chunks.expand((e) => e).toList(),
+                      );
+                      final mimeType =
+                          lookupMimeType(
+                            file.fileName ?? '',
+                            headerBytes: attachmentBytes,
+                          ) ??
+                          'application/octet-stream';
+                      final fileName =
+                          file.fileName ??
+                          'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${getExtensionFromMime(mimeType)}';
+                      final dataPart = DataPart(
+                        attachmentBytes,
+                        mimeType: mimeType,
+                        name: fileName,
+                      );
+                      parts.add(dataPart);
+                    } catch (error, stackTrace) {
+                      debugPrint('Error handling dropped file -> $error');
+                      debugPrint('$stackTrace');
+                    } finally {
+                      completer.complete();
+                    }
                   });
                 }
+              }
+              if (handled) {
+                futures.add(completer.future);
+              } else {
+                completer.complete();
               }
             }
           }

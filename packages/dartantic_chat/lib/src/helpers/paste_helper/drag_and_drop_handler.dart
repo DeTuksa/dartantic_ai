@@ -129,7 +129,13 @@ class DragAndDropHandler {
             }
           }
         }
-        await Future.wait(futures);
+        await Future.wait(futures).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () async {
+            debugPrint('Timeout waiting for file drop futures');
+            return [];
+          },
+        );
         if (parts.isNotEmpty) {
           onAttachments(parts);
         }

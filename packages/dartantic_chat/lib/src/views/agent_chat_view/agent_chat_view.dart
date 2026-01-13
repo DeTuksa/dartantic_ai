@@ -166,7 +166,7 @@ class _AgentChatViewState extends State<AgentChatView>
   ChatMessage? _associatedResponse;
   AgentResponse? _pendingSttResponse;
 
-  List<Part> attachments = [];
+  final List<Part> attachments = [];
   bool _isDragging = false;
 
   @override
@@ -205,19 +205,14 @@ class _AgentChatViewState extends State<AgentChatView>
     Widget content = Column(
       children: [
         Expanded(
-          child: Stack(
-            children: [
-              ChatHistoryView(
-                // can only edit if we're not waiting on the agent or if
-                // we're not already editing an agent response
-                onEditMessage:
-                    _pendingPromptResponse == null &&
-                        _associatedResponse == null
-                    ? _onEditMessage
-                    : null,
-                onSelectSuggestion: _onSelectSuggestion,
-              ),
-            ],
+          child: ChatHistoryView(
+            // can only edit if we're not waiting on the agent or if
+            // we're not already editing an agent response
+            onEditMessage:
+                _pendingPromptResponse == null && _associatedResponse == null
+                ? _onEditMessage
+                : null,
+            onSelectSuggestion: _onSelectSuggestion,
           ),
         ),
         SafeArea(

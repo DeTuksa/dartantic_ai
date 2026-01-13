@@ -55,7 +55,6 @@ class DragAndDropHandler {
   ///   - [child]: The widget that should accept drops.
   ///   - [allowedOperations]: The types of operations allowed (copy, move, etc.)
   ///   - [hitTestBehavior]: How the drop region should behave during hit testing.
-  ///   - [cursor]: The cursor to display when dragging over the region.
   ///
   /// Returns:
   ///   A [DropRegion] widget that handles file drops.
@@ -63,13 +62,12 @@ class DragAndDropHandler {
     required Widget child,
     Set<DropOperation> allowedOperations = const {DropOperation.copy},
     HitTestBehavior hitTestBehavior = HitTestBehavior.deferToChild,
-    MouseCursor cursor = SystemMouseCursors.copy,
   }) {
     return DropRegion(
       formats: [Formats.fileUri, ..._formats],
       hitTestBehavior: hitTestBehavior,
       onDropOver: (event) {
-        return DropOperation.copy;
+        return allowedOperations.firstOrNull ?? DropOperation.copy;
       },
       onPerformDrop: (event) async {
         final items = event.session.items;
@@ -84,7 +82,6 @@ class DragAndDropHandler {
                 if (val != null) {
                   final file = await _handleDroppedFile(val);
                   if (file != null) {
-                    // onAttachments([file]);
                     parts.add(file);
                   }
                 }
@@ -105,15 +102,10 @@ class DragAndDropHandler {
                       final attachmentBytes = Uint8List.fromList(
                         chunks.expand((e) => e).toList(),
                       );
-                      final mimeType =
-                          lookupMimeType(
-                            file.fileName ?? '',
-                            headerBytes: attachmentBytes,
-                          ) ??
-                          'application/octet-stream';
-                      final fileName =
-                          file.fileName ??
-                          'pasted_file_${DateTime.now().millisecondsSinceEpoch}.${getExtensionFromMime(mimeType)}';
+                      final (mimeType, fileName) = _determineMimeAndFilename(
+                        originalName: file.fileName,
+                        bytes: attachmentBytes,
+                      );
                       final dataPart = DataPart(
                         attachmentBytes,
                         mimeType: mimeType,
@@ -141,7 +133,7 @@ class DragAndDropHandler {
         onAttachments(parts);
       },
       onDropEnter: (_) => onDragEnter?.call(),
-      onDropEnded: (_) => onDragExit?.call(),
+      onDropLeave: (_) => onDragExit?.call(),
       child: child,
     );
   }
@@ -178,4 +170,37 @@ class DragAndDropHandler {
   /// Test-only wrapper to expose file drop handling for unit tests.
   @visibleForTesting
   Future<Part?> handleDroppedFile(Uri data) => _handleDroppedFile(data);
+
+  (String mimeType, String fileName) _determineMimeAndFilename({
+    required String? originalName,
+    required Uint8List bytes,
+  }) {
+    String mimeType =
+        lookupMimeType(originalName ?? '', headerBytes: bytes) ??
+        'application/octet-stream';
+
+    String fileName =
+        originalName ?? 'pasted_file_${DateTime.now().millisecondsSinceEpoch}';
+
+    // Handle markdown files
+    if (originalName?.endsWith('.md') == true ||
+        originalName?.endsWith('.markdown') == true) {
+      mimeType = 'text/markdown';
+      if (!fileName.endsWith('.md') && !fileName.endsWith('.markdown')) {
+        fileName = '$fileName.md';
+      }
+    } else if (mimeType == 'application/octet-stream' &&
+        originalName?.contains('.') == true) {
+      // Try to get extension from original filename
+      final extension = originalName!.substring(originalName.lastIndexOf('.'));
+      fileName = '${fileName.split('.').first}$extension';
+    } else {
+      final extension = getExtensionFromMime(mimeType);
+      if (extension.isNotEmpty && !fileName.endsWith('.$extension')) {
+        fileName = '$fileName.$extension';
+      }
+    }
+
+    return (mimeType, fileName);
+  }
 }

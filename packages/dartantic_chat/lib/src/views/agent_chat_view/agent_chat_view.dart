@@ -244,7 +244,9 @@ class _AgentChatViewState extends State<AgentChatView>
       ],
     );
 
-    if (UniversalPlatform.isAndroid || UniversalPlatform.isIOS) {
+    if (UniversalPlatform.isAndroid ||
+        UniversalPlatform.isIOS ||
+        !widget.viewModel.enableAttachments) {
       return child;
     } else {
       return DragAndDropHandler(

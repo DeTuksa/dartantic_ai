@@ -5,8 +5,11 @@
 import 'dart:async';
 
 import 'package:cross_file/cross_file.dart';
+import 'package:dartantic_chat/src/helpers/paste_helper/drag_and_drop_handler.dart';
 import 'package:dartantic_interface/dartantic_interface.dart';
+import 'package:flutter/material.dart' show Icons, Material, Theme;
 import 'package:flutter/widgets.dart';
+import 'package:universal_platform/universal_platform.dart';
 
 import '../../chat_view_model/chat_view_model.dart';
 import '../../chat_view_model/chat_view_model_provider.dart';
@@ -163,6 +166,9 @@ class _AgentChatViewState extends State<AgentChatView>
   ChatMessage? _associatedResponse;
   AgentResponse? _pendingSttResponse;
 
+  final List<Part> attachments = [];
+  bool _isDragging = false;
+
   @override
   void initState() {
     super.initState();
@@ -179,7 +185,6 @@ class _AgentChatViewState extends State<AgentChatView>
   Widget build(BuildContext context) {
     super.build(context); // for AutomaticKeepAliveClientMixin
 
-    final chatStyle = ChatViewStyle.resolve(widget.viewModel.style);
     return ListenableBuilder(
       listenable: widget.viewModel.provider,
       builder: (context, child) => ChatViewModelProvider(
@@ -189,48 +194,91 @@ class _AgentChatViewState extends State<AgentChatView>
             // Dismiss keyboard when tapping anywhere in the view
             FocusScope.of(context).unfocus();
           },
-          child: Container(
-            color: chatStyle.backgroundColor,
-            child: Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      ChatHistoryView(
-                        // can only edit if we're not waiting on the agent or if
-                        // we're not already editing an agent response
-                        onEditMessage:
-                            _pendingPromptResponse == null &&
-                                _associatedResponse == null
-                            ? _onEditMessage
-                            : null,
-                        onSelectSuggestion: _onSelectSuggestion,
-                      ),
-                    ],
-                  ),
-                ),
-                SafeArea(
-                  child: ChatInput(
-                    initialMessage: _initialMessage,
-                    autofocus:
-                        widget.autofocus ??
-                        widget.viewModel.suggestions.isEmpty,
-                    onCancelEdit: _associatedResponse != null
-                        ? _onCancelEdit
-                        : null,
-                    onSendMessage: _onSendMessage,
-                    onCancelMessage: _pendingPromptResponse == null
-                        ? null
-                        : _onCancelMessage,
-                    onTranslateStt: _onTranslateStt,
-                    onCancelStt: _pendingSttResponse == null
-                        ? null
-                        : _onCancelStt,
-                  ),
-                ),
-              ],
-            ),
+          child: _buildContent(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    final chatStyle = ChatViewStyle.resolve(widget.viewModel.style);
+    Widget content = Column(
+      children: [
+        Expanded(
+          child: ChatHistoryView(
+            // can only edit if we're not waiting on the agent or if
+            // we're not already editing an agent response
+            onEditMessage:
+                _pendingPromptResponse == null && _associatedResponse == null
+                ? _onEditMessage
+                : null,
+            onSelectSuggestion: _onSelectSuggestion,
           ),
+        ),
+        SafeArea(
+          child: ChatInput(
+            initialMessage: _initialMessage,
+            autofocus: widget.autofocus ?? widget.viewModel.suggestions.isEmpty,
+            onCancelEdit: _associatedResponse != null ? _onCancelEdit : null,
+            onSendMessage: _onSendMessage,
+            onCancelMessage: _pendingPromptResponse == null
+                ? null
+                : _onCancelMessage,
+            onTranslateStt: _onTranslateStt,
+            onCancelStt: _pendingSttResponse == null ? null : _onCancelStt,
+            attachments: attachments,
+            onRemoveAttachment: _onRemoveAttachment,
+            onAttachments: _onAttachments,
+            onClearAttachments: _onClearAttachments,
+            onReplaceAttachments: _onReplaceAttachments,
+          ),
+        ),
+      ],
+    );
+
+    final child = Stack(
+      children: [
+        Container(color: chatStyle.backgroundColor, child: content),
+        if (_isDragging && widget.viewModel.enableAttachments)
+          overlayWidget(chatStyle),
+      ],
+    );
+
+    if (UniversalPlatform.isAndroid ||
+        UniversalPlatform.isIOS ||
+        !widget.viewModel.enableAttachments) {
+      return child;
+    } else {
+      return DragAndDropHandler(
+        onAttachments: _onAttachments,
+        onDragEnter: () => setState(() => _isDragging = true),
+        onDragExit: () => setState(() => _isDragging = false),
+      ).buildDropRegion(child: child);
+    }
+  }
+
+  Widget overlayWidget(ChatViewStyle chatStyle) {
+    final style = chatStyle.fileDropOverlayStyle!;
+
+    return Positioned.fill(
+      child: Material(
+        color:
+            style.backgroundColor?.withAlpha((0.6 * 255).round()) ??
+            Theme.of(
+              context,
+            ).colorScheme.surface.withAlpha((0.6 * 255).round()),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Icon(
+              Icons.upload_file_rounded,
+              size: style.iconSize,
+              color: style.iconColor,
+            ),
+            Text(style.text ?? 'Drop files here', style: style.textStyle),
+          ],
         ),
       ),
     );
@@ -382,4 +430,25 @@ class _AgentChatViewState extends State<AgentChatView>
       _associatedResponse = null;
     });
   }
+
+  void _onAttachments(Iterable<Part> newAttachments) => setState(() {
+    assert(widget.viewModel.enableAttachments);
+    _isDragging = false;
+    attachments.addAll(newAttachments);
+  });
+
+  void _onClearAttachments() => setState(() {
+    attachments.clear();
+  });
+
+  void _onReplaceAttachments(List<Part> newAttachments) => setState(() {
+    assert(widget.viewModel.enableAttachments);
+    attachments
+      ..clear()
+      ..addAll(newAttachments);
+  });
+
+  void _onRemoveAttachment(Part attachment) => setState(() {
+    attachments.remove(attachment);
+  });
 }

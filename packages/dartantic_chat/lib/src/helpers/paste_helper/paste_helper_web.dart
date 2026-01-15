@@ -11,6 +11,7 @@ import 'package:dartantic_interface/dartantic_interface.dart';
 
 bool _isListenerRegistered = false;
 final _events = ClipboardEvents.instance;
+void Function(ClipboardReadEvent)? _registeredCallback;
 
 /// Handles paste events in a web environment, supporting both text, file, and image pasting.
 ///
@@ -41,7 +42,7 @@ Future<void> handlePasteWeb({
 
     if (_events == null) return;
 
-    _events!.registerPasteEventListener((event) async {
+    _registeredCallback = (event) async {
       final reader = await event.getClipboardReader();
       await pasteOperation(
         controller: controller,
@@ -49,7 +50,8 @@ Future<void> handlePasteWeb({
         insertText: insertText,
         reader: reader,
       );
-    });
+    };
+    _events!.registerPasteEventListener(_registeredCallback!);
   } catch (e, s) {
     debugPrint('Error in handlePasteWeb: $e');
     debugPrintStack(stackTrace: s);
@@ -77,6 +79,22 @@ Future<void> pasteOperation({
   insertText,
   required ClipboardReader reader,
 }) async {
+  if (reader.canProvide(Formats.plainText)) {
+    final text = await reader.readValue(Formats.plainText);
+    if (text != null && text.isNotEmpty) {
+      insertText(controller: controller, text: text);
+      return;
+    }
+  }
+
+  if (reader.canProvide(Formats.htmlText)) {
+    final html = await reader.readValue(Formats.htmlText);
+    if (html != null && html.isNotEmpty) {
+      insertText(controller: controller, text: html);
+      return;
+    }
+  }
+
   if (onAttachments != null) {
     final imageFormats = [
       Formats.png,
@@ -148,22 +166,6 @@ Future<void> pasteOperation({
         return;
       }
     }
-
-    if (reader.canProvide(Formats.plainText)) {
-      final text = await reader.readValue(Formats.plainText);
-      if (text != null && text.isNotEmpty) {
-        insertText(controller: controller, text: text);
-        return;
-      }
-    }
-
-    if (reader.canProvide(Formats.htmlText)) {
-      final html = await reader.readValue(Formats.htmlText);
-      if (html != null && html.isNotEmpty) {
-        insertText(controller: controller, text: html);
-        return;
-      }
-    }
   }
 }
 
@@ -173,6 +175,10 @@ Future<void> pasteOperation({
 /// (e.g., when a widget is disposed).
 void unregisterPasteListener() {
   if (_events != null) {
-    _events!.unregisterPasteEventListener;
+    if (_registeredCallback != null) {
+      _events!.unregisterPasteEventListener(_registeredCallback!);
+      _registeredCallback = null;
+    }
   }
+  _isListenerRegistered = false;
 }
